@@ -1,0 +1,30 @@
+version: '3'
+services:
+  web:
+    build:
+      context: .
+      args:
+        PIP_USERNAME: "${PIP_USERNAME}"
+        PIP_PASSWORD: "${PIP_PASSWORD}"
+    ports:
+      - "8000:8000"
+    environment:
+      - env="local"
+    volumes:
+    - .:/usr/src/app
+    depends_on:
+      - db
+    command:
+      sh -c "
+        uvicorn main:app --reload --host 0.0.0.0"
+
+  db:
+    image: 'postgres:12-alpine'
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    volumes:
+      - ./postgres-data:/var/lib/postgresql
