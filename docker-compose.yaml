@@ -9,14 +9,20 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - env="local"
+      ENV: local
+      DB_USER: postgres
+      DB_PWD: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: metadata
+      SQLALCHEMY_DATABASE_URI: postgresql://postgres:postgres@db:5432/metadata
     volumes:
     - .:/usr/src/app
     depends_on:
       - db
     command:
       sh -c "
-        uvicorn main:app --reload --host 0.0.0.0"
+        uvicorn app.main:app --reload --host 0.0.0.0"
 
   db:
     image: 'postgres:12-alpine'
