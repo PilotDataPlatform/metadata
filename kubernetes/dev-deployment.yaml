@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metadata
+  namespace: utility
+  labels:
+    app: metadata
+  annotations:
+    "sidecar.jaegertracing.io/inject": "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: metadata
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 33%
+  template:
+    metadata:
+      labels:
+        app: metadata
+    spec:
+      containers:
+        - name: metadata
+          image: registry-gitlab.indocresearch.org/platform/metadata:<VERSION>
+          ports:
+            - containerPort: 5065
+          env:
+            - name: ENV
+              value: "dev"
+            - name: CONFIG_CENTER_ENABLED
+              value: "true"
+            - name: VAULT_URL
+              value: "https://vault.vault:8200/v1/vre/app/config"
+            - name: VAULT_CRT
+              value: "/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+            - name: VAULT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: vault-secret
+                  key: token
+      nodeSelector:
+        namespace: utility
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: metadata
+  namespace: utility
+  labels:
+    app: metadata
+spec:
+  ports:
+    - name: metadata
+      port: 5065
+      targetPort: 5065
+  selector:
+    app: metadata
+  type: LoadBalancer
