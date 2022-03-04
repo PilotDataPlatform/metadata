@@ -4,20 +4,22 @@
 Manages metadata such as file hierarchy, project and user ownership, names, types, etc.
 
 ### Built With
-_To be written._
+- Python
+- FastAPI
+- Alembic
 
 ## Getting Started
 
 ### Prerequisites
-_To be written._
+- Docker
+- Poetry credentials
 
 ### Installation
+Run Docker compose with environment variables.
 
-#### Using Docker
-_To be written._
-
-#### Without Docker
-_To be written._
+    PIP_USERNAME=[...] PIP_PASSWORD=[...] docker-compose up
 
 ## Usage
-_To be written._
+Local URLs:
+- API documentation: http://localhost:8000/v1/api-doc
+- pgAdmin: http://localhost:8750/
