@@ -5,6 +5,7 @@ from app.main import app
 # This file is for early testing only
 # Delete when a functional endpoint is added
 
+
 class TestAnnouncement:
     app = TestClient(app)
 
