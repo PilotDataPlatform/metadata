@@ -6,7 +6,7 @@
 
 (What JIRA issues this merge request is related to)
 
-## Type of change
+## Type of Change
 
 Please delete options that are not relevant.
 
