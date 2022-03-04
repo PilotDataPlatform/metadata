@@ -3,6 +3,9 @@ from fastapi_utils.cbv import cbv
 
 router = APIRouter()
 
+# This file is for early testing only
+# Delete when a functional endpoint is added
+
 @cbv(router)
 class APIHelloWorld:
     @router.get(
