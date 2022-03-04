@@ -12,14 +12,14 @@ Manages metadata such as file hierarchy, project and user ownership, names, type
 
 ### Prerequisites
 - Docker
-- Poetry credentials
+- Gitlab Package Registry credentials for Poetry installation
 
 ### Installation
-Run Docker compose with environment variables.
+Run Docker compose with Package Registry credentials.
 
     PIP_USERNAME=[...] PIP_PASSWORD=[...] docker-compose up
 
 ## Usage
 Local URLs:
 - API documentation: http://localhost:8000/v1/api-doc
-- pgAdmin: http://localhost:8750/
+- pgAdmin: http://localhost:8750
