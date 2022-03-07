@@ -69,7 +69,7 @@ pipeline {
       steps{
         build(job: "/VRE-IaC/UpdateAppVersion", parameters: [
           [$class: 'StringParameterValue', name: 'TF_TARGET_ENV', value: 'dev' ],
-          [$class: 'StringParameterValue', name: 'TARGET_RELEASE', value: 'notification' ],
+          [$class: 'StringParameterValue', name: 'TARGET_RELEASE', value: 'metadata' ],
           [$class: 'StringParameterValue', name: 'NEW_APP_VERSION', value: "$commit" ]
         ])
       }
