@@ -44,8 +44,6 @@ venv
 .vscode
 
 # log file
-gunicorn_access.log
-gunicorn_error.log
 /logs
 
 # test

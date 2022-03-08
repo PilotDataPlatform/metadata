@@ -14,5 +14,4 @@ RUN poetry install --no-dev --no-root --no-interaction
 
 RUN if [ ${RUN_MIGRATIONS_ON_BUILD} == "true" ] && [ ${SQLALCHEMY_DATABASE_URI} ] ; then pip install alembic ; alembic upgrade head ; fi
 
-RUN chmod +x gunicorn_starter.sh
-CMD ["./gunicorn_starter.sh"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
