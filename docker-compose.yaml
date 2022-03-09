@@ -9,7 +9,6 @@ services:
     ports:
       - "8000:8000"
     environment:
-      ENV: local
       DB_USER: postgres
       DB_PWD: postgres
       DB_HOST: db
