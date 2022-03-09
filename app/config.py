@@ -8,7 +8,7 @@ from pydantic import Extra
 from starlette.config import Config
 
 config = Config('.env')
-SRV_NAMESPACE = config('APP_NAME', cast=str, default='service_notification')
+SRV_NAMESPACE = config('APP_NAME', cast=str, default='metadata')
 CONFIG_CENTER_ENABLED = config('CONFIG_CENTER_ENABLED', cast=str, default='false')
 
 
@@ -26,7 +26,7 @@ def vault_factory() -> dict:
 
 class Settings(BaseSettings):
     version = '1.0.0'
-    APP_NAME: str = 'service_notification'
+    APP_NAME: str = 'metadata'
     PORT: int = 5065
     HOST: str = '0.0.0.0'
     ENV: str = 'test'
