@@ -6,7 +6,7 @@ from app.main import app
 # Delete when a functional endpoint is added
 
 
-class TestAnnouncement:
+class TestHelloWorld:
     app = TestClient(app)
 
     def test_01_hello_world(self):
