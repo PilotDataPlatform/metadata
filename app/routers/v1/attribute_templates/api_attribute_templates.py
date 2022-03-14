@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from fastapi_utils.cbv import cbv
 from fastapi.responses import JSONResponse
+from fastapi_utils.cbv import cbv
 
 router = APIRouter()
 

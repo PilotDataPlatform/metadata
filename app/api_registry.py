@@ -2,8 +2,8 @@ from fastapi import FastAPI
 from fastapi_health import health
 from fastapi_sqlalchemy import db
 
-from .routers.v1.items import api_items
 from .routers.v1.attribute_templates import api_attribute_templates
+from .routers.v1.items import api_items
 
 
 def is_db_online():
