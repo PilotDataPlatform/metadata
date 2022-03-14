@@ -26,5 +26,3 @@ Local URLs:
 - pgAdmin: http://localhost:8750
 
 pgAdmin's local config files have been committed to this repo for ease of development. Without the files, a connection between pgAdmin and Postgres will have to be manually established by the developer.
-
-
