@@ -1,16 +1,14 @@
-"""Add items table
+"""Add items table.
 
 Revision ID: 212e0e60c178
-Revises: 
+Revises:
 Create Date: 2022-03-14 15:17:34.248801
-
 """
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy import Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy_utils import LtreeType
-
 
 # revision identifiers, used by Alembic.
 revision = '212e0e60c178'
@@ -31,7 +29,9 @@ def upgrade():
         sa.Column('size', sa.Integer()),
         sa.Column('owner', sa.String()),
         sa.Column('container', UUID()),
-        sa.Column('container_type', Enum('project', 'dataset', name='container_enum', create_type=False), nullable=False),
+        sa.Column(
+            'container_type', Enum('project', 'dataset', name='container_enum', create_type=False), nullable=False
+        ),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('id'),
         schema='metadata',
