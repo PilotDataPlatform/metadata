@@ -1,10 +1,13 @@
 from fastapi import APIRouter
+from fastapi import Depends
 from fastapi.responses import JSONResponse
 from fastapi_sqlalchemy import db
 from fastapi_utils.cbv import cbv
 from sqlalchemy_utils import Ltree
 
 from app.models.base_models import EAPIResponseCode
+from app.models.models_items import GETItem
+from app.models.models_items import GETItemResponse
 from app.models.models_items import POSTItem
 from app.models.models_items import POSTItemResponse
 from app.models.sql_items import ItemsModel
@@ -15,9 +18,19 @@ router = APIRouter()
 
 @cbv(router)
 class APIItems:
-    @router.get('/', summary='Get one or more items or check if an item exists')
-    async def get_items(self):
-        return JSONResponse(content={'message': 'Placeholder'}, status_code=501)
+    @router.get('/', response_model=GETItemResponse, summary='Get one or more items or check if an item exists')
+    async def get_items(self, params: GETItem = Depends(GETItem)):
+        try:
+            api_response = GETItemResponse()
+            item = db.session.query(ItemsModel).filter_by(id=params.id)
+            api_response.page = 0
+            api_response.num_of_pages = 1
+            api_response.total = 1
+            api_response.result = item.first().to_dict()
+        except Exception:
+            api_response.set_error_msg(f'Could not get item with id {params.id}')
+            api_response.set_code(EAPIResponseCode.bad_request)
+        return api_response.json_response()
 
     @router.post('/', response_model=POSTItemResponse, summary='Create a new item')
     async def create_item(self, data: POSTItem):
