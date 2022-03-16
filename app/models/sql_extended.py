@@ -21,7 +21,4 @@ class ExtendedModel(Base):
         self.parent = extra
 
     def to_dict(self):
-        return {
-            'id': self.id,
-            'extra': self.extra
-        }
+        return {'id': self.id, 'extra': self.extra}

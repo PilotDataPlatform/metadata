@@ -15,7 +15,7 @@ Base = declarative_base()
 
 class ItemsModel(Base):
     __tablename__ = 'items'
-    id = Column(UUID(as_uuid=True), unique=True, primary_key=True, default=uuid.uuid4)
+    id = Column(UUID(as_uuid=True), unique=True, primary_key=True)
     parent = Column(UUID(as_uuid=True), nullable=False)
     path = Column(LtreeType(), nullable=False)
     type = Column(Enum('file', 'folder', name='type_enum', create_type=False), nullable=False)
@@ -29,6 +29,7 @@ class ItemsModel(Base):
     __table_args__ = ({'schema': ConfigClass.METADATA_SCHEMA},)
 
     def __init__(self, parent, path, type, zone, name, size, owner, container, container_type):
+        self.id = uuid.uuid4()
         self.parent = parent
         self.path = path
         self.type = type
@@ -41,14 +42,14 @@ class ItemsModel(Base):
 
     def to_dict(self):
         return {
-            'id': self.id,
-            'parent': self.parent,
-            'path': self.path,
+            'id': str(self.id),
+            'parent': str(self.parent),
+            'path': str(self.path),
             'type': self.type,
             'zone': self.zone,
             'name': self.name,
             'size': self.size,
             'owner': self.owner,
-            'container': self.container,
+            'container': str(self.container),
             'container_type': self.container_type,
         }
