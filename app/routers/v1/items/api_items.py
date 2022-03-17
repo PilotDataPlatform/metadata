@@ -12,8 +12,25 @@ from app.models.models_items import POSTItem
 from app.models.models_items import POSTItemResponse
 from app.models.sql_items import ItemsModel
 from app.routers.router_exceptions import BadRequestException
+from app.routers.router_utils import paginate
 
 router = APIRouter()
+
+
+def get_item_by_id(params, api_response):
+    item = db.session.query(ItemsModel).filter_by(id=params.id)
+    result = item.first()
+    if result:
+        api_response.total = 1
+        api_response.num_of_pages = 1
+        api_response.result = result.to_dict()
+
+
+def get_items_by_location(params, api_response):
+    items = db.session.query(ItemsModel).filter_by(container=params.container, zone=params.zone)
+    if params.path:
+        items = db.session.query(ItemsModel).filter_by(path=params.path)
+    paginate(params, api_response, items)
 
 
 @cbv(router)
@@ -22,13 +39,17 @@ class APIItems:
     async def get_items(self, params: GETItem = Depends(GETItem)):
         try:
             api_response = GETItemResponse()
-            item = db.session.query(ItemsModel).filter_by(id=params.id)
-            api_response.page = 0
-            api_response.num_of_pages = 1
-            api_response.total = 1
-            api_response.result = item.first().to_dict()
+            if params.id:
+                get_item_by_id(params, api_response)
+            else:
+                if not params.container or params.zone == None:
+                    raise BadRequestException('container and zone are required when getting by location')
+                get_items_by_location(params, api_response)
+        except BadRequestException as e:
+            api_response.set_error_msg(str(e))
+            api_response.set_code(EAPIResponseCode.bad_request)
         except Exception:
-            api_response.set_error_msg(f'Could not get item with id {params.id}')
+            api_response.set_error_msg('Failed to get item')
             api_response.set_code(EAPIResponseCode.bad_request)
         return api_response.json_response()
 
@@ -60,7 +81,7 @@ class APIItems:
             api_response.set_error_msg(str(e))
             api_response.set_code(EAPIResponseCode.bad_request)
         except Exception:
-            api_response.set_error_msg('Failed to write to database')
+            api_response.set_error_msg('Failed to create item')
             api_response.set_code(EAPIResponseCode.bad_request)
         return api_response.json_response()
 

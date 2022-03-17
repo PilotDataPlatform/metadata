@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -5,8 +6,15 @@ from pydantic import Field
 
 from .base_models import APIResponse
 
+
 class GETItem(BaseModel):
-    id: UUID
+    id: Optional[UUID]
+    container: Optional[UUID]
+    zone: Optional[int]
+    path: Optional[str]
+    page_size: int = 10
+    page: int = 0
+
 
 class GETItemResponse(APIResponse):
     result: dict = Field(
@@ -25,6 +33,7 @@ class GETItemResponse(APIResponse):
         },
     )
 
+
 class POSTItem(BaseModel):
     parent: UUID
     path: str
@@ -35,6 +44,7 @@ class POSTItem(BaseModel):
     owner: str
     container: UUID
     container_type: str
+
 
 class POSTItemResponse(GETItemResponse):
     pass
