@@ -4,10 +4,10 @@ from app.models.base_models import APIResponse
 from app.models.sql_items import Base
 
 
-def paginate(params: BaseModel, api_response: APIResponse, items: Base):
-    total = items.count()
-    items = items.limit(params.page_size).offset(params.page * params.page_size)
-    items = items.all()
+def paginate(params: BaseModel, api_response: APIResponse, items_query: Base):
+    total = items_query.count()
+    items_query = items_query.limit(params.page_size).offset(params.page * params.page_size)
+    items = items_query.all()
     results = []
     for item in items:
         results.append(item.to_dict())

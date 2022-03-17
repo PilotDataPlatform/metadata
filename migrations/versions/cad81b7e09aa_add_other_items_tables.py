@@ -19,6 +19,7 @@ def upgrade():
     op.create_table(
         'extended',
         sa.Column('id', UUID(), nullable=False),
+        sa.Column('item_id', UUID(), nullable=False),
         sa.Column('extra', sa.JSON()),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('id'),

@@ -13,7 +13,7 @@ from app.config import ConfigClass
 Base = declarative_base()
 
 
-class ItemsModel(Base):
+class ItemModel(Base):
     __tablename__ = 'items'
     id = Column(UUID(as_uuid=True), unique=True, primary_key=True)
     parent = Column(UUID(as_uuid=True), nullable=False)

@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi.responses import JSONResponse
@@ -10,7 +12,9 @@ from app.models.models_items import GETItem
 from app.models.models_items import GETItemResponse
 from app.models.models_items import POSTItem
 from app.models.models_items import POSTItemResponse
-from app.models.sql_items import ItemsModel
+from app.models.sql_extended import ExtendedModel
+from app.models.sql_items import ItemModel
+from app.models.sql_storage import StorageModel
 from app.routers.router_exceptions import BadRequestException
 from app.routers.router_utils import paginate
 
@@ -18,19 +22,22 @@ router = APIRouter()
 
 
 def get_item_by_id(params, api_response):
-    item = db.session.query(ItemsModel).filter_by(id=params.id)
-    result = item.first()
-    if result:
+    item_query = db.session.query(ItemModel, StorageModel, ExtendedModel).filter_by(id=params.id)
+    item_result = item_query.first()
+    if item_result:
         api_response.total = 1
         api_response.num_of_pages = 1
-        api_response.result = result.to_dict()
+        item_dict = item_result[0].to_dict()
+        item_dict['storage'] = item_result[1].to_dict()
+        item_dict['extended'] = item_result[2].to_dict()
+        api_response.result = item_dict
 
 
 def get_items_by_location(params, api_response):
-    items = db.session.query(ItemsModel).filter_by(container=params.container, zone=params.zone)
+    item_query = db.session.query(ItemModel).filter_by(container=params.container, zone=params.zone)
     if params.path:
-        items = db.session.query(ItemsModel).filter_by(path=params.path)
-    paginate(params, api_response, items)
+        item_query = db.session.query(ItemModel).filter_by(path=params.path)
+    paginate(params, api_response, item_query)
 
 
 @cbv(router)
@@ -61,7 +68,7 @@ class APIItems:
                 raise BadRequestException('type must be file or folder')
             if data.container_type not in ['project', 'dataset']:
                 raise BadRequestException('container_type must be project or dataset')
-            model_data = {
+            item_model_data = {
                 'parent': data.parent,
                 'path': Ltree(data.path),
                 'type': data.type,
@@ -72,10 +79,25 @@ class APIItems:
                 'container': data.container,
                 'container_type': data.container_type,
             }
-            item = ItemsModel(**model_data)
+            item = ItemModel(**item_model_data)
+            storage_model_data = {
+                'item_id': item.id,
+                'location_uri': data.location_uri,
+                'version': data.version,
+            }
+            storage = StorageModel(**storage_model_data)
+            extended_model_data = {
+                'item_id': item.id,
+                'extra': {},
+            }
+            extended = ExtendedModel(**extended_model_data)
             db.session.add(item)
+            db.session.add(storage)
+            db.session.add(extended)
             db.session.commit()
             db.session.refresh(item)
+            db.session.refresh(storage)
+            db.session.refresh(extended)
             api_response.result = item.to_dict()
         except BadRequestException as e:
             api_response.set_error_msg(str(e))

@@ -30,6 +30,17 @@ class GETItemResponse(APIResponse):
             'owner': 'username',
             'container': '3789e66f-2e70-4c36-9706-473777f0fe2a',
             'container_type': 'project',
+            'storage': {
+                'id': 'ba623005-8183-419a-972a-e4ce0d539349',
+                'item_id': '85465212-168a-4f0c-a7aa-f3a19795d2ff',
+                'location_uri': 'https://example.com/item',
+                'version': '1.0',
+            },
+            'extended': {
+                'id': 'dc763d28-7e74-4db3-a702-fa719aa702c6',
+                'item_id': '85465212-168a-4f0c-a7aa-f3a19795d2ff',
+                'extra': {},
+            },
         },
     )
 
@@ -44,6 +55,8 @@ class POSTItem(BaseModel):
     owner: str
     container: UUID
     container_type: str
+    location_uri: str
+    version: str
 
 
 class POSTItemResponse(GETItemResponse):
