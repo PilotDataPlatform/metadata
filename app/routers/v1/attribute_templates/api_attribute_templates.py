@@ -1,6 +1,9 @@
 from fastapi import APIRouter
-from fastapi_utils.cbv import cbv
 from fastapi.responses import JSONResponse
+from fastapi_sqlalchemy import db
+from fastapi_utils.cbv import cbv
+
+from app.models.sql_attribute_templates import AttributeTemplatesModel
 
 router = APIRouter()
 

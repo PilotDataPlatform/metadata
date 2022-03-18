@@ -37,6 +37,8 @@ class Settings(BaseSettings):
     DB_PORT: str
     DB_NAME: str
 
+    METADATA_SCHEMA = str = 'metadata'
+
     def __init__(self):
         super().__init__()
         self.SQLALCHEMY_DATABASE_URI = (
