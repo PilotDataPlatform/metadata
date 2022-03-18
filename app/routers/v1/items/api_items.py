@@ -50,7 +50,7 @@ def get_items_by_location(params, api_response):
         .filter(ItemModel.container == params.container, ItemModel.zone == params.zone)
     )
     if params.path:
-        item_query = item_query.filter(ItemModel.path == params.path)
+        item_query = item_query.filter(ItemModel.path == Ltree(params.path))
     paginate(params, api_response, item_query, combine_item_tables)
 
 
