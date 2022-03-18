@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi.responses import JSONResponse
@@ -21,23 +19,39 @@ from app.routers.router_utils import paginate
 router = APIRouter()
 
 
+def combine_item_tables(item_result):
+    item_data = item_result[0].to_dict()
+    storage_data = item_result[1].to_dict()
+    storage_data.pop('item_id')
+    extended_data = item_result[2].to_dict()
+    extended_data.pop('item_id')
+    item_data['storage'] = storage_data
+    item_data['extended'] = extended_data
+    return item_data
+
+
 def get_item_by_id(params, api_response):
-    item_query = db.session.query(ItemModel, StorageModel, ExtendedModel).filter_by(id=params.id)
+    item_query = (
+        db.session.query(ItemModel, StorageModel, ExtendedModel)
+        .join(StorageModel, ExtendedModel)
+        .filter(ItemModel.id == params.id)
+    )
     item_result = item_query.first()
     if item_result:
         api_response.total = 1
         api_response.num_of_pages = 1
-        item_dict = item_result[0].to_dict()
-        item_dict['storage'] = item_result[1].to_dict()
-        item_dict['extended'] = item_result[2].to_dict()
-        api_response.result = item_dict
+        api_response.result = combine_item_tables(item_result)
 
 
 def get_items_by_location(params, api_response):
-    item_query = db.session.query(ItemModel).filter_by(container=params.container, zone=params.zone)
+    item_query = (
+        db.session.query(ItemModel, StorageModel, ExtendedModel)
+        .join(StorageModel, ExtendedModel)
+        .filter(ItemModel.container == params.container, ItemModel.zone == params.zone)
+    )
     if params.path:
-        item_query = db.session.query(ItemModel).filter_by(path=params.path)
-    paginate(params, api_response, item_query)
+        item_query = item_query.filter(ItemModel.path == params.path)
+    paginate(params, api_response, item_query, combine_item_tables)
 
 
 @cbv(router)
