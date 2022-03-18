@@ -1,13 +1,15 @@
 from fastapi_sqlalchemy import db
 from sqlalchemy_utils import Ltree
-from app.models.base_models import APIResponse
 
+from app.models.base_models import APIResponse
+from app.models.models_items import DELETEItem
+from app.models.models_items import GETItem
+from app.models.models_items import POSTItem
 from app.models.sql_extended import ExtendedModel
 from app.models.sql_items import ItemModel
 from app.models.sql_storage import StorageModel
 from app.routers.router_utils import paginate
-from app.models.models_items import POSTItem
-from app.models.models_items import GETItem
+
 
 def combine_item_tables(item_result):
     item_data = item_result[0].to_dict()
@@ -18,6 +20,7 @@ def combine_item_tables(item_result):
     item_data['storage'] = storage_data
     item_data['extended'] = extended_data
     return item_data
+
 
 def get_item_by_id(params: GETItem, api_response: APIResponse):
     item_query = (
@@ -31,6 +34,7 @@ def get_item_by_id(params: GETItem, api_response: APIResponse):
         api_response.num_of_pages = 1
         api_response.result = combine_item_tables(item_result)
 
+
 def get_items_by_location(params: GETItem, api_response: APIResponse):
     item_query = (
         db.session.query(ItemModel, StorageModel, ExtendedModel)
@@ -40,6 +44,7 @@ def get_items_by_location(params: GETItem, api_response: APIResponse):
     if params.path:
         item_query = item_query.filter(ItemModel.path == Ltree(params.path))
     paginate(params, api_response, item_query, combine_item_tables)
+
 
 def create_item(data: POSTItem, api_response: APIResponse):
     item_model_data = {
@@ -71,3 +76,14 @@ def create_item(data: POSTItem, api_response: APIResponse):
     db.session.refresh(storage)
     db.session.refresh(extended)
     api_response.result = item.to_dict()
+
+
+def delete_item_by_id(params: DELETEItem):
+    item_query = (
+        db.session.query(ItemModel, StorageModel, ExtendedModel)
+        .join(StorageModel, ExtendedModel)
+        .filter(ItemModel.id == params.id)
+    )
+    for row in item_query.first():
+        db.session.delete(row)
+    db.session.commit()

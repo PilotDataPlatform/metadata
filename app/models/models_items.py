@@ -61,3 +61,11 @@ class POSTItem(BaseModel):
 
 class POSTItemResponse(GETItemResponse):
     pass
+
+
+class DELETEItem(BaseModel):
+    id: UUID
+
+
+class DELETEItemResponse(APIResponse):
+    pass

@@ -4,13 +4,18 @@ from fastapi.responses import JSONResponse
 from fastapi_utils.cbv import cbv
 
 from app.models.base_models import EAPIResponseCode
+from app.models.models_items import DELETEItem
+from app.models.models_items import DELETEItemResponse
 from app.models.models_items import GETItem
 from app.models.models_items import GETItemResponse
 from app.models.models_items import POSTItem
 from app.models.models_items import POSTItemResponse
 from app.routers.router_exceptions import BadRequestException
 
-from .crud import *
+from .crud import create_item
+from .crud import delete_item_by_id
+from .crud import get_item_by_id
+from .crud import get_items_by_location
 
 router = APIRouter()
 
@@ -60,6 +65,12 @@ class APIItems:
     async def trash_item(self):
         return JSONResponse(content={'message': 'Placeholder'}, status_code=501)
 
-    @router.delete('/', summary='Permanently delete an item')
-    async def delete_item(self):
-        return JSONResponse(content={'message': 'Placeholder'}, status_code=501)
+    @router.delete('/', response_model=DELETEItemResponse, summary='Permanently delete an item')
+    async def delete_item(self, params: DELETEItem = Depends(DELETEItem)):
+        try:
+            api_response = DELETEItemResponse()
+            delete_item_by_id(params)
+        except Exception:
+            api_response.set_error_msg('Failed to delete item')
+            api_response.set_code(EAPIResponseCode.bad_request)
+        return api_response.json_response()
