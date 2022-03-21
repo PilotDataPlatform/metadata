@@ -70,7 +70,7 @@ def create_item(data: POSTItem, api_response: APIResponse):
     storage = StorageModel(**storage_model_data)
     extended_model_data = {
         'item_id': item.id,
-        'extra': {},
+        'extra': data.extra,
     }
     extended = ExtendedModel(**extended_model_data)
     db.session.add_all([item, storage, extended])

@@ -48,15 +48,16 @@ class GETItemResponse(APIResponse):
 class POSTItem(BaseModel):
     parent: UUID
     path: str
-    type: str
-    zone: int
+    type: str = 'file'
+    zone: int = 0
     name: str
     size: int
     owner: str
     container: UUID
-    container_type: str
+    container_type: str = 'project'
     location_uri: str
     version: str
+    extra: dict = {}
 
 
 class POSTItemResponse(GETItemResponse):
