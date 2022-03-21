@@ -60,6 +60,15 @@ class POSTItem(BaseModel):
     extra: dict = {}
 
 
+class PATCHItem(BaseModel):
+    id: UUID
+    archived: bool
+
+
+class PATCHItemResponse(GETItemResponse):
+    pass
+
+
 class POSTItemResponse(GETItemResponse):
     pass
 

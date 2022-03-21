@@ -6,6 +6,7 @@ from sqlalchemy_utils import Ltree
 from app.models.base_models import APIResponse
 from app.models.models_items import DELETEItem
 from app.models.models_items import GETItem
+from app.models.models_items import PATCHItem
 from app.models.models_items import POSTItem
 from app.models.models_items import PUTItem
 from app.models.sql_extended import ExtendedModel
@@ -14,7 +15,7 @@ from app.models.sql_storage import StorageModel
 from app.routers.router_utils import paginate
 
 
-def combine_item_tables(item_result):
+def combine_item_tables(item_result: tuple) -> dict:
     item_data = item_result[0].to_dict()
     storage_data = item_result[1].to_dict()
     storage_data.pop('item_id')
@@ -53,6 +54,7 @@ def create_item(data: POSTItem, api_response: APIResponse):
     item_model_data = {
         'parent': data.parent,
         'path': Ltree(data.path),
+        'archived': False,
         'type': data.type,
         'zone': data.zone,
         'name': data.name,
@@ -103,6 +105,14 @@ def update_item(item_id: UUID, data: PUTItem, api_response: APIResponse):
     db.session.refresh(item)
     db.session.refresh(storage)
     db.session.refresh(extended)
+    api_response.result = item.to_dict()
+
+
+def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
+    item = db.session.query(ItemModel).filter_by(id=params.id).first()
+    item.archived = params.archived
+    db.session.commit()
+    db.session.refresh(item)
     api_response.result = item.to_dict()
 
 

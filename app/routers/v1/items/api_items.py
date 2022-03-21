@@ -2,7 +2,6 @@ from uuid import UUID
 
 from fastapi import APIRouter
 from fastapi import Depends
-from fastapi.responses import JSONResponse
 from fastapi_utils.cbv import cbv
 
 from app.models.base_models import EAPIResponseCode
@@ -10,12 +9,15 @@ from app.models.models_items import DELETEItem
 from app.models.models_items import DELETEItemResponse
 from app.models.models_items import GETItem
 from app.models.models_items import GETItemResponse
+from app.models.models_items import PATCHItem
+from app.models.models_items import PATCHItemResponse
 from app.models.models_items import POSTItem
 from app.models.models_items import POSTItemResponse
 from app.models.models_items import PUTItem
 from app.models.models_items import PUTItemResponse
 from app.routers.router_exceptions import BadRequestException
 
+from .crud import archive_item_by_id
 from .crud import create_item
 from .crud import delete_item_by_id
 from .crud import get_item_by_id
@@ -79,9 +81,15 @@ class APIItems:
             api_response.set_code(EAPIResponseCode.bad_request)
         return api_response.json_response()
 
-    @router.patch('/', summary='Move an item to the trash')
-    async def trash_item(self):
-        return JSONResponse(content={'message': 'Placeholder'}, status_code=501)
+    @router.patch('/', response_model=PATCHItemResponse, summary='Move an item to or out of the trash')
+    async def trash_item(self, params: PATCHItem = Depends(PATCHItem)):
+        try:
+            api_response = PATCHItemResponse()
+            archive_item_by_id(params, api_response)
+        except Exception:
+            api_response.set_error_msg('Failed to archive item')
+            api_response.set_code(EAPIResponseCode.bad_request)
+        return api_response.json_response()
 
     @router.delete('/', response_model=DELETEItemResponse, summary='Permanently delete an item')
     async def delete_item(self, params: DELETEItem = Depends(DELETEItem)):

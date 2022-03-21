@@ -1,5 +1,6 @@
 import uuid
 
+from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import Enum
 from sqlalchemy import Integer
@@ -18,6 +19,7 @@ class ItemModel(Base):
     id = Column(UUID(as_uuid=True), unique=True, primary_key=True)
     parent = Column(UUID(as_uuid=True), nullable=False)
     path = Column(LtreeType(), nullable=False)
+    archived = Column(Boolean(), nullable=False)
     type = Column(Enum('file', 'folder', name='type_enum', create_type=False), nullable=False)
     zone = Column(Integer(), nullable=False)
     name = Column(String(), nullable=False)
@@ -28,10 +30,11 @@ class ItemModel(Base):
 
     __table_args__ = ({'schema': ConfigClass.METADATA_SCHEMA},)
 
-    def __init__(self, parent, path, type, zone, name, size, owner, container, container_type):
+    def __init__(self, parent, path, archived, type, zone, name, size, owner, container, container_type):
         self.id = uuid.uuid4()
         self.parent = parent
         self.path = path
+        self.archived = archived
         self.type = type
         self.zone = zone
         self.name = name
@@ -45,6 +48,7 @@ class ItemModel(Base):
             'id': str(self.id),
             'parent': str(self.parent),
             'path': str(self.path),
+            'archived': self.archived,
             'type': self.type,
             'zone': self.zone,
             'name': self.name,
