@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi_sqlalchemy import db
 from sqlalchemy_utils import Ltree
 
@@ -5,6 +7,7 @@ from app.models.base_models import APIResponse
 from app.models.models_items import DELETEItem
 from app.models.models_items import GETItem
 from app.models.models_items import POSTItem
+from app.models.models_items import PUTItem
 from app.models.sql_extended import ExtendedModel
 from app.models.sql_items import ItemModel
 from app.models.sql_storage import StorageModel
@@ -75,6 +78,24 @@ def create_item(data: POSTItem, api_response: APIResponse):
     db.session.refresh(item)
     db.session.refresh(storage)
     db.session.refresh(extended)
+    api_response.result = item.to_dict()
+
+
+def update_item(item_id: UUID, data: PUTItem, api_response: APIResponse):
+    item = db.session.query(ItemModel).filter_by(id=item_id).first()
+    item.parent = data.parent
+    item.path = Ltree(data.path)
+    item.type = data.type
+    item.zone = data.zone
+    item.name = data.name
+    item.size = data.size
+    item.owner = data.owner
+    item.container = data.container
+    item.container_type = data.container_type
+    item.location_uri = data.location_uri
+    item.version = data.version
+    db.session.commit()
+    db.session.refresh(item)
     api_response.result = item.to_dict()
 
 

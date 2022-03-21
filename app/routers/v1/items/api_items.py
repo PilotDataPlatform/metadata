@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi.responses import JSONResponse
@@ -10,12 +12,15 @@ from app.models.models_items import GETItem
 from app.models.models_items import GETItemResponse
 from app.models.models_items import POSTItem
 from app.models.models_items import POSTItemResponse
+from app.models.models_items import PUTItem
+from app.models.models_items import PUTItemResponse
 from app.routers.router_exceptions import BadRequestException
 
 from .crud import create_item
 from .crud import delete_item_by_id
 from .crud import get_item_by_id
 from .crud import get_items_by_location
+from .crud import update_item
 
 router = APIRouter()
 
@@ -57,9 +62,22 @@ class APIItems:
             api_response.set_code(EAPIResponseCode.bad_request)
         return api_response.json_response()
 
-    @router.put('/', summary='Update an item')
-    async def update_item(self):
-        return JSONResponse(content={'message': 'Placeholder'}, status_code=501)
+    @router.put('/', response_model=PUTItemResponse, summary='Update an item')
+    async def update_item(self, id: UUID, data: PUTItem):
+        try:
+            api_response = PUTItemResponse()
+            if data.type not in ['file', 'folder']:
+                raise BadRequestException('type must be file or folder')
+            if data.container_type not in ['project', 'dataset']:
+                raise BadRequestException('container_type must be project or dataset')
+            update_item(id, data, api_response)
+        except BadRequestException as e:
+            api_response.set_error_msg(str(e))
+            api_response.set_code(EAPIResponseCode.bad_request)
+        except Exception:
+            api_response.set_error_msg('Failed to update item')
+            api_response.set_code(EAPIResponseCode.bad_request)
+        return api_response.json_response()
 
     @router.patch('/', summary='Move an item to the trash')
     async def trash_item(self):

@@ -63,6 +63,14 @@ class POSTItemResponse(GETItemResponse):
     pass
 
 
+class PUTItem(POSTItem):
+    pass
+
+
+class PUTItemResponse(GETItemResponse):
+    pass
+
+
 class DELETEItem(BaseModel):
     id: UUID
 
