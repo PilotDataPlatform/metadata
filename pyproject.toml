@@ -19,6 +19,7 @@ uvicorn = "0.17.5"
 
 [tool.poetry.dev-dependencies]
 pytest = "6.2.4"
+pytest-dependency = "0.5.1"
 coverage = "5.3"
 flake8 = "4.0.1"
 

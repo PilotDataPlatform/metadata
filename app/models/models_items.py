@@ -12,6 +12,7 @@ class GETItem(BaseModel):
     container: Optional[UUID]
     zone: Optional[int]
     path: Optional[str]
+    archived: Optional[bool]
     page_size: int = 10
     page: int = 0
 

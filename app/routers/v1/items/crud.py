@@ -43,7 +43,11 @@ def get_items_by_location(params: GETItem, api_response: APIResponse):
     item_query = (
         db.session.query(ItemModel, StorageModel, ExtendedModel)
         .join(StorageModel, ExtendedModel)
-        .filter(ItemModel.container == params.container, ItemModel.zone == params.zone)
+        .filter(
+            ItemModel.container == params.container,
+            ItemModel.zone == params.zone,
+            ItemModel.archived == params.archived,
+        )
     )
     if params.path:
         item_query = item_query.filter(ItemModel.path == Ltree(params.path))
@@ -113,7 +117,7 @@ def get_available_file_path(container: UUID, zone: int, path: Ltree, archived: b
     if item is None:
         return path
     new_path = Ltree(f'{str(path)}_{recursions}') if '_copy' in str(path) else Ltree(f'{str(path)}_copy')
-    return get_available_file_path(container, zone, new_path, archived, recursions+1)
+    return get_available_file_path(container, zone, new_path, archived, recursions + 1)
 
 
 def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
