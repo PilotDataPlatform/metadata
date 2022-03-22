@@ -23,6 +23,7 @@ def upgrade():
         sa.Column('id', UUID(), nullable=False),
         sa.Column('parent', UUID(), nullable=False),
         sa.Column('path', LtreeType(), nullable=False),
+        sa.Column('restore_path', LtreeType()),
         sa.Column('archived', sa.Boolean(), nullable=False),
         sa.Column('type', Enum('file', 'folder', name='type_enum', create_type=False), nullable=False),
         sa.Column('zone', sa.Integer(), nullable=False),

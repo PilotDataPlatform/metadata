@@ -19,6 +19,7 @@ class ItemModel(Base):
     id = Column(UUID(as_uuid=True), unique=True, primary_key=True)
     parent = Column(UUID(as_uuid=True), nullable=False)
     path = Column(LtreeType(), nullable=False)
+    restore_path = Column(LtreeType())
     archived = Column(Boolean(), nullable=False)
     type = Column(Enum('file', 'folder', name='type_enum', create_type=False), nullable=False)
     zone = Column(Integer(), nullable=False)
@@ -48,6 +49,7 @@ class ItemModel(Base):
             'id': str(self.id),
             'parent': str(self.parent),
             'path': str(self.path),
+            'restore_path': str(self.restore_path) if self.restore_path else None,
             'archived': self.archived,
             'type': self.type,
             'zone': self.zone,

@@ -53,7 +53,7 @@ def get_items_by_location(params: GETItem, api_response: APIResponse):
 def create_item(data: POSTItem, api_response: APIResponse):
     item_model_data = {
         'parent': data.parent,
-        'path': Ltree(data.path),
+        'path': Ltree(f'{data.path}.{data.name}'),
         'archived': False,
         'type': data.type,
         'zone': data.zone,
@@ -86,7 +86,7 @@ def create_item(data: POSTItem, api_response: APIResponse):
 def update_item(item_id: UUID, data: PUTItem, api_response: APIResponse):
     item = db.session.query(ItemModel).filter_by(id=item_id).first()
     item.parent = data.parent
-    item.path = Ltree(data.path)
+    item.path = Ltree(f'{data.path}.{data.name}')
     item.type = data.type
     item.zone = data.zone
     item.name = data.name
@@ -110,7 +110,14 @@ def update_item(item_id: UUID, data: PUTItem, api_response: APIResponse):
 
 def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
     item = db.session.query(ItemModel).filter_by(id=params.id).first()
-    item.archived = params.archived
+    if params.archived:
+        item.archived = True
+        item.restore_path = item.path
+        item.path = Ltree(f'{item.name}')
+    else:
+        item.archived = False
+        item.path = item.restore_path
+        item.restore_path = None
     db.session.commit()
     db.session.refresh(item)
     api_response.result = item.to_dict()

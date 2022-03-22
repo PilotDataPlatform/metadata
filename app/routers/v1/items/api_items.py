@@ -36,7 +36,7 @@ class APIItems:
             if params.id:
                 get_item_by_id(params, api_response)
             else:
-                if not params.container or params.zone == None:
+                if not params.container or params.zone is None:
                     raise BadRequestException('container and zone are required when getting by location')
                 get_items_by_location(params, api_response)
         except BadRequestException as e:
