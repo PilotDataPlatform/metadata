@@ -108,23 +108,22 @@ def update_item(item_id: UUID, data: PUTItem, api_response: APIResponse):
     api_response.result = item.to_dict()
 
 
-def get_available_file_path(container: UUID, zone: int, path: Ltree, recursions: int) -> Ltree:
-    item = db.session.query(ItemModel).filter_by(container=container, zone=zone, path=path).first()
+def get_available_file_path(container: UUID, zone: int, path: Ltree, archived: bool, recursions: int = 1) -> Ltree:
+    item = db.session.query(ItemModel).filter_by(container=container, zone=zone, path=path, archived=archived).first()
     if item is None:
         return path
     new_path = Ltree(f'{str(path)}_{recursions}') if '_copy' in str(path) else Ltree(f'{str(path)}_copy')
-    return get_available_file_path(container, zone, new_path, recursions+1)
+    return get_available_file_path(container, zone, new_path, archived, recursions+1)
 
 
 def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
     item = db.session.query(ItemModel).filter_by(id=params.id).first()
+    item.archived = params.archived
     if params.archived:
-        item.archived = True
         item.restore_path = item.path
-        item.path = Ltree(f'{item.name}')
+        item.path = get_available_file_path(item.container, item.zone, Ltree(f'{item.name}'), True)
     else:
-        item.archived = False
-        item.path = get_available_file_path(item.container, item.zone, item.restore_path, 1)
+        item.path = get_available_file_path(item.container, item.zone, item.restore_path, False)
         item.restore_path = None
     db.session.commit()
     db.session.refresh(item)

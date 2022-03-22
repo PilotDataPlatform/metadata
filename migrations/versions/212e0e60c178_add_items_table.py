@@ -36,7 +36,7 @@ def upgrade():
         ),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('id'),
-        sa.UniqueConstraint('path', 'container', 'container_type'),
+        sa.UniqueConstraint('path', 'container', 'container_type', 'archived'),
         schema='metadata',
     )
 
