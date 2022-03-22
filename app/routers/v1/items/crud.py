@@ -98,12 +98,10 @@ def update_item(item_id: UUID, data: PUTItem, api_response: APIResponse):
     item.owner = data.owner
     item.container = data.container
     item.container_type = data.container_type
-    item.location_uri = data.location_uri
-    item.version = data.version
-    storage = db.session.query(StorageModel).filter_by(id=item_id).first()
+    storage = db.session.query(StorageModel).filter_by(item_id=item_id).first()
     storage.location_uri = data.location_uri
     storage.version = data.version
-    extended = db.session.query(ExtendedModel).filter_by(id=item_id).first()
+    extended = db.session.query(ExtendedModel).filter_by(item_id=item_id).first()
     extended.extra = data.extra
     db.session.commit()
     db.session.refresh(item)
