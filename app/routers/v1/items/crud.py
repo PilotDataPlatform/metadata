@@ -124,9 +124,11 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
     if params.archived:
         item.restore_path = item.path
         item.path = get_available_file_path(item.container, item.zone, Ltree(f'{item.name}'), True)
+        item.name = str(item.path).split('.')[-1]
     else:
         item.path = get_available_file_path(item.container, item.zone, item.restore_path, False)
         item.restore_path = None
+        item.name = str(item.path).split('.')[-1]
     db.session.commit()
     db.session.refresh(item)
     api_response.result = item.to_dict()
