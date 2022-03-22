@@ -108,6 +108,14 @@ def update_item(item_id: UUID, data: PUTItem, api_response: APIResponse):
     api_response.result = item.to_dict()
 
 
+def get_available_file_path(container: UUID, zone: int, path: Ltree, recursions: int) -> Ltree:
+    item = db.session.query(ItemModel).filter_by(container=container, zone=zone, path=path).first()
+    if item is None:
+        return path
+    new_path = Ltree(f'{str(path)}_{recursions}') if '_copy' in str(path) else Ltree(f'{str(path)}_copy')
+    return get_available_file_path(container, zone, new_path, recursions+1)
+
+
 def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
     item = db.session.query(ItemModel).filter_by(id=params.id).first()
     if params.archived:
@@ -116,7 +124,7 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
         item.path = Ltree(f'{item.name}')
     else:
         item.archived = False
-        item.path = item.restore_path
+        item.path = get_available_file_path(item.container, item.zone, item.restore_path, 1)
         item.restore_path = None
     db.session.commit()
     db.session.refresh(item)
