@@ -55,3 +55,12 @@ class TestAttributeTemplates:
         params = {'id': reused_template_id}
         response = self.app.delete('/v1/template/', params=params)
         assert response.status_code == 200
+
+    def test_06_create_attribute_template_wrong_type(self):
+        payload = {
+            'name': 'template_1',
+            'project_id': reused_project_id,
+            'attributes': [{'name': 'attribute_1', 'optional': True, 'type': 'invalid', 'value': 'val1, val2'}],
+        }
+        response = self.app.post('/v1/template/', json=payload)
+        assert response.status_code == 422
