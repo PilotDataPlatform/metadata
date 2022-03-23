@@ -19,7 +19,7 @@ def paginate(params: BaseModel, api_response: APIResponse, query: Base, expand_f
         else:
             results.append(item.to_dict())
     api_response.page = params.page
-    api_response.num_of_pages = int(int(total) / int(params.page_size))
+    api_response.num_of_pages = int(int(total) / int(params.page_size)) + 1
     api_response.total = total
     api_response.result = results
 

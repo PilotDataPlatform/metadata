@@ -7,11 +7,17 @@ from app.models.models_attribute_templates import GETTemplates
 from app.models.models_attribute_templates import POSTTemplate
 from app.models.models_attribute_templates import PUTTemplate
 from app.models.sql_attribute_templates import AttributeTemplateModel
+from app.routers.router_utils import paginate
 
 
 def get_template_by_id(params: GETTemplate, api_response: APIResponse):
     template_query = db.session.query(AttributeTemplateModel).filter_by(id=params.id)
     api_response.result = template_query.first().to_dict()
+
+
+def get_templates_by_project_id(params: GETTemplates, api_response: APIResponse):
+    template_query = db.session.query(AttributeTemplateModel).filter_by(project_id=params.project_id)
+    paginate(params, api_response, template_query, None)
 
 
 def create_template(data: POSTTemplate, api_response: APIResponse):

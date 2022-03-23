@@ -8,6 +8,7 @@ from app.models.base_models import EAPIResponseCode
 from app.models.models_attribute_templates import DELETETemplate
 from app.models.models_attribute_templates import DELETETemplateResponse
 from app.models.models_attribute_templates import GETTemplate
+from app.models.models_attribute_templates import GETTemplates
 from app.models.models_attribute_templates import GETTemplateResponse
 from app.models.models_attribute_templates import POSTTemplate
 from app.models.models_attribute_templates import POSTTemplateResponse
@@ -17,6 +18,7 @@ from app.routers.router_utils import set_api_response_error
 
 from .crud import create_template
 from .crud import get_template_by_id
+from .crud import get_templates_by_project_id
 from .crud import delete_template_by_id
 
 router = APIRouter()
@@ -34,8 +36,13 @@ class APIAttributeTemplates:
         return api_response.json_response()
 
     @router.get('/', summary='Get all attribute templates associated with a project')
-    async def get_attribute_templates(self):
-        return JSONResponse(content={'message': 'Placeholder'}, status_code=501)
+    async def get_attribute_templates(self, params: GETTemplates = Depends(GETTemplates)):
+        try:
+            api_response = GETTemplateResponse()
+            get_templates_by_project_id(params, api_response)
+        except Exception:
+            set_api_response_error(api_response, f'Failed to get templates with project_id {params.project_id}', EAPIResponseCode.not_found)
+        return api_response.json_response()
 
     @router.post('/', response_model=POSTTemplateResponse, summary='Create a new attribute template')
     async def create_attribute_template(self, data: POSTTemplate):
@@ -43,8 +50,7 @@ class APIAttributeTemplates:
             api_response = POSTTemplateResponse()
             create_template(data, api_response)
         except Exception:
-            api_response.set_error_msg('Failed to create attribute template')
-            api_response.set_code(EAPIResponseCode.bad_request)
+            set_api_response_error(api_response, 'Failed to create attribute template', EAPIResponseCode.bad_request)
         return api_response.json_response()
 
     @router.put('/', summary='Update an attribute template')

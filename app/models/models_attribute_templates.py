@@ -12,6 +12,8 @@ class GETTemplate(BaseModel):
 
 class GETTemplates(BaseModel):
     project_id: UUID
+    page_size: int = 10
+    page: int = 0
 
 
 class GETTemplateResponse(APIResponse):
