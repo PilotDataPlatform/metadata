@@ -1,3 +1,4 @@
+from typing import List
 from uuid import UUID
 
 from fastapi_sqlalchemy import db
@@ -7,6 +8,7 @@ from app.models.models_attribute_templates import DELETETemplate
 from app.models.models_attribute_templates import GETTemplate
 from app.models.models_attribute_templates import GETTemplates
 from app.models.models_attribute_templates import POSTTemplate
+from app.models.models_attribute_templates import POSTTemplateAttributes
 from app.models.models_attribute_templates import PUTTemplate
 from app.models.sql_attribute_templates import AttributeTemplateModel
 from app.routers.router_utils import paginate
@@ -22,9 +24,9 @@ def get_templates_by_project_id(params: GETTemplates, api_response: APIResponse)
     paginate(params, api_response, template_query, None)
 
 
-def create_template(data: POSTTemplate, api_response: APIResponse):
+def format_attributes_for_json(attributes: POSTTemplateAttributes) -> List[dict]:
     json_attributes = []
-    for attribute in data.attributes:
+    for attribute in attributes:
         json_attributes.append(
             {
                 'name': attribute.name,
@@ -33,10 +35,14 @@ def create_template(data: POSTTemplate, api_response: APIResponse):
                 'value': attribute.value,
             }
         )
+    return json_attributes
+
+
+def create_template(data: POSTTemplate, api_response: APIResponse):
     template_model_data = {
         'name': data.name,
         'project_id': data.project_id,
-        'attributes': json_attributes,
+        'attributes': format_attributes_for_json(data.attributes),
     }
     template = AttributeTemplateModel(**template_model_data)
     db.session.add(template)
@@ -49,7 +55,7 @@ def update_template(template_id: UUID, data: PUTTemplate, api_response: APIRespo
     template = db.session.query(AttributeTemplateModel).filter_by(id=template_id).first()
     template.name = data.name
     template.project_id = data.project_id
-    template.attributes = data.attributes
+    template.attributes = format_attributes_for_json(data.attributes)
     db.session.commit()
     db.session.refresh(template)
     api_response.result = template.to_dict()
