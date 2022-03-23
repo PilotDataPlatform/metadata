@@ -1,3 +1,4 @@
+from typing import List
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -25,20 +26,32 @@ class GETTemplateResponse(APIResponse):
             'project_id': '28c608ac-1693-4318-a1c4-412caf2cd74a',
             'attributes': [
                 {
-                    'name': 'attribute_name',
+                    'name': 'attribute_1',
+                    'optional': True,
+                    'type': 'text',
+                },
+                {
+                    'name': 'attribute_2',
                     'optional': True,
                     'type': 'multiple_choice',
                     'value': 'val1, val2',
-                }
+                },
             ],
         },
     )
 
 
+class POSTTemplateAttributes(BaseModel):
+    name: str
+    optional: bool = True
+    type: str
+    value: str
+
+
 class POSTTemplate(BaseModel):
     name: str
     project_id: UUID
-    attributes: dict = {}
+    attributes: List[POSTTemplateAttributes]
 
 
 class POSTTemplateResponse(GETTemplateResponse):

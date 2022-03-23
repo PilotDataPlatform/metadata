@@ -23,10 +23,20 @@ def get_templates_by_project_id(params: GETTemplates, api_response: APIResponse)
 
 
 def create_template(data: POSTTemplate, api_response: APIResponse):
+    json_attributes = []
+    for attribute in data.attributes:
+        json_attributes.append(
+            {
+                'name': attribute.name,
+                'optional': attribute.optional,
+                'type': attribute.type,
+                'value': attribute.value,
+            }
+        )
     template_model_data = {
         'name': data.name,
         'project_id': data.project_id,
-        'attributes': data.attributes,
+        'attributes': json_attributes,
     }
     template = AttributeTemplateModel(**template_model_data)
     db.session.add(template)
