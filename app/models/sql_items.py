@@ -26,7 +26,7 @@ class ItemModel(Base):
     name = Column(String(), nullable=False)
     size = Column(Integer())
     owner = Column(String())
-    container = Column(UUID(as_uuid=True))
+    container = Column(UUID(as_uuid=True), nullable=False)
     container_type = Column(Enum('project', 'dataset', name='container_enum', create_type=False), nullable=False)
 
     __table_args__ = ({'schema': ConfigClass.METADATA_SCHEMA},)

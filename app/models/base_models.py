@@ -18,9 +18,9 @@ class EAPIResponseCode(Enum):
 class APIResponse(BaseModel):
     code: EAPIResponseCode = EAPIResponseCode.success
     error_msg: str = ''
-    page: int = 0
-    total: int = 0
-    num_of_pages: int = 0
+    page: int = 1
+    total: int = 1
+    num_of_pages: int = 1
     result = []
 
     def json_response(self) -> JSONResponse:
