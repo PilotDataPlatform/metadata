@@ -77,7 +77,7 @@ class TestItems:
         }
         response = self.app.patch('/v1/item/', params=params)
         assert response.status_code == 200
-    
+
     @pytest.mark.dependency(depends=['test_01'])
     def test_06_restore_item(self):
         params = {
@@ -151,7 +151,7 @@ class TestItems:
         }
         response = self.app.put('/v1/item/', json=payload, params=params)
         assert response.status_code == 400
-    
+
     @pytest.mark.dependency(depends=['test_01'])
     def test_10_update_item_wrong_container_type(self):
         params = {'id': reused_item_id}
@@ -171,7 +171,7 @@ class TestItems:
         }
         response = self.app.put('/v1/item/', json=payload, params=params)
         assert response.status_code == 400
-    
+
     def test_11_rename_item_on_conflict(self):
         payload = {
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
