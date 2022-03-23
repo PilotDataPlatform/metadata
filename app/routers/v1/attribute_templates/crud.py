@@ -3,9 +3,15 @@ from fastapi_sqlalchemy import db
 from app.models.base_models import APIResponse
 from app.models.models_attribute_templates import DELETETemplate
 from app.models.models_attribute_templates import GETTemplate
+from app.models.models_attribute_templates import GETTemplates
 from app.models.models_attribute_templates import POSTTemplate
 from app.models.models_attribute_templates import PUTTemplate
 from app.models.sql_attribute_templates import AttributeTemplateModel
+
+
+def get_template_by_id(params: GETTemplate, api_response: APIResponse):
+    template_query = db.session.query(AttributeTemplateModel).filter_by(id=params.id)
+    api_response.result = template_query.first().to_dict()
 
 
 def create_template(data: POSTTemplate, api_response: APIResponse):

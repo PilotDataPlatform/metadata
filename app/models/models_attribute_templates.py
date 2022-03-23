@@ -10,6 +10,10 @@ class GETTemplate(BaseModel):
     id: UUID
 
 
+class GETTemplates(BaseModel):
+    project_id: UUID
+
+
 class GETTemplateResponse(APIResponse):
     result: dict = Field(
         {},

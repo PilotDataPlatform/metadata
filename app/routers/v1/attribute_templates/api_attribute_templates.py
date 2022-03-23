@@ -1,3 +1,4 @@
+from uuid import UUID
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi.responses import JSONResponse
@@ -15,6 +16,7 @@ from app.models.models_attribute_templates import PUTTemplateResponse
 from app.routers.router_utils import set_api_response_error
 
 from .crud import create_template
+from .crud import get_template_by_id
 from .crud import delete_template_by_id
 
 router = APIRouter()
@@ -22,8 +24,17 @@ router = APIRouter()
 
 @cbv(router)
 class APIAttributeTemplates:
-    @router.get('/', summary='Get an attribute template')
-    async def get_attribute_template(self):
+    @router.get('/{id}', response_model=GETTemplateResponse, summary='Get an attribute template')
+    async def get_attribute_template(self, params: GETTemplate = Depends(GETTemplate)):
+        try:
+            api_response = GETTemplateResponse()
+            get_template_by_id(params, api_response)
+        except Exception:
+            set_api_response_error(api_response, f'Failed to get template with id {params.id}', EAPIResponseCode.not_found)
+        return api_response.json_response()
+
+    @router.get('/', summary='Get all attribute templates associated with a project')
+    async def get_attribute_templates(self):
         return JSONResponse(content={'message': 'Placeholder'}, status_code=501)
 
     @router.post('/', response_model=POSTTemplateResponse, summary='Create a new attribute template')
