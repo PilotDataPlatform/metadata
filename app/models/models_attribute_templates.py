@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List
 from uuid import UUID
 
@@ -41,10 +42,15 @@ class GETTemplateResponse(APIResponse):
     )
 
 
+class AttributeTypes(Enum):
+    text = 'text'
+    multiple_choice = 'multiple_choice'
+
+
 class POSTTemplateAttributes(BaseModel):
     name: str
     optional: bool = True
-    type: str
+    type: AttributeTypes
     value: str
 
 

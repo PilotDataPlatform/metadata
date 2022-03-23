@@ -29,7 +29,7 @@ def create_template(data: POSTTemplate, api_response: APIResponse):
             {
                 'name': attribute.name,
                 'optional': attribute.optional,
-                'type': attribute.type,
+                'type': attribute.type.value,
                 'value': attribute.value,
             }
         )
