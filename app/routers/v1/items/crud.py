@@ -135,7 +135,7 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
     api_response.result = item.to_dict()
 
 
-def delete_item_by_id(params: DELETEItem):
+def delete_item_by_id(params: DELETEItem, api_response: APIResponse):
     item_query = (
         db.session.query(ItemModel, StorageModel, ExtendedModel)
         .join(StorageModel, ExtendedModel)
@@ -144,3 +144,5 @@ def delete_item_by_id(params: DELETEItem):
     for row in item_query.first():
         db.session.delete(row)
     db.session.commit()
+    api_response.total = 0
+    api_response.num_of_pages = 0

@@ -3,6 +3,7 @@ from typing import Callable
 from pydantic import BaseModel
 
 from app.models.base_models import APIResponse
+from app.models.base_models import EAPIResponseCode
 from app.models.sql_items import Base
 
 
@@ -21,3 +22,10 @@ def paginate(params: BaseModel, api_response: APIResponse, query: Base, expand_f
     api_response.num_of_pages = int(int(total) / int(params.page_size))
     api_response.total = total
     api_response.result = results
+
+
+def set_api_response_error(api_response: APIResponse, message: str, code: EAPIResponseCode):
+    api_response.set_error_msg(message)
+    api_response.set_code(code)
+    api_response.total = 0
+    api_response.num_of_pages = 0

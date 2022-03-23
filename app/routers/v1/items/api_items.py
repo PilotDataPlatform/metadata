@@ -16,6 +16,7 @@ from app.models.models_items import POSTItemResponse
 from app.models.models_items import PUTItem
 from app.models.models_items import PUTItemResponse
 from app.routers.router_exceptions import BadRequestException
+from app.routers.router_utils import set_api_response_error
 
 from .crud import archive_item_by_id
 from .crud import create_item
@@ -40,11 +41,9 @@ class APIItems:
                     raise BadRequestException('container and zone are required when getting by location')
                 get_items_by_location(params, api_response)
         except BadRequestException as e:
-            api_response.set_error_msg(str(e))
-            api_response.set_code(EAPIResponseCode.bad_request)
+            set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
         except Exception:
-            api_response.set_error_msg('Failed to get item')
-            api_response.set_code(EAPIResponseCode.bad_request)
+            set_api_response_error(api_response, 'Failed to get item', EAPIResponseCode.bad_request)
         return api_response.json_response()
 
     @router.post('/', response_model=POSTItemResponse, summary='Create a new item')
@@ -57,11 +56,9 @@ class APIItems:
                 raise BadRequestException('container_type must be project or dataset')
             create_item(data, api_response)
         except BadRequestException as e:
-            api_response.set_error_msg(str(e))
-            api_response.set_code(EAPIResponseCode.bad_request)
+            set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
         except Exception:
-            api_response.set_error_msg('Failed to create item')
-            api_response.set_code(EAPIResponseCode.bad_request)
+            set_api_response_error(api_response, 'Failed to create item', EAPIResponseCode.bad_request)
         return api_response.json_response()
 
     @router.put('/', response_model=PUTItemResponse, summary='Update an item')
@@ -74,11 +71,9 @@ class APIItems:
                 raise BadRequestException('container_type must be project or dataset')
             update_item(id, data, api_response)
         except BadRequestException as e:
-            api_response.set_error_msg(str(e))
-            api_response.set_code(EAPIResponseCode.bad_request)
+            set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
         except Exception:
-            api_response.set_error_msg('Failed to update item')
-            api_response.set_code(EAPIResponseCode.bad_request)
+            set_api_response_error(api_response, 'Failed to update item', EAPIResponseCode.bad_request)
         return api_response.json_response()
 
     @router.patch('/', response_model=PATCHItemResponse, summary='Move an item to or out of the trash')
@@ -87,16 +82,14 @@ class APIItems:
             api_response = PATCHItemResponse()
             archive_item_by_id(params, api_response)
         except Exception:
-            api_response.set_error_msg('Failed to archive item')
-            api_response.set_code(EAPIResponseCode.bad_request)
+            set_api_response_error(api_response, 'Failed to archive item', EAPIResponseCode.bad_request)
         return api_response.json_response()
 
     @router.delete('/', response_model=DELETEItemResponse, summary='Permanently delete an item')
     async def delete_item(self, params: DELETEItem = Depends(DELETEItem)):
         try:
             api_response = DELETEItemResponse()
-            delete_item_by_id(params)
+            delete_item_by_id(params, api_response)
         except Exception:
-            api_response.set_error_msg('Failed to delete item')
-            api_response.set_code(EAPIResponseCode.bad_request)
+            set_api_response_error(api_response, 'Failed to delete item', EAPIResponseCode.bad_request)
         return api_response.json_response()
