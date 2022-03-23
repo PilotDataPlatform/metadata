@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi_sqlalchemy import db
 
 from app.models.base_models import APIResponse
@@ -28,6 +30,16 @@ def create_template(data: POSTTemplate, api_response: APIResponse):
     }
     template = AttributeTemplateModel(**template_model_data)
     db.session.add(template)
+    db.session.commit()
+    db.session.refresh(template)
+    api_response.result = template.to_dict()
+
+
+def update_template(template_id: UUID, data: PUTTemplate, api_response: APIResponse):
+    template = db.session.query(AttributeTemplateModel).filter_by(id=template_id).first()
+    template.name = data.name
+    template.project_id = data.project_id
+    template.attributes = data.attributes
     db.session.commit()
     db.session.refresh(template)
     api_response.result = template.to_dict()
