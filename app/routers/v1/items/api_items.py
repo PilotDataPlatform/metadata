@@ -52,9 +52,6 @@ class APIItems:
         try:
             api_response = POSTItemResponse()
             create_item(data, api_response)
-        except BadRequestException as e:
-            api_response.set_error_msg(str(e))
-            api_response.set_code(EAPIResponseCode.bad_request)
         except Exception:
             api_response.set_error_msg('Failed to create item')
             api_response.set_code(EAPIResponseCode.bad_request)
@@ -65,9 +62,6 @@ class APIItems:
         try:
             api_response = PUTItemResponse()
             update_item(id, data, api_response)
-        except BadRequestException as e:
-            api_response.set_error_msg(str(e))
-            api_response.set_code(EAPIResponseCode.bad_request)
         except Exception:
             api_response.set_error_msg('Failed to update item')
             api_response.set_code(EAPIResponseCode.bad_request)
