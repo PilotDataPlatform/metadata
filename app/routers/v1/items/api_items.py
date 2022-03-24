@@ -51,10 +51,6 @@ class APIItems:
     async def create_item(self, data: POSTItem):
         try:
             api_response = POSTItemResponse()
-            if data.type not in ['file', 'folder']:
-                raise BadRequestException('type must be file or folder')
-            if data.container_type not in ['project', 'dataset']:
-                raise BadRequestException('container_type must be project or dataset')
             create_item(data, api_response)
         except BadRequestException as e:
             api_response.set_error_msg(str(e))
@@ -68,10 +64,6 @@ class APIItems:
     async def update_item(self, id: UUID, data: PUTItem):
         try:
             api_response = PUTItemResponse()
-            if data.type not in ['file', 'folder']:
-                raise BadRequestException('type must be file or folder')
-            if data.container_type not in ['project', 'dataset']:
-                raise BadRequestException('container_type must be project or dataset')
             update_item(id, data, api_response)
         except BadRequestException as e:
             api_response.set_error_msg(str(e))
