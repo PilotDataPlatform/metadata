@@ -30,6 +30,7 @@ pipeline {
                 file(credentialsId:'VAULT_CRT', variable: 'VAULT_CRT')
             ]) {
                 sh """
+                whoami
                 export OPSDB_UTILILT_USERNAME=postgres
                 export OPSDB_UTILILT_PASSWORD=postgres
                 export OPSDB_UTILILT_HOST=db
