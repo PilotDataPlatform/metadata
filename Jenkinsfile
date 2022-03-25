@@ -29,11 +29,11 @@ pipeline {
                 file(credentialsId:'VAULT_CRT', variable: 'VAULT_CRT')
             ]) {
                 sh """
-                export DB_USER=postgres
-                export DB_PWD=postgres
-                export DB_HOST=db
-                export DB_PORT=5432
-                export DB_NAME=metadata
+                export OPSDB_UTILILT_USERNAME=postgres
+                export OPSDB_UTILILT_PASSWORD=postgres
+                export OPSDB_UTILILT_HOST=db
+                export OPSDB_UTILILT_PORT=5432
+                export OPSDB_UTILILT_NAME=metadata
                 docker build --add-host git.indocresearch.org:10.4.3.151 --build-arg PIP_USERNAME=${PIP_USERNAME} --build-arg PIP_PASSWORD=${PIP_PASSWORD} -t web .
                 docker-compose -f docker-compose.yaml down
                 docker-compose up -d

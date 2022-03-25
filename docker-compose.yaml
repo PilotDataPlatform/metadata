@@ -9,11 +9,11 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DB_USER: postgres
-      DB_PWD: postgres
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_NAME: metadata
+      OPSDB_UTILILT_USERNAME: postgres
+      OPSDB_UTILILT_PASSWORD: postgres
+      OPSDB_UTILILT_HOST: db
+      OPSDB_UTILILT_PORT: 5432
+      OPSDB_UTILILT_NAME: metadata
       SQLALCHEMY_DATABASE_URI: postgresql://postgres:postgres@db:5432/metadata
     volumes:
     - .:/usr/src/app
