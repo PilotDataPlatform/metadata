@@ -4,6 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 from pydantic import Field
+from pydantic import validator
 
 from .base_models import APIResponse
 
@@ -42,16 +43,17 @@ class GETTemplateResponse(APIResponse):
     )
 
 
-class AttributeTypes(Enum):
-    text = 'text'
-    multiple_choice = 'multiple_choice'
-
-
 class POSTTemplateAttributes(BaseModel):
     name: str
     optional: bool = True
-    type: AttributeTypes
+    type: str = 'text'
     value: str
+
+    @validator('type')
+    def type_validation(cls, v):
+        if v not in ['text', 'multiple_choice']:
+            raise ValueError('type must be text or multiple_choice')
+        return v
 
 
 class POSTTemplate(BaseModel):
