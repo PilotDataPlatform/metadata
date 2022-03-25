@@ -1,3 +1,4 @@
+import uuid
 from json import loads
 
 import pytest
@@ -6,6 +7,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 
 reused_item_id = None
+reused_container = str(uuid.uuid4())
 
 
 class TestItems:
@@ -21,7 +23,7 @@ class TestItems:
             'name': 'file',
             'size': 0,
             'owner': 'admin',
-            'container': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+            'container': reused_container,
             'container_type': 'project',
             'location_uri': 'https://example.com',
             'version': '1.0',
@@ -44,7 +46,7 @@ class TestItems:
             'path': 'folder1.folder2',
             'archived': False,
             'zone': 0,
-            'container': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+            'container': reused_container,
         }
         response = self.app.get('/v1/item/', params=params)
         assert response.status_code == 200
@@ -60,7 +62,7 @@ class TestItems:
             'name': 'file_renamed',
             'size': 0,
             'owner': 'admin',
-            'container': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+            'container': reused_container,
             'container_type': 'project',
             'location_uri': 'https://example.com',
             'version': '1.0',
@@ -91,7 +93,7 @@ class TestItems:
         params = {
             'path': 'folder1.folder2',
             'archived': False,
-            'container': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+            'container': reused_container,
         }
         response = self.app.get('/v1/item/', params=params)
         assert response.status_code == 400
@@ -105,14 +107,14 @@ class TestItems:
             'name': 'file',
             'size': 0,
             'owner': 'admin',
-            'container': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+            'container': reused_container,
             'container_type': 'project',
             'location_uri': 'https://example.com',
             'version': '1.0',
             'extra': {},
         }
         response = self.app.post('/v1/item/', json=payload)
-        assert response.status_code == 400
+        assert response.status_code == 422
 
     def test_09_create_item_wrong_container_type(self):
         payload = {
@@ -123,14 +125,14 @@ class TestItems:
             'name': 'file',
             'size': 0,
             'owner': 'admin',
-            'container': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+            'container': reused_container,
             'container_type': 'invalid',
             'location_uri': 'https://example.com',
             'version': '1.0',
             'extra': {},
         }
         response = self.app.post('/v1/item/', json=payload)
-        assert response.status_code == 400
+        assert response.status_code == 422
 
     @pytest.mark.dependency(depends=['test_01'])
     def test_10_update_item_wrong_type(self):
@@ -143,17 +145,17 @@ class TestItems:
             'name': 'file_renamed',
             'size': 0,
             'owner': 'admin',
-            'container': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+            'container': reused_container,
             'container_type': 'project',
             'location_uri': 'https://example.com',
             'version': '1.0',
             'extra': {},
         }
         response = self.app.put('/v1/item/', json=payload, params=params)
-        assert response.status_code == 400
+        assert response.status_code == 422
 
     @pytest.mark.dependency(depends=['test_01'])
-    def test_10_update_item_wrong_container_type(self):
+    def test_11_update_item_wrong_container_type(self):
         params = {'id': reused_item_id}
         payload = {
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
@@ -163,16 +165,16 @@ class TestItems:
             'name': 'file_renamed',
             'size': 0,
             'owner': 'admin',
-            'container': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+            'container': reused_container,
             'container_type': 'invalid',
             'location_uri': 'https://example.com',
             'version': '1.0',
             'extra': {},
         }
         response = self.app.put('/v1/item/', json=payload, params=params)
-        assert response.status_code == 400
+        assert response.status_code == 422
 
-    def test_11_rename_item_on_conflict(self):
+    def test_12_rename_item_on_conflict(self):
         payload = {
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
             'path': 'folder1.folder2',
@@ -181,7 +183,7 @@ class TestItems:
             'name': 'conflict',
             'size': 0,
             'owner': 'admin',
-            'container': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+            'container': reused_container,
             'container_type': 'project',
             'location_uri': 'https://example.com',
             'version': '1.0',
@@ -202,7 +204,7 @@ class TestItems:
             'name': 'conflict',
             'size': 0,
             'owner': 'admin',
-            'container': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+            'container': reused_container,
             'container_type': 'project',
             'location_uri': 'https://example.com',
             'version': '1.0',
@@ -223,7 +225,7 @@ class TestItems:
         self.app.delete('/v1/item/', params=params)
 
     @pytest.mark.dependency(depends=['test_01'])
-    def test_12_delete_item(self):
+    def test_13_delete_item(self):
         params = {'id': reused_item_id}
         response = self.app.delete('/v1/item/', params=params)
         assert response.status_code == 200

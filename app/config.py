@@ -41,9 +41,7 @@ class Settings(BaseSettings):
 
     def __init__(self):
         super().__init__()
-        self.SQLALCHEMY_DATABASE_URI = (
-            f'postgresql://{self.OPSDB_UTILILT_USERNAME}:{self.OPSDB_UTILILT_PASSWORD}@{self.OPSDB_UTILILT_HOST}:{self.OPSDB_UTILILT_PORT}/{self.OPSDB_UTILILT_NAME}'
-        )
+        self.SQLALCHEMY_DATABASE_URI = f'postgresql://{self.OPSDB_UTILILT_USERNAME}:{self.OPSDB_UTILILT_PASSWORD}@{self.OPSDB_UTILILT_HOST}:{self.OPSDB_UTILILT_PORT}/{self.OPSDB_UTILILT_NAME}'
 
     class Config:
         env_file = '.env'
