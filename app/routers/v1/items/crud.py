@@ -1,7 +1,9 @@
 from uuid import UUID
 
 from fastapi_sqlalchemy import db
+from sqlalchemy.sql import expression
 from sqlalchemy_utils import Ltree
+from sqlalchemy_utils.types.ltree import LQUERY
 
 from app.models.base_models import APIResponse
 from app.models.models_items import DELETEItem
@@ -50,7 +52,8 @@ def get_items_by_location(params: GETItem, api_response: APIResponse):
         )
     )
     if params.path:
-        item_query = item_query.filter(ItemModel.path == Ltree(params.path))
+        regex = f'{params.path}.*{{1}}'
+        item_query = item_query.filter(ItemModel.path.lquery(expression.cast(regex, LQUERY)))
     paginate(params, api_response, item_query, combine_item_tables)
 
 
