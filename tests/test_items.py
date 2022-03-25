@@ -30,6 +30,7 @@ class TestItems:
             'extra': {},
         }
         response = self.app.post('/v1/item/', json=payload)
+        print(response.text)
         global reused_item_id
         reused_item_id = loads(response.text)['result']['id']
         assert response.status_code == 200
