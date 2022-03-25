@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 from pydantic import Field
+from pydantic import validator
 
 from .base_models import APIResponse
 
@@ -59,6 +60,18 @@ class POSTItem(BaseModel):
     location_uri: str
     version: str
     extra: dict = {}
+
+    @validator('type')
+    def type_validation(cls, v):
+        if v not in ['file', 'folder']:
+            raise ValueError('type must be file or folder')
+        return v
+
+    @validator('container_type')
+    def container_type_validation(cls, v):
+        if v not in ['project', 'dataset']:
+            raise ValueError('container_type must be project or dataset')
+        return v
 
 
 class PATCHItem(BaseModel):
