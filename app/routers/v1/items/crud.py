@@ -84,7 +84,7 @@ def create_item(data: POSTItem, api_response: APIResponse):
     db.session.refresh(item)
     db.session.refresh(storage)
     db.session.refresh(extended)
-    api_response.result = item.to_dict()
+    api_response.result = combine_item_tables((item, storage, extended))
 
 
 def update_item(item_id: UUID, data: PUTItem, api_response: APIResponse):
@@ -107,7 +107,7 @@ def update_item(item_id: UUID, data: PUTItem, api_response: APIResponse):
     db.session.refresh(item)
     db.session.refresh(storage)
     db.session.refresh(extended)
-    api_response.result = item.to_dict()
+    api_response.result = combine_item_tables((item, storage, extended))
 
 
 def get_available_file_path(container: UUID, zone: int, path: Ltree, archived: bool, recursions: int = 1) -> Ltree:
@@ -119,7 +119,13 @@ def get_available_file_path(container: UUID, zone: int, path: Ltree, archived: b
 
 
 def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
-    item = db.session.query(ItemModel).filter_by(id=params.id).first()
+    item_query = (
+        db.session.query(ItemModel, StorageModel, ExtendedModel)
+        .join(StorageModel, ExtendedModel)
+        .filter(ItemModel.id == params.id)
+    )
+    item_result = item_query.first()
+    item = item_result[0]
     item.archived = params.archived
     if params.archived:
         item.restore_path = item.path
@@ -131,7 +137,7 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
         item.name = str(item.path).split('.')[-1]
     db.session.commit()
     db.session.refresh(item)
-    api_response.result = item.to_dict()
+    api_response.result = combine_item_tables(item_result)
 
 
 def delete_item_by_id(params: DELETEItem):
