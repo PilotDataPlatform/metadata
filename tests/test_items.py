@@ -112,7 +112,7 @@ class TestItems:
             'extra': {},
         }
         response = self.app.post('/v1/item/', json=payload)
-        assert response.status_code == 400
+        assert response.status_code == 422
 
     def test_09_create_item_wrong_container_type(self):
         payload = {
@@ -130,7 +130,7 @@ class TestItems:
             'extra': {},
         }
         response = self.app.post('/v1/item/', json=payload)
-        assert response.status_code == 400
+        assert response.status_code == 422
 
     @pytest.mark.dependency(depends=['test_01'])
     def test_10_update_item_wrong_type(self):
@@ -150,10 +150,10 @@ class TestItems:
             'extra': {},
         }
         response = self.app.put('/v1/item/', json=payload, params=params)
-        assert response.status_code == 400
+        assert response.status_code == 422
 
     @pytest.mark.dependency(depends=['test_01'])
-    def test_10_update_item_wrong_container_type(self):
+    def test_11_update_item_wrong_container_type(self):
         params = {'id': reused_item_id}
         payload = {
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
@@ -170,9 +170,9 @@ class TestItems:
             'extra': {},
         }
         response = self.app.put('/v1/item/', json=payload, params=params)
-        assert response.status_code == 400
+        assert response.status_code == 422
 
-    def test_11_rename_item_on_conflict(self):
+    def test_12_rename_item_on_conflict(self):
         payload = {
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
             'path': 'folder1.folder2',
@@ -223,7 +223,7 @@ class TestItems:
         self.app.delete('/v1/item/', params=params)
 
     @pytest.mark.dependency(depends=['test_01'])
-    def test_12_delete_item(self):
+    def test_13_delete_item(self):
         params = {'id': reused_item_id}
         response = self.app.delete('/v1/item/', params=params)
         assert response.status_code == 200
