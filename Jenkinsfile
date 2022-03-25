@@ -34,8 +34,7 @@ pipeline {
                 export OPSDB_UTILILT_PASSWORD=postgres
                 export OPSDB_UTILILT_HOST=db
                 export OPSDB_UTILILT_PORT=5432
-                export OPSDB_UTILILT_NAME=metadata
-                sudo -S <<< $SUDO_PASSWORD chmod 755 local_config/pgadmin/sessions
+                export OPSDB_UTILILT_NAME=metadata                
                 docker build --add-host git.indocresearch.org:10.4.3.151 --build-arg PIP_USERNAME=${PIP_USERNAME} --build-arg PIP_PASSWORD=${PIP_PASSWORD} -t web .
                 docker-compose -f docker-compose.yaml down -v
                 docker-compose up -d
