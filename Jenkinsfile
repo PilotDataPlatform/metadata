@@ -24,6 +24,7 @@ pipeline {
         steps {
             withCredentials([
                 usernamePassword(credentialsId: 'readonly', usernameVariable: 'PIP_USERNAME', passwordVariable: 'PIP_PASSWORD'),
+                usernamePassword(credentialsId: 'indoc-ssh', usernameVariable: 'SUDO_USERNAME', passwordVariable: 'SUDO_PASSWORD'),
                 string(credentialsId:'VAULT_TOKEN', variable: 'VAULT_TOKEN'),
                 string(credentialsId:'VAULT_URL', variable: 'VAULT_URL'),
                 file(credentialsId:'VAULT_CRT', variable: 'VAULT_CRT')
@@ -34,7 +35,7 @@ pipeline {
                 export OPSDB_UTILILT_HOST=db
                 export OPSDB_UTILILT_PORT=5432
                 export OPSDB_UTILILT_NAME=metadata
-                sudo chmod 755 local_config/pgadmin/sessions
+                sudo -S <<< $SUDO_PASSWORD chmod 755 local_config/pgadmin/sessions
                 docker build --add-host git.indocresearch.org:10.4.3.151 --build-arg PIP_USERNAME=${PIP_USERNAME} --build-arg PIP_PASSWORD=${PIP_PASSWORD} -t web .
                 docker-compose -f docker-compose.yaml down -v
                 docker-compose up -d
