@@ -45,6 +45,7 @@ pipeline {
                 ${HOME}/.local/bin/poetry config http-basic.pilot ${PIP_USERNAME} ${PIP_PASSWORD}
                 ${HOME}/.local/bin/poetry install --no-root --no-interaction
                 ${HOME}/.local/bin/poetry run pytest --verbose -c tests/pytest.ini
+                docker-compose -f docker-compose.yaml down -v
                 """
             }
         }
