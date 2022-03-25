@@ -17,7 +17,7 @@ Base = declarative_base()
 class ItemModel(Base):
     __tablename__ = 'items'
     id = Column(UUID(as_uuid=True), unique=True, primary_key=True)
-    parent = Column(UUID(as_uuid=True), nullable=False)
+    parent = Column(UUID(as_uuid=True))
     path = Column(LtreeType(), nullable=False)
     restore_path = Column(LtreeType())
     archived = Column(Boolean(), nullable=False)

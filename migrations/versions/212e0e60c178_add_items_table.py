@@ -21,7 +21,7 @@ def upgrade():
     op.create_table(
         'items',
         sa.Column('id', UUID(), nullable=False),
-        sa.Column('parent', UUID(), nullable=False),
+        sa.Column('parent', UUID()),
         sa.Column('path', LtreeType(), nullable=False),
         sa.Column('restore_path', LtreeType()),
         sa.Column('archived', sa.Boolean(), nullable=False),
