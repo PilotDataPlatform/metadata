@@ -52,3 +52,6 @@ tests/logs/*
 
 # Mac files
 .DS_Store
+
+# pgAdmin
+local_config/pgadmin/sessions/*

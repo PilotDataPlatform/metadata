@@ -1,14 +1,12 @@
-"""Add other items tables
+"""Add other items tables.
 
 Revision ID: cad81b7e09aa
 Revises: 5df5e2987093
 Create Date: 2022-03-15 16:13:11.424561
-
 """
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects.postgresql import UUID
-
 
 # revision identifiers, used by Alembic.
 revision = 'cad81b7e09aa'
@@ -21,6 +19,7 @@ def upgrade():
     op.create_table(
         'extended',
         sa.Column('id', UUID(), nullable=False),
+        sa.Column('item_id', UUID(), nullable=False),
         sa.Column('extra', sa.JSON()),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('id'),
