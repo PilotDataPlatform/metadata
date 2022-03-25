@@ -55,7 +55,7 @@ class APIAttributeTemplates:
             api_response = POSTTemplateResponse()
             create_template(data, api_response)
         except Exception:
-            set_api_response_error(api_response, 'Failed to create attribute template', EAPIResponseCode.bad_request)
+            set_api_response_error(api_response, 'Failed to create attribute template', EAPIResponseCode.internal_error)
         return api_response.json_response()
 
     @router.put('/', response_model=PUTTemplateResponse, summary='Update an attribute template')
@@ -64,7 +64,7 @@ class APIAttributeTemplates:
             api_response = PUTTemplateResponse()
             update_template(id, data, api_response)
         except Exception:
-            set_api_response_error(api_response, 'Failed to update attribute template', EAPIResponseCode.bad_request)
+            set_api_response_error(api_response, 'Failed to update attribute template', EAPIResponseCode.internal_error)
         return api_response.json_response()
 
     @router.delete('/', response_model=DELETETemplateResponse, summary='Delete an attribute template')
@@ -73,5 +73,5 @@ class APIAttributeTemplates:
             api_response = DELETETemplateResponse()
             delete_template_by_id(params, api_response)
         except Exception:
-            set_api_response_error(api_response, 'Failed to delete template', EAPIResponseCode.bad_request)
+            set_api_response_error(api_response, 'Failed to delete template', EAPIResponseCode.internal_error)
         return api_response.json_response()
