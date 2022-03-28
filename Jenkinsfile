@@ -20,7 +20,7 @@ pipeline {
     }
 
     stage('DEV Run unit tests') {
-        when { branch 'skip' }
+        when { branch 'k8s-dev' }
         steps {
             withCredentials([
                 usernamePassword(credentialsId: 'readonly', usernameVariable: 'PIP_USERNAME', passwordVariable: 'PIP_PASSWORD'),
