@@ -14,6 +14,7 @@ from app.models.models_attribute_templates import POSTTemplate
 from app.models.models_attribute_templates import POSTTemplateResponse
 from app.models.models_attribute_templates import PUTTemplate
 from app.models.models_attribute_templates import PUTTemplateResponse
+from app.routers.router_exceptions import EntityNotFoundException
 from app.routers.router_utils import set_api_response_error
 
 from .crud import create_template
@@ -63,6 +64,10 @@ class APIAttributeTemplates:
         try:
             api_response = PUTTemplateResponse()
             update_template(id, data, api_response)
+        except EntityNotFoundException:
+            set_api_response_error(
+                api_response, f'Failed to get template with id {id}', EAPIResponseCode.not_found
+            )
         except Exception:
             set_api_response_error(api_response, 'Failed to update attribute template', EAPIResponseCode.internal_error)
         return api_response.json_response()

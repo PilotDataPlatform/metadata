@@ -11,6 +11,7 @@ from app.models.models_attribute_templates import POSTTemplate
 from app.models.models_attribute_templates import POSTTemplateAttributes
 from app.models.models_attribute_templates import PUTTemplate
 from app.models.sql_attribute_templates import AttributeTemplateModel
+from app.routers.router_exceptions import EntityNotFoundException
 from app.routers.router_utils import paginate
 
 
@@ -53,6 +54,8 @@ def create_template(data: POSTTemplate, api_response: APIResponse):
 
 def update_template(template_id: UUID, data: PUTTemplate, api_response: APIResponse):
     template = db.session.query(AttributeTemplateModel).filter_by(id=template_id).first()
+    if not template:
+        raise EntityNotFoundException()
     template.name = data.name
     template.project_id = data.project_id
     template.attributes = format_attributes_for_json(data.attributes)
@@ -62,8 +65,8 @@ def update_template(template_id: UUID, data: PUTTemplate, api_response: APIRespo
 
 
 def delete_template_by_id(params: DELETETemplate, api_response: APIResponse):
-    template_query = db.session.query(AttributeTemplateModel).filter_by(id=params.id)
-    db.session.delete(template_query.first())
+    template = db.session.query(AttributeTemplateModel).filter_by(id=params.id).first()
+    db.session.delete(template)
     db.session.commit()
     api_response.total = 0
     api_response.num_of_pages = 0
