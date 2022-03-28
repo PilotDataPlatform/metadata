@@ -66,6 +66,8 @@ def update_template(template_id: UUID, data: PUTTemplate, api_response: APIRespo
 
 def delete_template_by_id(params: DELETETemplate, api_response: APIResponse):
     template = db.session.query(AttributeTemplateModel).filter_by(id=params.id).first()
+    if not template:
+        raise EntityNotFoundException()
     db.session.delete(template)
     db.session.commit()
     api_response.total = 0
