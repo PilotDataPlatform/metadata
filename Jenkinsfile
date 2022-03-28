@@ -20,7 +20,7 @@ pipeline {
     }
 
     stage('DEV Run unit tests') {
-        when { branch 'k8s-dev' }
+        when { branch 'skip' }
         steps {
             withCredentials([
                 usernamePassword(credentialsId: 'readonly', usernameVariable: 'PIP_USERNAME', passwordVariable: 'PIP_PASSWORD'),
@@ -34,8 +34,8 @@ pipeline {
                 export OPSDB_UTILILT_PASSWORD=postgres
                 export OPSDB_UTILILT_HOST=db
                 export OPSDB_UTILILT_PORT=5432
-                export OPSDB_UTILILT_NAME=metadata    
-                sudo chmod 777 -R /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions            
+                export OPSDB_UTILILT_NAME=metadata
+                sudo chmod 777 -R /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions
                 docker build --add-host git.indocresearch.org:10.4.3.151 --build-arg PIP_USERNAME=${PIP_USERNAME} --build-arg PIP_PASSWORD=${PIP_PASSWORD} -t web .
                 docker-compose -f docker-compose.yaml down -v
                 docker-compose up -d

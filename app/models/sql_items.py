@@ -17,7 +17,7 @@ Base = declarative_base()
 class ItemModel(Base):
     __tablename__ = 'items'
     id = Column(UUID(as_uuid=True), unique=True, primary_key=True)
-    parent = Column(UUID(as_uuid=True), nullable=False)
+    parent = Column(UUID(as_uuid=True))
     path = Column(LtreeType(), nullable=False)
     restore_path = Column(LtreeType())
     archived = Column(Boolean(), nullable=False)
@@ -26,7 +26,7 @@ class ItemModel(Base):
     name = Column(String(), nullable=False)
     size = Column(Integer())
     owner = Column(String())
-    container = Column(UUID(as_uuid=True))
+    container = Column(UUID(as_uuid=True), nullable=False)
     container_type = Column(Enum('project', 'dataset', name='container_enum', create_type=False), nullable=False)
 
     __table_args__ = ({'schema': ConfigClass.METADATA_SCHEMA},)

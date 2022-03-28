@@ -16,6 +16,7 @@ from app.models.models_items import POSTItemResponse
 from app.models.models_items import PUTItem
 from app.models.models_items import PUTItemResponse
 from app.routers.router_exceptions import BadRequestException
+from app.routers.router_utils import set_api_response_error
 
 from .crud import archive_item_by_id
 from .crud import create_item
@@ -40,8 +41,7 @@ class APIItems:
                     raise BadRequestException('container, zone, and archived are required when getting by location')
                 get_items_by_location(params, api_response)
         except BadRequestException as e:
-            api_response.set_error_msg(str(e))
-            api_response.set_code(EAPIResponseCode.bad_request)
+            set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
         except Exception:
             api_response.set_error_msg('Failed to get item')
             api_response.set_code(EAPIResponseCode.internal_error)
@@ -82,7 +82,7 @@ class APIItems:
     async def delete_item(self, params: DELETEItem = Depends(DELETEItem)):
         try:
             api_response = DELETEItemResponse()
-            delete_item_by_id(params)
+            delete_item_by_id(params, api_response)
         except Exception:
             api_response.set_error_msg('Failed to delete item')
             api_response.set_code(EAPIResponseCode.internal_error)

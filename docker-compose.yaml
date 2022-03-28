@@ -15,8 +15,10 @@ services:
       OPSDB_UTILILT_PORT: 5432
       OPSDB_UTILILT_NAME: metadata
       SQLALCHEMY_DATABASE_URI: postgresql://postgres:postgres@db:5432/metadata
+    env_file:
+      - .env
     volumes:
-    - .:/usr/src/app
+      - .:/usr/src/app
     depends_on:
       - db
     command:
