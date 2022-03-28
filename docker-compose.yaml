@@ -55,3 +55,8 @@ services:
       - ./local_config/pgadmin/:/var/lib/pgadmin/
     depends_on:
       - db
+
+networks:
+  default:
+    external:
+      name: pilot-network
