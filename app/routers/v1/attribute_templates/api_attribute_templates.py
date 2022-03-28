@@ -65,9 +65,7 @@ class APIAttributeTemplates:
             api_response = PUTTemplateResponse()
             update_template(id, data, api_response)
         except EntityNotFoundException:
-            set_api_response_error(
-                api_response, f'Failed to get template with id {id}', EAPIResponseCode.not_found
-            )
+            set_api_response_error(api_response, f'Failed to get template with id {id}', EAPIResponseCode.not_found)
         except Exception:
             set_api_response_error(api_response, 'Failed to update attribute template', EAPIResponseCode.internal_error)
         return api_response.json_response()
