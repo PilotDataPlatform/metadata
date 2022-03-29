@@ -42,11 +42,13 @@ pipeline {
                 docker-compose up -d
                 sudo chmod 777 -R -f /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions
                 docker-compose exec -T web /bin/bash
-                pip install --user poetry==1.1.12
-                ${HOME}/.local/bin/poetry config virtualenvs.in-project true
-                ${HOME}/.local/bin/poetry config http-basic.pilot ${PIP_USERNAME} ${PIP_PASSWORD}
-                ${HOME}/.local/bin/poetry install --no-root --no-interaction
-                ${HOME}/.local/bin/poetry run pytest --verbose -c tests/pytest.ini
+                pwd
+                hostname
+                #pip install --user poetry==1.1.12
+                #${HOME}/.local/bin/poetry config virtualenvs.in-project true
+                #${HOME}/.local/bin/poetry config http-basic.pilot ${PIP_USERNAME} ${PIP_PASSWORD}
+                #${HOME}/.local/bin/poetry install --no-root --no-interaction
+                #${HOME}/.local/bin/poetry run pytest --verbose -c tests/pytest.ini
                 docker-compose -f docker-compose.yaml down -v
                 """
             }
