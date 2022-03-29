@@ -41,6 +41,7 @@ pipeline {
                 docker-compose -f docker-compose.yaml down -v
                 docker-compose up -d
                 sudo chmod 777 -R -f /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions
+                sleep 10s
                 docker-compose exec -T web /bin/bash
                 pwd
                 hostname
