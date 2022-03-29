@@ -19,7 +19,7 @@ services:
       - db
     command: >
       sh -c "
-        pip install apt_pkg &&
+        apt-get install --reinstall python3-apt &&
         pip install alembic &&
         alembic upgrade head &&
         uvicorn app.main:app --reload --host 0.0.0.0
