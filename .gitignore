@@ -55,3 +55,4 @@ tests/logs/*
 
 # pgAdmin
 local_config/pgadmin/sessions/*
+!local_config/pgadmin/sessions
