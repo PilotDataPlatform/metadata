@@ -35,16 +35,21 @@ pipeline {
                 export OPSDB_UTILILT_HOST=db
                 export OPSDB_UTILILT_PORT=5432
                 export OPSDB_UTILILT_NAME=metadata
-                sudo chmod 777 -R /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions
+                [ ! -f /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/.env ] && touch /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/.env
+                [ -d /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions ] && sudo chmod 777 -R -f /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions
+                sudo chmod 777 -R -f /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions                
                 docker build --add-host git.indocresearch.org:10.4.3.151 --build-arg PIP_USERNAME=${PIP_USERNAME} --build-arg PIP_PASSWORD=${PIP_PASSWORD} -t web .
                 docker-compose -f docker-compose.yaml down -v
                 docker-compose up -d
+                sleep 10s
                 docker-compose exec -T web /bin/bash
-                pip install --user poetry==1.1.12
-                ${HOME}/.local/bin/poetry config virtualenvs.in-project true
-                ${HOME}/.local/bin/poetry config http-basic.pilot ${PIP_USERNAME} ${PIP_PASSWORD}
-                ${HOME}/.local/bin/poetry install --no-root --no-interaction
-                ${HOME}/.local/bin/poetry run pytest --verbose -c tests/pytest.ini
+                pwd
+                hostname
+                docker-compose exec -T web pip install --user poetry==1.1.12
+                docker-compose exec -T web poetry config virtualenvs.in-project false
+                docker-compose exec -T web poetry config http-basic.pilot ${PIP_USERNAME} ${PIP_PASSWORD}
+                docker-compose exec -T web poetry install --no-root --no-interaction
+                docker-compose exec -T web poetry run pytest --verbose -c tests/pytest.ini
                 docker-compose -f docker-compose.yaml down -v
                 """
             }
