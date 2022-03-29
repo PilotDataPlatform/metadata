@@ -44,7 +44,8 @@ pipeline {
                 docker-compose exec -T web /bin/bash
                 pwd
                 hostname
-                docker-compose exec -T web pip install --user poetry==1.1.12
+                docker-compose exec -T web pip install pip install apt_pkg
+                #docker-compose exec -T web pip install --user poetry==1.1.12
                 #docker-compose exec -T web poetry config http-basic.pilot ${PIP_USERNAME} ${PIP_PASSWORD}
                 #docker-compose exec -T web poetry install --no-root --no-interaction
                 #docker-compose exec -T web poetry run pytest --verbose -c tests/pytest.ini
