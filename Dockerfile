@@ -1,4 +1,4 @@
-FROM python:3.7-buster
+FROM python:3.9
 
 ARG PIP_USERNAME
 ARG PIP_PASSWORD
