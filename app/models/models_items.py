@@ -21,7 +21,7 @@ class GETItemsByLocation(BaseModel):
     container: UUID
     zone: int
     path: Optional[str]
-    archived: bool = False
+    archived: Optional[bool]
     page_size: int = 10
     page: int = 0
 
@@ -89,6 +89,10 @@ class POSTItem(BaseModel):
         if len(v) > 10:
             raise ValueError('Maximum of 10 tags')
         return v
+
+
+class POSTItems(BaseModel):
+    items: list[POSTItem]
 
 
 class PATCHItem(BaseModel):

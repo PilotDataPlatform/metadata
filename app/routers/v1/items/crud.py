@@ -10,6 +10,7 @@ from app.models.models_items import DELETEItem
 from app.models.models_items import GETItem
 from app.models.models_items import PATCHItem
 from app.models.models_items import POSTItem
+from app.models.models_items import POSTItems
 from app.models.models_items import PUTItem
 from app.models.sql_extended import ExtendedModel
 from app.models.sql_items import ItemModel
@@ -48,15 +49,7 @@ def get_items_by_ids(params: GETItem, ids: list[UUID], api_response: APIResponse
         .join(StorageModel, ExtendedModel)
         .filter(ItemModel.id.in_(ids))
     )
-    item_result = item_query.all()
-    results = []
-    if item_result:
-        for item in item_result:
-            results.append(combine_item_tables(item))
-        api_response.result = results
-    else:
-        api_response.total = 0
-        api_response.num_of_pages = 0
+    paginate(params, api_response, item_query, combine_item_tables)
 
 
 def get_items_by_location(params: GETItem, api_response: APIResponse):
@@ -75,7 +68,7 @@ def get_items_by_location(params: GETItem, api_response: APIResponse):
     paginate(params, api_response, item_query, combine_item_tables)
 
 
-def create_item(data: POSTItem, api_response: APIResponse):
+def create_item(data: POSTItem) -> dict:
     item_model_data = {
         'parent': data.parent,
         'path': Ltree(f'{data.path}.{data.name}'),
@@ -108,7 +101,15 @@ def create_item(data: POSTItem, api_response: APIResponse):
     db.session.refresh(item)
     db.session.refresh(storage)
     db.session.refresh(extended)
-    api_response.result = combine_item_tables((item, storage, extended))
+    return combine_item_tables((item, storage, extended))
+
+
+def create_items(data: POSTItems, api_response: APIResponse):
+    results = []
+    for item in data.items:
+        results.append(create_item(item))
+    api_response.result = results
+    api_response.total = len(results)
 
 
 def update_item(item_id: UUID, data: PUTItem, api_response: APIResponse):

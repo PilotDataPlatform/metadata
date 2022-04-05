@@ -16,6 +16,7 @@ from app.models.models_items import GETItemsByLocation
 from app.models.models_items import PATCHItem
 from app.models.models_items import PATCHItemResponse
 from app.models.models_items import POSTItem
+from app.models.models_items import POSTItems
 from app.models.models_items import POSTItemResponse
 from app.models.models_items import PUTItem
 from app.models.models_items import PUTItemResponse
@@ -23,6 +24,7 @@ from app.routers.router_utils import set_api_response_error
 
 from .crud import archive_item_by_id
 from .crud import create_item
+from .crud import create_items
 from .crud import delete_item_by_id
 from .crud import get_item_by_id
 from .crud import get_items_by_ids
@@ -43,7 +45,7 @@ class APIItems:
             set_api_response_error(api_response, f'Failed to get item with id {params.id}', EAPIResponseCode.not_found)
         return api_response.json_response()
 
-    @router.get('/ids/', response_model=GETItemResponse, summary='Get many items by IDs')
+    @router.get('/batch/', response_model=GETItemResponse, summary='Get many items by IDs')
     async def get_items_by_ids(self, ids: List[UUID] = Query(None), params: GETItemsByIDs = Depends(GETItemsByIDs)):
         try:
             api_response = GETItemResponse()
@@ -53,7 +55,7 @@ class APIItems:
             api_response.set_code(EAPIResponseCode.internal_error)
         return api_response.json_response()
 
-    @router.get('/location/', response_model=GETItemResponse, summary='Get all items by location')
+    @router.get('/search/', response_model=GETItemResponse, summary='Get all items by location')
     async def get_items_by_location(self, params: GETItemsByLocation = Depends(GETItemsByLocation)):
         try:
             api_response = GETItemResponse()
@@ -67,9 +69,19 @@ class APIItems:
     async def create_item(self, data: POSTItem):
         try:
             api_response = POSTItemResponse()
-            create_item(data, api_response)
+            api_response.result = create_item(data)
         except Exception:
             api_response.set_error_msg('Failed to create item')
+            api_response.set_code(EAPIResponseCode.internal_error)
+        return api_response.json_response()
+
+    @router.post('/batch/', response_model=POSTItemResponse, summary='Create many new items')
+    async def create_items(self, data: POSTItems):
+        try:
+            api_response = POSTItemResponse()
+            create_items(data, api_response)
+        except Exception:
+            api_response.set_error_msg('Failed to create items')
             api_response.set_code(EAPIResponseCode.internal_error)
         return api_response.json_response()
 
