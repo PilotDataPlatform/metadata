@@ -1,8 +1,11 @@
 version: '3'
 services:
   web:
-    image: 'web'
-    restart: always
+    build:
+      context: .
+      args:
+        PIP_USERNAME: "${PIP_USERNAME}"
+        PIP_PASSWORD: "${PIP_PASSWORD}"
     ports:
       - "8000:8000"
     environment:
@@ -12,8 +15,6 @@ services:
       OPSDB_UTILILT_PORT: 5432
       OPSDB_UTILILT_NAME: metadata
       SQLALCHEMY_DATABASE_URI: postgresql://postgres:postgres@db:5432/metadata
-    env_file:
-      - .env
     volumes:
       - .:/usr/src/app
     depends_on:

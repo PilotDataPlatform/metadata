@@ -80,7 +80,10 @@ def create_item(data: POSTItem, api_response: APIResponse):
     storage = StorageModel(**storage_model_data)
     extended_model_data = {
         'item_id': item.id,
-        'extra': data.extra,
+        'extra': {
+            'tags': data.tags,
+            'attributes': {str(data.attribute_template_id): data.attributes},
+        },
     }
     extended = ExtendedModel(**extended_model_data)
     db.session.add_all([item, storage, extended])
@@ -106,7 +109,10 @@ def update_item(item_id: UUID, data: PUTItem, api_response: APIResponse):
     storage.location_uri = data.location_uri
     storage.version = data.version
     extended = db.session.query(ExtendedModel).filter_by(item_id=item_id).first()
-    extended.extra = data.extra
+    extended.extra = {
+        'tags': data.tags,
+        'attributes': {str(data.attribute_template_id): data.attributes},
+    }
     db.session.commit()
     db.session.refresh(item)
     db.session.refresh(storage)

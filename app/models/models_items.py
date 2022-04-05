@@ -1,3 +1,4 @@
+from typing import List
 from typing import Optional
 from uuid import UUID
 
@@ -34,14 +35,15 @@ class GETItemResponse(APIResponse):
             'container_type': 'project',
             'storage': {
                 'id': 'ba623005-8183-419a-972a-e4ce0d539349',
-                'item_id': '85465212-168a-4f0c-a7aa-f3a19795d2ff',
                 'location_uri': 'https://example.com/item',
                 'version': '1.0',
             },
             'extended': {
                 'id': 'dc763d28-7e74-4db3-a702-fa719aa702c6',
-                'item_id': '85465212-168a-4f0c-a7aa-f3a19795d2ff',
-                'extra': {},
+                'extra': {
+                    'tags': ['tag1', 'tag2'],
+                    'attributes': {'101778d7-a628-41ea-823b-e4b377f3476c': {'key1': 'value1', 'key2': 'value2'}},
+                },
             },
         },
     )
@@ -59,7 +61,9 @@ class POSTItem(BaseModel):
     container_type: str = 'project'
     location_uri: str
     version: str
-    extra: dict = {}
+    tags: list = []
+    attribute_template_id: Optional[UUID]
+    attributes: dict = {}
 
     @validator('type')
     def type_validation(cls, v):
@@ -71,6 +75,12 @@ class POSTItem(BaseModel):
     def container_type_validation(cls, v):
         if v not in ['project', 'dataset']:
             raise ValueError('container_type must be project or dataset')
+        return v
+
+    @validator('tags')
+    def tags_count(cls, v):
+        if len(v) > 10:
+            raise ValueError('Maximum of 10 tags')
         return v
 
 
