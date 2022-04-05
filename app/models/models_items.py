@@ -1,4 +1,3 @@
-from typing import List
 from typing import Optional
 from uuid import UUID
 
@@ -10,11 +9,19 @@ from .base_models import APIResponse
 
 
 class GETItem(BaseModel):
-    id: Optional[UUID]
-    container: Optional[UUID]
-    zone: Optional[int]
+    id: UUID
+
+
+class GETItemsByIDs(BaseModel):
+    page_size: int = 10
+    page: int = 0
+
+
+class GETItemsByLocation(BaseModel):
+    container: UUID
+    zone: int
     path: Optional[str]
-    archived: Optional[bool]
+    archived: bool = False
     page_size: int = 10
     page: int = 0
 
@@ -61,7 +68,7 @@ class POSTItem(BaseModel):
     container_type: str = 'project'
     location_uri: str
     version: str
-    tags: list = []
+    tags: list[str] = []
     attribute_template_id: Optional[UUID]
     attributes: dict = {}
 

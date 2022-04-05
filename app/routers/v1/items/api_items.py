@@ -1,7 +1,9 @@
+from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter
 from fastapi import Depends
+from fastapi import Query
 from fastapi_utils.cbv import cbv
 
 from app.models.base_models import EAPIResponseCode
@@ -9,19 +11,21 @@ from app.models.models_items import DELETEItem
 from app.models.models_items import DELETEItemResponse
 from app.models.models_items import GETItem
 from app.models.models_items import GETItemResponse
+from app.models.models_items import GETItemsByIDs
+from app.models.models_items import GETItemsByLocation
 from app.models.models_items import PATCHItem
 from app.models.models_items import PATCHItemResponse
 from app.models.models_items import POSTItem
 from app.models.models_items import POSTItemResponse
 from app.models.models_items import PUTItem
 from app.models.models_items import PUTItemResponse
-from app.routers.router_exceptions import BadRequestException
 from app.routers.router_utils import set_api_response_error
 
 from .crud import archive_item_by_id
 from .crud import create_item
 from .crud import delete_item_by_id
 from .crud import get_item_by_id
+from .crud import get_items_by_ids
 from .crud import get_items_by_location
 from .crud import update_item
 
@@ -30,18 +34,30 @@ router = APIRouter()
 
 @cbv(router)
 class APIItems:
-    @router.get('/', response_model=GETItemResponse, summary='Get one or more items or check if an item exists')
-    async def get_items(self, params: GETItem = Depends(GETItem)):
+    @router.get('/{id}', response_model=GETItemResponse, summary='Get an item by ID or check if an item exists')
+    async def get_item(self, params: GETItem = Depends(GETItem)):
         try:
             api_response = GETItemResponse()
-            if params.id:
-                get_item_by_id(params, api_response)
-            else:
-                if not params.container or params.zone is None or params.archived is None:
-                    raise BadRequestException('container, zone, and archived are required when getting by location')
-                get_items_by_location(params, api_response)
-        except BadRequestException as e:
-            set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
+            get_item_by_id(params, api_response)
+        except Exception:
+            set_api_response_error(api_response, f'Failed to get item with id {params.id}', EAPIResponseCode.not_found)
+        return api_response.json_response()
+
+    @router.get('/ids/', response_model=GETItemResponse, summary='Get many items by IDs')
+    async def get_items_by_ids(self, ids: List[UUID] = Query(None), params: GETItemsByIDs = Depends(GETItemsByIDs)):
+        try:
+            api_response = GETItemResponse()
+            get_items_by_ids(params, ids, api_response)
+        except Exception:
+            api_response.set_error_msg('Failed to get item')
+            api_response.set_code(EAPIResponseCode.internal_error)
+        return api_response.json_response()
+
+    @router.get('/location/', response_model=GETItemResponse, summary='Get all items by location')
+    async def get_items_by_location(self, params: GETItemsByLocation = Depends(GETItemsByLocation)):
+        try:
+            api_response = GETItemResponse()
+            get_items_by_location(params, api_response)
         except Exception:
             api_response.set_error_msg('Failed to get item')
             api_response.set_code(EAPIResponseCode.internal_error)

@@ -42,6 +42,23 @@ def get_item_by_id(params: GETItem, api_response: APIResponse):
         api_response.num_of_pages = 0
 
 
+def get_items_by_ids(params: GETItem, ids: list[UUID], api_response: APIResponse):
+    item_query = (
+        db.session.query(ItemModel, StorageModel, ExtendedModel)
+        .join(StorageModel, ExtendedModel)
+        .filter(ItemModel.id.in_(ids))
+    )
+    item_result = item_query.all()
+    results = []
+    if item_result:
+        for item in item_result:
+            results.append(combine_item_tables(item))
+        api_response.result = results
+    else:
+        api_response.total = 0
+        api_response.num_of_pages = 0
+
+
 def get_items_by_location(params: GETItem, api_response: APIResponse):
     item_query = (
         db.session.query(ItemModel, StorageModel, ExtendedModel)
