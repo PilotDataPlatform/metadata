@@ -12,6 +12,7 @@ from app.models.models_items import PATCHItem
 from app.models.models_items import POSTItem
 from app.models.models_items import POSTItems
 from app.models.models_items import PUTItem
+from app.models.models_items import PUTItems
 from app.models.sql_extended import ExtendedModel
 from app.models.sql_items import ItemModel
 from app.models.sql_storage import StorageModel
@@ -112,7 +113,7 @@ def create_items(data: POSTItems, api_response: APIResponse):
     api_response.total = len(results)
 
 
-def update_item(item_id: UUID, data: PUTItem, api_response: APIResponse):
+def update_item(item_id: UUID, data: PUTItem) -> dict:
     item = db.session.query(ItemModel).filter_by(id=item_id).first()
     item.parent = data.parent
     item.path = Ltree(f'{data.path}.{data.name}')
@@ -135,7 +136,15 @@ def update_item(item_id: UUID, data: PUTItem, api_response: APIResponse):
     db.session.refresh(item)
     db.session.refresh(storage)
     db.session.refresh(extended)
-    api_response.result = combine_item_tables((item, storage, extended))
+    return combine_item_tables((item, storage, extended))
+
+
+def update_items(ids: list[UUID], data: PUTItems, api_response: APIResponse):
+    results = []
+    for i in range(0, len(ids)):
+        results.append(update_item(ids[i], data.items[i]))
+    api_response.result = results
+    api_response.total = len(results)
 
 
 def get_available_file_path(container: UUID, zone: int, path: Ltree, archived: bool, recursions: int = 1) -> Ltree:

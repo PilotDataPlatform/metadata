@@ -16,10 +16,12 @@ from app.models.models_items import GETItemsByLocation
 from app.models.models_items import PATCHItem
 from app.models.models_items import PATCHItemResponse
 from app.models.models_items import POSTItem
-from app.models.models_items import POSTItems
 from app.models.models_items import POSTItemResponse
+from app.models.models_items import POSTItems
 from app.models.models_items import PUTItem
 from app.models.models_items import PUTItemResponse
+from app.models.models_items import PUTItems
+from app.routers.router_exceptions import BadRequestException
 from app.routers.router_utils import set_api_response_error
 
 from .crud import archive_item_by_id
@@ -30,6 +32,7 @@ from .crud import get_item_by_id
 from .crud import get_items_by_ids
 from .crud import get_items_by_location
 from .crud import update_item
+from .crud import update_items
 
 router = APIRouter()
 
@@ -51,8 +54,7 @@ class APIItems:
             api_response = GETItemResponse()
             get_items_by_ids(params, ids, api_response)
         except Exception:
-            api_response.set_error_msg('Failed to get item')
-            api_response.set_code(EAPIResponseCode.internal_error)
+            set_api_response_error(api_response, 'Failed to get item', EAPIResponseCode.not_found)
         return api_response.json_response()
 
     @router.get('/search/', response_model=GETItemResponse, summary='Get all items by location')
@@ -61,8 +63,7 @@ class APIItems:
             api_response = GETItemResponse()
             get_items_by_location(params, api_response)
         except Exception:
-            api_response.set_error_msg('Failed to get item')
-            api_response.set_code(EAPIResponseCode.internal_error)
+            set_api_response_error(api_response, 'Failed to get item', EAPIResponseCode.not_found)
         return api_response.json_response()
 
     @router.post('/', response_model=POSTItemResponse, summary='Create a new item')
@@ -71,8 +72,7 @@ class APIItems:
             api_response = POSTItemResponse()
             api_response.result = create_item(data)
         except Exception:
-            api_response.set_error_msg('Failed to create item')
-            api_response.set_code(EAPIResponseCode.internal_error)
+            set_api_response_error(api_response, 'Failed to create item', EAPIResponseCode.internal_error)
         return api_response.json_response()
 
     @router.post('/batch/', response_model=POSTItemResponse, summary='Create many new items')
@@ -81,18 +81,29 @@ class APIItems:
             api_response = POSTItemResponse()
             create_items(data, api_response)
         except Exception:
-            api_response.set_error_msg('Failed to create items')
-            api_response.set_code(EAPIResponseCode.internal_error)
+            set_api_response_error(api_response, 'Failed to create items', EAPIResponseCode.internal_error)
         return api_response.json_response()
 
     @router.put('/', response_model=PUTItemResponse, summary='Update an item')
     async def update_item(self, id: UUID, data: PUTItem):
         try:
             api_response = PUTItemResponse()
-            update_item(id, data, api_response)
+            api_response.result = update_item(id, data)
         except Exception:
-            api_response.set_error_msg('Failed to update item')
-            api_response.set_code(EAPIResponseCode.internal_error)
+            set_api_response_error(api_response, 'Failed to update item', EAPIResponseCode.internal_error)
+        return api_response.json_response()
+
+    @router.put('/batch', response_model=PUTItemResponse, summary='Update many items')
+    async def update_items(self, data: PUTItems, ids: List[UUID] = Query(None)):
+        try:
+            api_response = PUTItemResponse()
+            if len(data.items) != len(ids):
+                raise BadRequestException('Number of IDs does not match number of update data')
+            update_items(ids, data, api_response)
+        except BadRequestException as e:
+            set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
+        except Exception:
+            set_api_response_error(api_response, 'Failed to update items', EAPIResponseCode.internal_error)
         return api_response.json_response()
 
     @router.patch('/', response_model=PATCHItemResponse, summary='Move an item to or out of the trash')
@@ -101,8 +112,7 @@ class APIItems:
             api_response = PATCHItemResponse()
             archive_item_by_id(params, api_response)
         except Exception:
-            api_response.set_error_msg('Failed to archive item')
-            api_response.set_code(EAPIResponseCode.internal_error)
+            set_api_response_error(api_response, 'Failed to archive item', EAPIResponseCode.internal_error)
         return api_response.json_response()
 
     @router.delete('/', response_model=DELETEItemResponse, summary='Permanently delete an item')
@@ -111,6 +121,5 @@ class APIItems:
             api_response = DELETEItemResponse()
             delete_item_by_id(params, api_response)
         except Exception:
-            api_response.set_error_msg('Failed to delete item')
-            api_response.set_code(EAPIResponseCode.internal_error)
+            set_api_response_error(api_response, 'Failed to delete item', EAPIResponseCode.internal_error)
         return api_response.json_response()

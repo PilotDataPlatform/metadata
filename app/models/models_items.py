@@ -112,6 +112,10 @@ class PUTItem(POSTItem):
     pass
 
 
+class PUTItems(BaseModel):
+    items: list[PUTItem]
+
+
 class PUTItemResponse(GETItemResponse):
     pass
 
