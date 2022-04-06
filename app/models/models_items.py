@@ -49,7 +49,7 @@ class GETItemResponse(APIResponse):
 
 class POSTItem(BaseModel):
     parent: UUID
-    path: str
+    path: Optional[str]
     type: str = 'file'
     zone: int = 0
     name: str

@@ -22,7 +22,7 @@ def upgrade():
         'items',
         sa.Column('id', UUID(), nullable=False),
         sa.Column('parent', UUID()),
-        sa.Column('path', LtreeType(), nullable=False),
+        sa.Column('path', LtreeType()),
         sa.Column('restore_path', LtreeType()),
         sa.Column('archived', sa.Boolean(), nullable=False),
         sa.Column('type', pg.ENUM('file', 'folder', name='type_enum', create_type=True), nullable=False),

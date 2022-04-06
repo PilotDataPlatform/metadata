@@ -52,8 +52,7 @@ class APIItems:
         try:
             api_response = POSTItemResponse()
             create_item(data, api_response)
-        except Exception as e:
-            print(e)
+        except Exception:
             api_response.set_error_msg('Failed to create item')
             api_response.set_code(EAPIResponseCode.internal_error)
         return api_response.json_response()

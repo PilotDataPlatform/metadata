@@ -5,6 +5,8 @@ from sqlalchemy.sql import expression
 from sqlalchemy_utils import Ltree
 from sqlalchemy_utils.types.ltree import LQUERY
 
+from app.app_utils import encode_label_for_ltree
+from app.app_utils import encode_path_for_ltree
 from app.models.base_models import APIResponse
 from app.models.models_items import DELETEItem
 from app.models.models_items import GETItem
@@ -59,13 +61,14 @@ def get_items_by_location(params: GETItem, api_response: APIResponse):
 
 
 def create_item(data: POSTItem, api_response: APIResponse):
+    encoded_item_name = encode_label_for_ltree(data.name)
     item_model_data = {
         'parent': data.parent,
-        'path': Ltree(f'{data.path}.{data.name}'),
+        'path': Ltree(f'{encode_path_for_ltree(data.path)}.{encoded_item_name}'),
         'archived': False,
         'type': data.type,
         'zone': data.zone,
-        'name': data.name,
+        'name': encoded_item_name,
         'size': data.size,
         'owner': data.owner,
         'container': data.container,
@@ -93,11 +96,12 @@ def create_item(data: POSTItem, api_response: APIResponse):
 
 def update_item(item_id: UUID, data: PUTItem, api_response: APIResponse):
     item = db.session.query(ItemModel).filter_by(id=item_id).first()
+    encoded_item_name = encode_label_for_ltree(data.name)
     item.parent = data.parent
-    item.path = Ltree(f'{data.path}.{data.name}')
+    item.path = Ltree(f'{encode_path_for_ltree(data.path)}.{encoded_item_name}')
     item.type = data.type
     item.zone = data.zone
-    item.name = data.name
+    item.name = encoded_item_name
     item.size = data.size
     item.owner = data.owner
     item.container = data.container

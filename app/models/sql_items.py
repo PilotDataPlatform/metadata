@@ -9,6 +9,8 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy_utils import LtreeType
 
+from app.app_utils import decode_label_from_ltree
+from app.app_utils import decode_path_from_ltree
 from app.config import ConfigClass
 
 Base = declarative_base()
@@ -48,12 +50,12 @@ class ItemModel(Base):
         return {
             'id': str(self.id),
             'parent': str(self.parent),
-            'path': str(self.path),
+            'path': decode_path_from_ltree(str(self.path)),
             'restore_path': str(self.restore_path) if self.restore_path else None,
             'archived': self.archived,
             'type': self.type,
             'zone': self.zone,
-            'name': self.name,
+            'name': decode_label_from_ltree(self.name),
             'size': self.size,
             'owner': self.owner,
             'container': str(self.container),
