@@ -64,7 +64,7 @@ def create_item(data: POSTItem, api_response: APIResponse):
     encoded_item_name = encode_label_for_ltree(data.name)
     item_model_data = {
         'parent': data.parent,
-        'path': Ltree(f'{encode_path_for_ltree(data.path)}.{encoded_item_name}'),
+        'path': Ltree(f'{encode_path_for_ltree(data.path)}') if data.path else None,
         'archived': False,
         'type': data.type,
         'zone': data.zone,
@@ -98,7 +98,7 @@ def update_item(item_id: UUID, data: PUTItem, api_response: APIResponse):
     item = db.session.query(ItemModel).filter_by(id=item_id).first()
     encoded_item_name = encode_label_for_ltree(data.name)
     item.parent = data.parent
-    item.path = Ltree(f'{encode_path_for_ltree(data.path)}.{encoded_item_name}')
+    item.path = Ltree(f'{encode_path_for_ltree(data.path)}') if data.path else None
     item.type = data.type
     item.zone = data.zone
     item.name = encoded_item_name
