@@ -13,9 +13,11 @@ from app.models.models_items import POSTItem
 from app.models.models_items import POSTItems
 from app.models.models_items import PUTItem
 from app.models.models_items import PUTItems
+from app.models.sql_attribute_templates import AttributeTemplateModel
 from app.models.sql_extended import ExtendedModel
 from app.models.sql_items import ItemModel
 from app.models.sql_storage import StorageModel
+from app.routers.router_exceptions import BadRequestException
 from app.routers.router_utils import paginate
 
 
@@ -28,6 +30,31 @@ def combine_item_tables(item_result: tuple) -> dict:
     item_data['storage'] = storage_data
     item_data['extended'] = extended_data
     return item_data
+
+
+def get_available_file_path(container: UUID, zone: int, path: Ltree, archived: bool, recursions: int = 1) -> Ltree:
+    item = db.session.query(ItemModel).filter_by(container=container, zone=zone, path=path, archived=archived).first()
+    if item is None:
+        return path
+    new_path = Ltree(f'{str(path)}_{recursions}') if '_copy' in str(path) else Ltree(f'{str(path)}_copy')
+    return get_available_file_path(container, zone, new_path, archived, recursions + 1)
+
+
+def attributes_match_template(attributes: dict, template_id: UUID) -> bool:
+    try:
+        attribute_template = db.session.query(AttributeTemplateModel).filter_by(id=template_id).first().to_dict()
+        if len(attributes) > len(attribute_template['attributes']):
+            return False
+        for format in attribute_template['attributes']:
+            if not format['optional']:
+                input_value = attributes[format['name']]
+                if 'options' in format:
+                    if format['options']:
+                        if input_value not in format['options']:
+                            return False
+        return True
+    except Exception:
+        return False
 
 
 def get_item_by_id(params: GETItem, api_response: APIResponse):
@@ -70,6 +97,8 @@ def get_items_by_location(params: GETItem, api_response: APIResponse):
 
 
 def create_item(data: POSTItem) -> dict:
+    if not attributes_match_template(data.attributes, data.attribute_template_id):
+        raise BadRequestException('Attributes do not match attribute template')
     item_model_data = {
         'parent': data.parent,
         'path': Ltree(f'{data.path}.{data.name}'),
@@ -114,6 +143,8 @@ def create_items(data: POSTItems, api_response: APIResponse):
 
 
 def update_item(item_id: UUID, data: PUTItem) -> dict:
+    if not attributes_match_template(data.attributes, data.attribute_template_id):
+        raise BadRequestException('Attributes do not match attribute template')
     item = db.session.query(ItemModel).filter_by(id=item_id).first()
     item.parent = data.parent
     item.path = Ltree(f'{data.path}.{data.name}')
@@ -145,14 +176,6 @@ def update_items(ids: list[UUID], data: PUTItems, api_response: APIResponse):
         results.append(update_item(ids[i], data.items[i]))
     api_response.result = results
     api_response.total = len(results)
-
-
-def get_available_file_path(container: UUID, zone: int, path: Ltree, archived: bool, recursions: int = 1) -> Ltree:
-    item = db.session.query(ItemModel).filter_by(container=container, zone=zone, path=path, archived=archived).first()
-    if item is None:
-        return path
-    new_path = Ltree(f'{str(path)}_{recursions}') if '_copy' in str(path) else Ltree(f'{str(path)}_copy')
-    return get_available_file_path(container, zone, new_path, archived, recursions + 1)
 
 
 def archive_item_by_id(params: PATCHItem, api_response: APIResponse):

@@ -71,6 +71,8 @@ class APIItems:
         try:
             api_response = POSTItemResponse()
             api_response.result = create_item(data)
+        except BadRequestException as e:
+            set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
         except Exception:
             set_api_response_error(api_response, 'Failed to create item', EAPIResponseCode.internal_error)
         return api_response.json_response()
@@ -80,6 +82,8 @@ class APIItems:
         try:
             api_response = POSTItemResponse()
             create_items(data, api_response)
+        except BadRequestException as e:
+            set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
         except Exception:
             set_api_response_error(api_response, 'Failed to create items', EAPIResponseCode.internal_error)
         return api_response.json_response()
@@ -89,6 +93,8 @@ class APIItems:
         try:
             api_response = PUTItemResponse()
             api_response.result = update_item(id, data)
+        except BadRequestException as e:
+            set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
         except Exception:
             set_api_response_error(api_response, 'Failed to update item', EAPIResponseCode.internal_error)
         return api_response.json_response()
