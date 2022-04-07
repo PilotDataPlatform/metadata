@@ -23,7 +23,6 @@ pipeline {
         when { branch 'k8s-dev' }
         steps {
             withCredentials([
-                usernamePassword(credentialsId: 'readonly', usernameVariable: 'PIP_USERNAME', passwordVariable: 'PIP_PASSWORD'),
                 usernamePassword(credentialsId: 'indoc-ssh', usernameVariable: 'SUDO_USERNAME', passwordVariable: 'SUDO_PASSWORD'),
                 string(credentialsId:'VAULT_TOKEN', variable: 'VAULT_TOKEN'),
                 string(credentialsId:'VAULT_URL', variable: 'VAULT_URL'),
@@ -38,7 +37,7 @@ pipeline {
                 [ ! -f /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/.env ] && touch /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/.env
                 [ -d /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions ] && sudo chmod 777 -R -f /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions
                 sudo chmod 777 -R -f /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions                
-                docker build --add-host git.indocresearch.org:10.4.3.151 --build-arg PIP_USERNAME=${PIP_USERNAME} --build-arg PIP_PASSWORD=${PIP_PASSWORD} -t web .
+                docker build --add-host git.indocresearch.org:10.4.3.151 -t web .
                 docker-compose -f docker-compose.yaml down -v
                 docker-compose up -d
                 sleep 10s
@@ -47,7 +46,6 @@ pipeline {
                 hostname
                 docker-compose exec -T web pip install --user poetry==1.1.12
                 docker-compose exec -T web poetry config virtualenvs.in-project false
-                docker-compose exec -T web poetry config http-basic.pilot ${PIP_USERNAME} ${PIP_PASSWORD}
                 docker-compose exec -T web poetry install --no-root --no-interaction
                 docker-compose exec -T web poetry run pytest --verbose -c tests/pytest.ini
                 docker-compose -f docker-compose.yaml down -v
@@ -60,11 +58,9 @@ pipeline {
       when {branch "k8s-dev"}
       steps {
         script {
-          withCredentials([usernamePassword(credentialsId:'readonly', usernameVariable: 'PIP_USERNAME', passwordVariable: 'PIP_PASSWORD')]) {
-            docker.withRegistry('https://registry-gitlab.indocresearch.org', registryCredential) {
-                customImage = docker.build("registry-gitlab.indocresearch.org/pilot/metadata:$commit", "--build-arg PIP_USERNAME=${PIP_USERNAME} --build-arg PIP_PASSWORD=${PIP_PASSWORD} --add-host git.indocresearch.org:10.4.3.151 .")
-                customImage.push()
-            }
+          docker.withRegistry('https://registry-gitlab.indocresearch.org', registryCredential) {
+              customImage = docker.build("registry-gitlab.indocresearch.org/pilot/metadata:$commit", "--build-arg --add-host git.indocresearch.org:10.4.3.151 .")
+              customImage.push()
           }
         }
       }
@@ -101,12 +97,10 @@ pipeline {
       when {branch "k8s-staging"}
       steps {
         script {
-            withCredentials([usernamePassword(credentialsId:'readonly', usernameVariable: 'PIP_USERNAME', passwordVariable: 'PIP_PASSWORD')]) {
-              docker.withRegistry('https://registry-gitlab.indocresearch.org', registryCredential) {
-                  customImage = docker.build("registry-gitlab.indocresearch.org/pilot/metadata:$commit", "--build-arg PIP_USERNAME=${PIP_USERNAME} --build-arg PIP_PASSWORD=${PIP_PASSWORD} --add-host git.indocresearch.org:10.4.3.151 .")
-                  customImage.push()
-              }
-            }
+          docker.withRegistry('https://registry-gitlab.indocresearch.org', registryCredential) {
+              customImage = docker.build("registry-gitlab.indocresearch.org/pilot/metadata:$commit", "--add-host git.indocresearch.org:10.4.3.151 .")
+              customImage.push()
+          }
         }
       }
     }
