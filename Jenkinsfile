@@ -57,7 +57,7 @@ pipeline {
       when {branch "k8s-dev"}
       steps {
         script {
-          docker.withRegistry('ghcr.io', registryCredential) {
+          docker.withRegistry('https://ghcr.io', registryCredential) {
               customImage = docker.build("$imagename:$commit")
               customImage.push()
           }
@@ -96,7 +96,7 @@ pipeline {
       when {branch "k8s-staging"}
       steps {
         script {
-          docker.withRegistry('ghcr.io', registryCredential) {
+          docker.withRegistry('https://ghcr.io', registryCredential) {
               customImage = docker.build("$imagename:$commit")
               customImage.push()
           }
