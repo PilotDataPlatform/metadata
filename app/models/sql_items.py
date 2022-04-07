@@ -51,7 +51,7 @@ class ItemModel(Base):
             'id': str(self.id),
             'parent': str(self.parent),
             'path': decode_path_from_ltree(str(self.path)) if self.path else None,
-            'restore_path': str(self.restore_path) if self.restore_path else None,
+            'restore_path': decode_path_from_ltree(str(self.restore_path)) if self.restore_path else None,
             'archived': self.archived,
             'type': self.type,
             'zone': self.zone,
