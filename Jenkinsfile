@@ -33,9 +33,9 @@ pipeline {
                 export OPSDB_UTILILT_HOST=db
                 export OPSDB_UTILILT_PORT=5432
                 export OPSDB_UTILILT_NAME=metadata
-                [ ! -f /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/.env ] && touch /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/.env
-                [ -d /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions ] && sudo chmod 777 -R -f /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions
-                sudo chmod 777 -R -f /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions                
+                [ ! -f ${env.WORKSPACE}/.env ] && touch ${env.WORKSPACE}/.env
+                [ -d ${env.WORKSPACE}/local_config/pgadmin/sessions ] && sudo chmod 777 -R -f ${env.WORKSPACE}/local_config/pgadmin/sessions
+                sudo chmod 777 -R -f ${env.WORKSPACE}/local_config/pgadmin/sessions                
                 docker build -t web .
                 docker-compose -f docker-compose.yaml down -v
                 docker-compose up -d
