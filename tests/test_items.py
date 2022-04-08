@@ -26,7 +26,9 @@ class TestItems:
             'container_type': 'project',
             'location_uri': 'https://example.com',
             'version': '1.0',
-            'extra': {},
+            'tags': [],
+            'attribute_template_id': None,
+            'attributes': {},
         }
         response = self.app.post('/v1/item/', json=payload)
         global reused_item_id
@@ -35,8 +37,7 @@ class TestItems:
 
     @pytest.mark.dependency(depends=['test_01'])
     def test_02_get_item_by_id(self):
-        params = {'id': reused_item_id}
-        response = self.app.get('/v1/item/', params=params)
+        response = self.app.get(f'/v1/item/{reused_item_id}')
         assert response.status_code == 200
 
     @pytest.mark.dependency(depends=['test_01'])
@@ -47,7 +48,7 @@ class TestItems:
             'zone': 0,
             'container_code': reused_container_code,
         }
-        response = self.app.get('/v1/item/', params=params)
+        response = self.app.get('/v1/item/search/', params=params)
         assert response.status_code == 200
 
     @pytest.mark.dependency(depends=['test_01'])
@@ -65,7 +66,9 @@ class TestItems:
             'container_type': 'project',
             'location_uri': 'https://example.com',
             'version': '1.0',
-            'extra': {},
+            'tags': [],
+            'attribute_template_id': None,
+            'attributes': {},
         }
         response = self.app.put('/v1/item/', json=payload, params=params)
         assert response.status_code == 200
@@ -88,14 +91,14 @@ class TestItems:
         response = self.app.patch('/v1/item/', params=params)
         assert response.status_code == 200
 
-    def test_07_get_item_by_location_missing_params(self):
+    def test_07_get_item_by_location_missing_zone(self):
         params = {
             'parent_path': 'folder1.folder2',
             'archived': False,
             'container_code': reused_container_code,
         }
-        response = self.app.get('/v1/item/', params=params)
-        assert response.status_code == 400
+        response = self.app.get('/v1/item/search', params=params)
+        assert response.status_code == 422
 
     def test_08_create_item_wrong_type(self):
         payload = {
@@ -110,7 +113,9 @@ class TestItems:
             'container_type': 'project',
             'location_uri': 'https://example.com',
             'version': '1.0',
-            'extra': {},
+            'tags': [],
+            'attribute_template_id': None,
+            'attributes': None,
         }
         response = self.app.post('/v1/item/', json=payload)
         assert response.status_code == 422
@@ -128,7 +133,9 @@ class TestItems:
             'container_type': 'invalid',
             'location_uri': 'https://example.com',
             'version': '1.0',
-            'extra': {},
+            'tags': [],
+            'attribute_template_id': None,
+            'attributes': None,
         }
         response = self.app.post('/v1/item/', json=payload)
         assert response.status_code == 422
@@ -148,7 +155,9 @@ class TestItems:
             'container_type': 'project',
             'location_uri': 'https://example.com',
             'version': '1.0',
-            'extra': {},
+            'tags': [],
+            'attribute_template_id': None,
+            'attributes': None,
         }
         response = self.app.put('/v1/item/', json=payload, params=params)
         assert response.status_code == 422
@@ -168,7 +177,9 @@ class TestItems:
             'container_type': 'invalid',
             'location_uri': 'https://example.com',
             'version': '1.0',
-            'extra': {},
+            'tags': [],
+            'attribute_template_id': None,
+            'attributes': None,
         }
         response = self.app.put('/v1/item/', json=payload, params=params)
         assert response.status_code == 422
@@ -186,7 +197,9 @@ class TestItems:
             'container_type': 'project',
             'location_uri': 'https://example.com',
             'version': '1.0',
-            'extra': {},
+            'tags': [],
+            'attribute_template_id': None,
+            'attributes': {},
         }
         response = self.app.post('/v1/item/', json=payload)
         item_1_id = loads(response.text)['result']['id']
@@ -207,7 +220,9 @@ class TestItems:
             'container_type': 'project',
             'location_uri': 'https://example.com',
             'version': '1.0',
-            'extra': {},
+            'tags': [],
+            'attribute_template_id': None,
+            'attributes': {},
         }
         response = self.app.post('/v1/item/', json=payload)
         item_2_id = loads(response.text)['result']['id']

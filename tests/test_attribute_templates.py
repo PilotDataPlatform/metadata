@@ -18,7 +18,7 @@ class TestAttributeTemplates:
             'name': 'template_1',
             'project_id': reused_project_id,
             'attributes': [
-                {'name': 'attribute_1', 'optional': True, 'type': 'multiple_choice', 'options': 'val1, val2'}
+                {'name': 'attribute_1', 'optional': True, 'type': 'multiple_choice', 'options': ['val1', 'val2']}
             ],
         }
         response = self.app.post('/v1/template/', json=payload)
@@ -44,8 +44,8 @@ class TestAttributeTemplates:
             'name': 'template_1',
             'project_id': reused_project_id,
             'attributes': [
-                {'name': 'attribute_1', 'optional': True, 'type': 'multiple_choice', 'options': 'val1, val2'},
-                {'name': 'attribute_2', 'optional': True, 'type': 'text', 'options': ''},
+                {'name': 'attribute_1', 'optional': True, 'type': 'multiple_choice', 'options': ['val1', 'val2']},
+                {'name': 'attribute_2', 'optional': True, 'type': 'text', 'options': []},
             ],
         }
         response = self.app.put('/v1/template/', json=payload, params=params)

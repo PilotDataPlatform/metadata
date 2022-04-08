@@ -89,7 +89,7 @@ class POSTItem(BaseModel):
         if len(v) > 10:
             raise ValueError('Maximum of 10 tags')
         return v
-    
+
     @validator('name')
     def folder_name_validation(cls, v, values):
         if 'type' in values and values['type'] == 'folder' and '.' in v:
