@@ -12,7 +12,7 @@ class GETItem(BaseModel):
     id: Optional[UUID]
     container: Optional[UUID]
     zone: Optional[int]
-    path: Optional[str]
+    parent_path: Optional[str]
     archived: Optional[bool]
     page_size: int = 10
     page: int = 0
@@ -24,7 +24,7 @@ class GETItemResponse(APIResponse):
         example={
             'id': '85465212-168a-4f0c-a7aa-f3a19795d2ff',
             'parent': '28c608ac-1693-4318-a1c4-412caf2cd74a',
-            'path': 'path.to.file',
+            'parent_path': 'path.to.file',
             'type': 'file',
             'zone': 0,
             'name': 'filename',
@@ -49,7 +49,7 @@ class GETItemResponse(APIResponse):
 
 class POSTItem(BaseModel):
     parent: UUID
-    path: Optional[str]
+    parent_path: Optional[str]
     type: str = 'file'
     zone: int = 0
     name: str
@@ -75,7 +75,7 @@ class POSTItem(BaseModel):
 
     @validator('name')
     def folder_name_validation(cls, v, values):
-        if values['type'] == 'folder' and '.' in v:
+        if 'type' in values and values['type'] == 'folder' and '.' in v:
             raise ValueError('Folder name cannot contain reserved character .')
         return v
 

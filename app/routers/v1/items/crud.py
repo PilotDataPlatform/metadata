@@ -55,9 +55,9 @@ def get_items_by_location(params: GETItem, api_response: APIResponse):
             ItemModel.archived == params.archived,
         )
     )
-    if params.path:
-        regex = f'{params.path}.*{{1}}'
-        item_query = item_query.filter(ItemModel.path.lquery(expression.cast(regex, LQUERY)))
+    if params.parent_path:
+        regex = f'{params.parent_path}.*{{1}}'
+        item_query = item_query.filter(ItemModel.parent_path.lquery(expression.cast(regex, LQUERY)))
     paginate(params, api_response, item_query, combine_item_tables)
 
 
@@ -65,7 +65,7 @@ def create_item(data: POSTItem, api_response: APIResponse):
     encoded_item_name = encode_label_for_ltree(data.name)
     item_model_data = {
         'parent': data.parent,
-        'path': Ltree(f'{encode_path_for_ltree(data.path)}') if data.path else None,
+        'parent_path': Ltree(f'{encode_path_for_ltree(data.parent_path)}') if data.parent_path else None,
         'archived': False,
         'type': data.type,
         'zone': data.zone,
@@ -99,7 +99,7 @@ def update_item(item_id: UUID, data: PUTItem, api_response: APIResponse):
     item = db.session.query(ItemModel).filter_by(id=item_id).first()
     encoded_item_name = encode_label_for_ltree(data.name)
     item.parent = data.parent
-    item.path = Ltree(f'{encode_path_for_ltree(data.path)}') if data.path else None
+    item.parent_path = Ltree(f'{encode_path_for_ltree(data.parent_path)}') if data.parent_path else None
     item.type = data.type
     item.zone = data.zone
     item.name = encoded_item_name
@@ -124,7 +124,9 @@ def get_available_file_name(
 ) -> str:
     item = (
         db.session.query(ItemModel)
-        .filter_by(container=container, zone=zone, name=encoded_item_name, path=encoded_item_path, archived=archived)
+        .filter_by(
+            container=container, zone=zone, name=encoded_item_name, parent_path=encoded_item_path, archived=archived
+        )
         .first()
     )
     if item is None:
@@ -149,11 +151,11 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
     item.archived = params.archived
     if params.archived:
         item.name = get_available_file_name(item.container, item.zone, item.name, None, True)
-        item.restore_path = item.path
-        item.path = None
+        item.restore_path = item.parent_path
+        item.parent_path = None
     else:
         item.name = get_available_file_name(item.container, item.zone, item.name, item.restore_path, False)
-        item.path = item.restore_path
+        item.parent_path = item.restore_path
         item.restore_path = None
     db.session.commit()
     db.session.refresh(item)

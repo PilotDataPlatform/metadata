@@ -17,7 +17,7 @@ class TestItems:
     def test_01_create_item(self):
         payload = {
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            'path': 'folder1.folder2',
+            'parent_path': 'folder1.folder2',
             'type': 'file',
             'zone': 0,
             'name': 'file',
@@ -43,7 +43,7 @@ class TestItems:
     @pytest.mark.dependency(depends=['test_01'])
     def test_03_get_item_by_location(self):
         params = {
-            'path': 'folder1.folder2',
+            'parent_path': 'folder1.folder2',
             'archived': False,
             'zone': 0,
             'container': reused_container,
@@ -56,7 +56,7 @@ class TestItems:
         params = {'id': reused_item_id}
         payload = {
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            'path': 'folder1.folder2',
+            'parent_path': 'folder1.folder2',
             'type': 'file',
             'zone': 0,
             'name': 'file_renamed',
@@ -91,7 +91,7 @@ class TestItems:
 
     def test_07_get_item_by_location_missing_params(self):
         params = {
-            'path': 'folder1.folder2',
+            'parent_path': 'folder1.folder2',
             'archived': False,
             'container': reused_container,
         }
@@ -101,7 +101,7 @@ class TestItems:
     def test_08_create_item_wrong_type(self):
         payload = {
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            'path': 'folder1.folder2',
+            'parent_path': 'folder1.folder2',
             'type': 'invalid',
             'zone': 0,
             'name': 'file',
@@ -119,7 +119,7 @@ class TestItems:
     def test_09_create_item_wrong_container_type(self):
         payload = {
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            'path': 'folder1.folder2',
+            'parent_path': 'folder1.folder2',
             'type': 'file',
             'zone': 0,
             'name': 'file',
@@ -139,7 +139,7 @@ class TestItems:
         params = {'id': reused_item_id}
         payload = {
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            'path': 'folder1.folder2',
+            'parent_path': 'folder1.folder2',
             'type': 'invalid',
             'zone': 0,
             'name': 'file_renamed',
@@ -159,7 +159,7 @@ class TestItems:
         params = {'id': reused_item_id}
         payload = {
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            'path': 'folder1.folder2',
+            'parent_path': 'folder1.folder2',
             'type': 'file',
             'zone': 0,
             'name': 'file_renamed',
@@ -177,7 +177,7 @@ class TestItems:
     def test_12_rename_item_on_conflict(self):
         payload = {
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            'path': 'folder1.folder2',
+            'parent_path': 'folder1.folder2',
             'type': 'file',
             'zone': 0,
             'name': 'conflict',
@@ -198,7 +198,7 @@ class TestItems:
         self.app.patch('/v1/item/', params=params)
         payload = {
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            'path': 'folder1.folder2',
+            'parent_path': 'folder1.folder2',
             'type': 'file',
             'zone': 0,
             'name': 'conflict',

@@ -20,7 +20,7 @@ class ItemModel(Base):
     __tablename__ = 'items'
     id = Column(UUID(as_uuid=True), unique=True, primary_key=True)
     parent = Column(UUID(as_uuid=True))
-    path = Column(LtreeType())
+    parent_path = Column(LtreeType())
     restore_path = Column(LtreeType())
     archived = Column(Boolean(), nullable=False)
     type = Column(Enum('file', 'folder', name='type_enum', create_type=False), nullable=False)
@@ -33,10 +33,10 @@ class ItemModel(Base):
 
     __table_args__ = ({'schema': ConfigClass.METADATA_SCHEMA},)
 
-    def __init__(self, parent, path, archived, type, zone, name, size, owner, container, container_type):
+    def __init__(self, parent, parent_path, archived, type, zone, name, size, owner, container, container_type):
         self.id = uuid.uuid4()
         self.parent = parent
-        self.path = path
+        self.parent_path = parent_path
         self.archived = archived
         self.type = type
         self.zone = zone
@@ -50,7 +50,7 @@ class ItemModel(Base):
         return {
             'id': str(self.id),
             'parent': str(self.parent),
-            'path': decode_path_from_ltree(str(self.path)) if self.path else None,
+            'parent_path': decode_path_from_ltree(str(self.parent_path)) if self.parent_path else None,
             'restore_path': decode_path_from_ltree(str(self.restore_path)) if self.restore_path else None,
             'archived': self.archived,
             'type': self.type,
