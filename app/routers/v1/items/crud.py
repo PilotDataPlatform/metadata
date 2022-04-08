@@ -5,7 +5,7 @@ from sqlalchemy.sql import expression
 from sqlalchemy_utils import Ltree
 from sqlalchemy_utils.types.ltree import LQUERY
 
-from app.app_utils import decode_label_from_ltree, encode_label_for_ltree
+from app.app_utils import decode_label_from_ltree, decode_path_from_ltree, encode_label_for_ltree
 from app.app_utils import encode_path_for_ltree
 from app.models.base_models import APIResponse
 from app.models.models_items import DELETEItem
@@ -118,12 +118,13 @@ def update_item(item_id: UUID, data: PUTItem, api_response: APIResponse):
     api_response.result = combine_item_tables((item, storage, extended))
 
 
-def get_available_file_name(container: UUID, zone: int, item_name: str, item_path: Ltree, archived: bool, recursions: int = 1) -> str:
-    item = db.session.query(ItemModel).filter_by(container=container, zone=zone, path=item_path, name=item_name, archived=archived).first()
+def get_available_file_name(container: UUID, zone: int, encoded_item_name: str, encoded_item_path: Ltree, archived: bool, recursions: int = 1) -> str:
+    item = db.session.query(ItemModel).filter_by(container=container, zone=zone, name=encoded_item_name, path=encoded_item_path, archived=archived).first()
     if item is None:
-        return item_name
-    new_name = f'{item_name}_{recursions}' if '_copy' in item_name else f'{item_name}_copy'
-    return get_available_file_name(container, zone, new_name, item_path, archived, recursions + 1)
+        return encoded_item_name
+    decoded_item_name = decode_label_from_ltree(encoded_item_name)
+    decoded_new_name = f'{decoded_item_name}_{recursions}' if '_copy' in decoded_item_name else f'{decoded_item_name}_copy'
+    return get_available_file_name(container, zone, encode_label_for_ltree(decoded_new_name), encoded_item_path, archived, recursions + 1)
 
 
 def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
@@ -136,13 +137,13 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
     item = item_result[0]
     item.archived = params.archived
     if params.archived:
+        item.name = get_available_file_name(item.container, item.zone, item.name, None, True)
         item.restore_path = item.path
         item.path = None
-        item.name = encode_label_for_ltree(get_available_file_name(item.container, item.zone, decode_label_from_ltree(item.name), None, True))
     else:
+        item.name = get_available_file_name(item.container, item.zone, item.name, item.restore_path, False)
         item.path = item.restore_path
         item.restore_path = None
-        item.name = encode_label_for_ltree(get_available_file_name(item.container, item.zone, decode_label_from_ltree(item.name), item.path, False))
     db.session.commit()
     db.session.refresh(item)
     api_response.result = combine_item_tables(item_result)

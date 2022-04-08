@@ -218,7 +218,6 @@ class TestItems:
         }
         response = self.app.patch('/v1/item/', params=params)
         assert loads(response.text)['result']['name'] == 'conflict_copy'
-        assert str(loads(response.text)['result']['path']) == 'folder1.folder2.conflict_copy'
         params = {'id': item_1_id}
         self.app.delete('/v1/item/', params=params)
         params = {'id': item_2_id}

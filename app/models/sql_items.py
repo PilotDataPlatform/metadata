@@ -20,7 +20,7 @@ class ItemModel(Base):
     __tablename__ = 'items'
     id = Column(UUID(as_uuid=True), unique=True, primary_key=True)
     parent = Column(UUID(as_uuid=True))
-    path = Column(LtreeType(), nullable=False)
+    path = Column(LtreeType())
     restore_path = Column(LtreeType())
     archived = Column(Boolean(), nullable=False)
     type = Column(Enum('file', 'folder', name='type_enum', create_type=False), nullable=False)
