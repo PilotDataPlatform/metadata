@@ -1,9 +1,11 @@
-from fastapi.testclient import TestClient
-from app.app_utils import encode_path_for_ltree
-from app.app_utils import decode_path_from_ltree
-
-from app.main import app
 import random
+
+from fastapi.testclient import TestClient
+
+from app.app_utils import decode_path_from_ltree
+from app.app_utils import encode_path_for_ltree
+from app.main import app
+
 
 class TestUtils:
     app = TestClient(app)
@@ -12,7 +14,7 @@ class TestUtils:
         random_label = ''
         label_length = random.randint(4, 20)
         for _ in range(label_length):
-            random_label += (chr(random.randint(32, 126)))
+            random_label += chr(random.randint(32, 126))
         return random_label
 
     def generate_random_path(self) -> str:
@@ -27,7 +29,6 @@ class TestUtils:
         paths_to_test = 100
         for _ in range(paths_to_test):
             random_paths.append(self.generate_random_path())
-        print(random_paths)
         for path in random_paths:
             encoded = encode_path_for_ltree(path)
             decoded = decode_path_from_ltree(encoded)

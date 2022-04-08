@@ -73,6 +73,12 @@ class POSTItem(BaseModel):
             raise ValueError('container_type must be project or dataset')
         return v
 
+    @validator('name')
+    def folder_name_validation(cls, v, values):
+        if values['type'] == 'folder' and '.' in v:
+            raise ValueError('Folder name cannot contain reserved character .')
+        return v
+
 
 class PATCHItem(BaseModel):
     id: UUID
