@@ -1,11 +1,8 @@
 version: '3'
 services:
   web:
-    build:
-      context: .
-      args:
-        PIP_USERNAME: "${PIP_USERNAME}"
-        PIP_PASSWORD: "${PIP_PASSWORD}"
+    image: 'web'
+    restart: always
     ports:
       - "8000:8000"
     environment:
