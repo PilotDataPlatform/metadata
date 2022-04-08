@@ -1,4 +1,3 @@
-import uuid
 from json import loads
 
 import pytest
@@ -7,7 +6,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 
 reused_item_id = None
-reused_container = str(uuid.uuid4())
+reused_container_code = 'test_container'
 
 
 class TestItems:
@@ -23,7 +22,7 @@ class TestItems:
             'name': 'file',
             'size': 0,
             'owner': 'admin',
-            'container': reused_container,
+            'container_code': reused_container_code,
             'container_type': 'project',
             'location_uri': 'https://example.com',
             'version': '1.0',
@@ -46,7 +45,7 @@ class TestItems:
             'parent_path': 'folder1.folder2',
             'archived': False,
             'zone': 0,
-            'container': reused_container,
+            'container_code': reused_container_code,
         }
         response = self.app.get('/v1/item/', params=params)
         assert response.status_code == 200
@@ -62,7 +61,7 @@ class TestItems:
             'name': 'file_renamed',
             'size': 0,
             'owner': 'admin',
-            'container': reused_container,
+            'container_code': reused_container_code,
             'container_type': 'project',
             'location_uri': 'https://example.com',
             'version': '1.0',
@@ -93,7 +92,7 @@ class TestItems:
         params = {
             'parent_path': 'folder1.folder2',
             'archived': False,
-            'container': reused_container,
+            'container_code': reused_container_code,
         }
         response = self.app.get('/v1/item/', params=params)
         assert response.status_code == 400
@@ -107,7 +106,7 @@ class TestItems:
             'name': 'file',
             'size': 0,
             'owner': 'admin',
-            'container': reused_container,
+            'container_code': reused_container_code,
             'container_type': 'project',
             'location_uri': 'https://example.com',
             'version': '1.0',
@@ -125,7 +124,7 @@ class TestItems:
             'name': 'file',
             'size': 0,
             'owner': 'admin',
-            'container': reused_container,
+            'container_code': reused_container_code,
             'container_type': 'invalid',
             'location_uri': 'https://example.com',
             'version': '1.0',
@@ -145,7 +144,7 @@ class TestItems:
             'name': 'file_renamed',
             'size': 0,
             'owner': 'admin',
-            'container': reused_container,
+            'container_code': reused_container_code,
             'container_type': 'project',
             'location_uri': 'https://example.com',
             'version': '1.0',
@@ -165,7 +164,7 @@ class TestItems:
             'name': 'file_renamed',
             'size': 0,
             'owner': 'admin',
-            'container': reused_container,
+            'container_code': reused_container_code,
             'container_type': 'invalid',
             'location_uri': 'https://example.com',
             'version': '1.0',
@@ -183,7 +182,7 @@ class TestItems:
             'name': 'conflict',
             'size': 0,
             'owner': 'admin',
-            'container': reused_container,
+            'container_code': reused_container_code,
             'container_type': 'project',
             'location_uri': 'https://example.com',
             'version': '1.0',
@@ -204,7 +203,7 @@ class TestItems:
             'name': 'conflict',
             'size': 0,
             'owner': 'admin',
-            'container': reused_container,
+            'container_code': reused_container_code,
             'container_type': 'project',
             'location_uri': 'https://example.com',
             'version': '1.0',

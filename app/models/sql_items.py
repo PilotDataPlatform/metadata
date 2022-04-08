@@ -28,12 +28,12 @@ class ItemModel(Base):
     name = Column(String(), nullable=False)
     size = Column(Integer())
     owner = Column(String())
-    container = Column(UUID(as_uuid=True), nullable=False)
+    container_code = Column(String(), nullable=False)
     container_type = Column(Enum('project', 'dataset', name='container_enum', create_type=False), nullable=False)
 
     __table_args__ = ({'schema': ConfigClass.METADATA_SCHEMA},)
 
-    def __init__(self, parent, parent_path, archived, type, zone, name, size, owner, container, container_type):
+    def __init__(self, parent, parent_path, archived, type, zone, name, size, owner, container_code, container_type):
         self.id = uuid.uuid4()
         self.parent = parent
         self.parent_path = parent_path
@@ -43,7 +43,7 @@ class ItemModel(Base):
         self.name = name
         self.size = size
         self.owner = owner
-        self.container = container
+        self.container_code = container_code
         self.container_type = container_type
 
     def to_dict(self):
@@ -58,6 +58,6 @@ class ItemModel(Base):
             'name': decode_label_from_ltree(self.name),
             'size': self.size,
             'owner': self.owner,
-            'container': str(self.container),
+            'container_code': self.container_code,
             'container_type': self.container_type,
         }

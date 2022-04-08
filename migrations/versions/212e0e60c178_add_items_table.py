@@ -30,13 +30,13 @@ def upgrade():
         sa.Column('name', sa.String(), nullable=False),
         sa.Column('size', sa.Integer()),
         sa.Column('owner', sa.String()),
-        sa.Column('container', UUID()),
+        sa.Column('container_code', sa.String()),
         sa.Column(
             'container_type', pg.ENUM('project', 'dataset', name='container_enum', create_type=True), nullable=False
         ),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('id'),
-        sa.UniqueConstraint('parent_path', 'archived', 'zone', 'name', 'container'),
+        sa.UniqueConstraint('parent_path', 'archived', 'zone', 'name', 'container_code'),
         schema='metadata',
     )
 

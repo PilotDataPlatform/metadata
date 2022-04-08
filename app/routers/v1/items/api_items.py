@@ -37,8 +37,10 @@ class APIItems:
             if params.id:
                 get_item_by_id(params, api_response)
             else:
-                if not params.container or params.zone is None or params.archived is None:
-                    raise BadRequestException('container, zone, and archived are required when getting by location')
+                if not params.container_code or params.zone is None or params.archived is None:
+                    raise BadRequestException(
+                        'container_code, zone, and archived are required when getting by location'
+                    )
                 get_items_by_location(params, api_response)
         except BadRequestException as e:
             set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)

@@ -10,7 +10,7 @@ from .base_models import APIResponse
 
 class GETItem(BaseModel):
     id: Optional[UUID]
-    container: Optional[UUID]
+    container_code: Optional[str]
     zone: Optional[int]
     parent_path: Optional[str]
     archived: Optional[bool]
@@ -30,7 +30,7 @@ class GETItemResponse(APIResponse):
             'name': 'filename',
             'size': 0,
             'owner': 'username',
-            'container': '3789e66f-2e70-4c36-9706-473777f0fe2a',
+            'container_code': 'project_code',
             'container_type': 'project',
             'storage': {
                 'id': 'ba623005-8183-419a-972a-e4ce0d539349',
@@ -55,7 +55,7 @@ class POSTItem(BaseModel):
     name: str
     size: int
     owner: str
-    container: UUID
+    container_code: str
     container_type: str = 'project'
     location_uri: str
     version: str
