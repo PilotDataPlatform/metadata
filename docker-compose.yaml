@@ -3,9 +3,6 @@ services:
   web:
     build:
       context: .
-      args:
-        PIP_USERNAME: "${PIP_USERNAME}"
-        PIP_PASSWORD: "${PIP_PASSWORD}"
     ports:
       - "8000:8000"
     environment:
