@@ -20,8 +20,9 @@ class GETItemsByIDs(BaseModel):
 class GETItemsByLocation(BaseModel):
     container_code: str
     zone: int
+    recursive: bool
+    archived: bool = False
     parent_path: Optional[str]
-    archived: Optional[bool]
     page_size: int = 10
     page: int = 0
 

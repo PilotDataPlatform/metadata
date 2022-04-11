@@ -118,7 +118,12 @@ def get_items_by_location(params: GETItem, api_response: APIResponse):
     )
     if params.parent_path:
         regex = f'{encode_path_for_ltree(params.parent_path)}'
+        if params.recursive:
+            regex += '.*'
         item_query = item_query.filter(ItemModel.parent_path.lquery(expression.cast(regex, LQUERY)))
+    else:
+        if not params.recursive:
+            item_query = item_query.filter(ItemModel.parent_path == None)
     paginate(params, api_response, item_query, combine_item_tables)
 
 
