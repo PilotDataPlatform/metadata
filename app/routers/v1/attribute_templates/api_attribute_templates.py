@@ -91,7 +91,9 @@ class APIAttributeTemplates:
             api_response = DELETETemplateResponse()
             delete_template_by_id(params, api_response)
         except EntityNotFoundException:
-            set_api_response_error(api_response, f'Failed to get template with id {params.id}', EAPIResponseCode.not_found)
+            set_api_response_error(
+                api_response, f'Failed to get template with id {params.id}', EAPIResponseCode.not_found
+            )
         except Exception:
             set_api_response_error(api_response, 'Failed to delete template', EAPIResponseCode.internal_error)
         return api_response.json_response()
