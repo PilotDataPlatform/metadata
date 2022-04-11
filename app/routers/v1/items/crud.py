@@ -9,7 +9,6 @@ from app.app_utils import decode_label_from_ltree
 from app.app_utils import encode_label_for_ltree
 from app.app_utils import encode_path_for_ltree
 from app.models.base_models import APIResponse
-from app.models.models_items import DELETEItem
 from app.models.models_items import GETItem
 from app.models.models_items import PATCHItem
 from app.models.models_items import POSTItem
@@ -229,14 +228,19 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
     api_response.result = combine_item_tables(item_result)
 
 
-def delete_item_by_id(params: DELETEItem, api_response: APIResponse):
+def delete_item_by_id(id: UUID, api_response: APIResponse):
     item_query = (
         db.session.query(ItemModel, StorageModel, ExtendedModel)
         .join(StorageModel, ExtendedModel)
-        .filter(ItemModel.id == params.id)
+        .filter(ItemModel.id == id)
     )
     for row in item_query.first():
         db.session.delete(row)
     db.session.commit()
     api_response.total = 0
     api_response.num_of_pages = 0
+
+
+def delete_items_by_ids(ids: list[UUID], api_response: APIResponse):
+    for id in ids:
+        delete_item_by_id(id, api_response)

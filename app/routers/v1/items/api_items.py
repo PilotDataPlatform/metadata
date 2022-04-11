@@ -28,6 +28,7 @@ from .crud import archive_item_by_id
 from .crud import create_item
 from .crud import create_items
 from .crud import delete_item_by_id
+from .crud import delete_items_by_ids
 from .crud import get_item_by_id
 from .crud import get_items_by_ids
 from .crud import get_items_by_location
@@ -99,7 +100,7 @@ class APIItems:
             set_api_response_error(api_response, 'Failed to update item', EAPIResponseCode.internal_error)
         return api_response.json_response()
 
-    @router.put('/batch', response_model=PUTItemResponse, summary='Update many items')
+    @router.put('/batch/', response_model=PUTItemResponse, summary='Update many items')
     async def update_items(self, data: PUTItems, ids: List[UUID] = Query(None)):
         try:
             api_response = PUTItemResponse()
@@ -125,7 +126,16 @@ class APIItems:
     async def delete_item(self, params: DELETEItem = Depends(DELETEItem)):
         try:
             api_response = DELETEItemResponse()
-            delete_item_by_id(params, api_response)
+            delete_item_by_id(params.id, api_response)
         except Exception:
             set_api_response_error(api_response, 'Failed to delete item', EAPIResponseCode.internal_error)
+        return api_response.json_response()
+
+    @router.delete('/batch/', response_model=DELETEItemResponse, summary='Permanently delete many items by IDs')
+    async def delete_items_by_ids(self, ids: List[UUID] = Query(None)):
+        try:
+            api_response = DELETEItemResponse()
+            delete_items_by_ids(ids, api_response)
+        except Exception:
+            set_api_response_error(api_response, 'Failed to delete items', EAPIResponseCode.not_found)
         return api_response.json_response()
