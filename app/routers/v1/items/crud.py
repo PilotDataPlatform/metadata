@@ -144,8 +144,9 @@ def get_available_file_name(
     decoded_new_name = (
         f'{decoded_item_name}_{recursions}' if '_copy' in decoded_item_name else f'{decoded_item_name}_copy'
     )
+    encoded_new_name = encode_label_for_ltree(decoded_new_name)
     return get_available_file_name(
-        container_code, zone, encode_label_for_ltree(decoded_new_name), encoded_item_path, archived, recursions + 1
+        container_code, zone, encoded_new_name, encoded_item_path, archived, recursions + 1
     )
 
 
