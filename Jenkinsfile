@@ -36,7 +36,7 @@ pipeline {
                 [ ! -f ${env.WORKSPACE}/.env ] && touch ${env.WORKSPACE}/.env
                 [ -d ${env.WORKSPACE}/local_config/pgadmin/sessions ] && sudo chmod 777 -R -f ${env.WORKSPACE}/local_config/pgadmin/sessions
                 sudo chmod 777 -R -f ${env.WORKSPACE}/local_config/pgadmin/sessions                
-                docker build -t web .
+                docker build -t web ${env.WORKSPACE}/
                 docker-compose -f docker-compose.yaml down -v
                 docker-compose up -d
                 sleep 10s
