@@ -5,6 +5,9 @@ from sqlalchemy.sql import expression
 from sqlalchemy_utils import Ltree
 from sqlalchemy_utils.types.ltree import LQUERY
 
+from app.app_utils import decode_label_from_ltree
+from app.app_utils import encode_label_for_ltree
+from app.app_utils import encode_path_for_ltree
 from app.models.base_models import APIResponse
 from app.models.models_items import DELETEItem
 from app.models.models_items import GETItem
@@ -47,28 +50,29 @@ def get_items_by_location(params: GETItem, api_response: APIResponse):
         db.session.query(ItemModel, StorageModel, ExtendedModel)
         .join(StorageModel, ExtendedModel)
         .filter(
-            ItemModel.container == params.container,
+            ItemModel.container_code == params.container_code,
             ItemModel.zone == params.zone,
             ItemModel.archived == params.archived,
         )
     )
-    if params.path:
-        regex = f'{params.path}.*{{1}}'
-        item_query = item_query.filter(ItemModel.path.lquery(expression.cast(regex, LQUERY)))
+    if params.parent_path:
+        regex = f'{encode_path_for_ltree(params.parent_path)}'
+        item_query = item_query.filter(ItemModel.parent_path.lquery(expression.cast(regex, LQUERY)))
     paginate(params, api_response, item_query, combine_item_tables)
 
 
 def create_item(data: POSTItem, api_response: APIResponse):
+    encoded_item_name = encode_label_for_ltree(data.name)
     item_model_data = {
         'parent': data.parent,
-        'path': Ltree(f'{data.path}.{data.name}'),
+        'parent_path': Ltree(f'{encode_path_for_ltree(data.parent_path)}') if data.parent_path else None,
         'archived': False,
         'type': data.type,
         'zone': data.zone,
-        'name': data.name,
+        'name': encoded_item_name,
         'size': data.size,
         'owner': data.owner,
-        'container': data.container,
+        'container_code': data.container_code,
         'container_type': data.container_type,
     }
     item = ItemModel(**item_model_data)
@@ -93,14 +97,15 @@ def create_item(data: POSTItem, api_response: APIResponse):
 
 def update_item(item_id: UUID, data: PUTItem, api_response: APIResponse):
     item = db.session.query(ItemModel).filter_by(id=item_id).first()
+    encoded_item_name = encode_label_for_ltree(data.name)
     item.parent = data.parent
-    item.path = Ltree(f'{data.path}.{data.name}')
+    item.parent_path = Ltree(f'{encode_path_for_ltree(data.parent_path)}') if data.parent_path else None
     item.type = data.type
     item.zone = data.zone
-    item.name = data.name
+    item.name = encoded_item_name
     item.size = data.size
     item.owner = data.owner
-    item.container = data.container
+    item.container_code = data.container_code
     item.container_type = data.container_type
     storage = db.session.query(StorageModel).filter_by(item_id=item_id).first()
     storage.location_uri = data.location_uri
@@ -114,12 +119,35 @@ def update_item(item_id: UUID, data: PUTItem, api_response: APIResponse):
     api_response.result = combine_item_tables((item, storage, extended))
 
 
-def get_available_file_path(container: UUID, zone: int, path: Ltree, archived: bool, recursions: int = 1) -> Ltree:
-    item = db.session.query(ItemModel).filter_by(container=container, zone=zone, path=path, archived=archived).first()
+def get_available_file_name(
+    container_code: UUID,
+    zone: int,
+    encoded_item_name: str,
+    encoded_item_path: Ltree,
+    archived: bool,
+    recursions: int = 1,
+) -> str:
+    item = (
+        db.session.query(ItemModel)
+        .filter_by(
+            container_code=container_code,
+            zone=zone,
+            name=encoded_item_name,
+            parent_path=encoded_item_path,
+            archived=archived,
+        )
+        .first()
+    )
     if item is None:
-        return path
-    new_path = Ltree(f'{str(path)}_{recursions}') if '_copy' in str(path) else Ltree(f'{str(path)}_copy')
-    return get_available_file_path(container, zone, new_path, archived, recursions + 1)
+        return encoded_item_name
+    decoded_item_name = decode_label_from_ltree(encoded_item_name)
+    decoded_new_name = (
+        f'{decoded_item_name}_{recursions}' if '_copy' in decoded_item_name else f'{decoded_item_name}_copy'
+    )
+    encoded_new_name = encode_label_for_ltree(decoded_new_name)
+    return get_available_file_name(
+        container_code, zone, encoded_new_name, encoded_item_path, archived, recursions + 1
+    )
 
 
 def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
@@ -132,13 +160,13 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
     item = item_result[0]
     item.archived = params.archived
     if params.archived:
-        item.restore_path = item.path
-        item.path = get_available_file_path(item.container, item.zone, Ltree(f'{item.name}'), True)
-        item.name = str(item.path).split('.')[-1]
+        item.name = get_available_file_name(item.container_code, item.zone, item.name, None, True)
+        item.restore_path = item.parent_path
+        item.parent_path = None
     else:
-        item.path = get_available_file_path(item.container, item.zone, item.restore_path, False)
+        item.name = get_available_file_name(item.container_code, item.zone, item.name, item.restore_path, False)
+        item.parent_path = item.restore_path
         item.restore_path = None
-        item.name = str(item.path).split('.')[-1]
     db.session.commit()
     db.session.refresh(item)
     api_response.result = combine_item_tables(item_result)
