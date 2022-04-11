@@ -33,9 +33,9 @@ pipeline {
                 export OPSDB_UTILILT_HOST=db
                 export OPSDB_UTILILT_PORT=5432
                 export OPSDB_UTILILT_NAME=metadata
-                [ ! -f .env ] && touch .env
-                [ -d local_config/pgadmin/sessions ] && sudo chmod 777 -R -f local_config/pgadmin/sessions
-                sudo chmod 777 -R -f local_config/pgadmin/sessions                
+                [ ! -f ${env.WORKSPACE}/.env ] && touch ${env.WORKSPACE}/.env
+                [ -d ${env.WORKSPACE}/local_config/pgadmin/sessions ] && sudo chmod 777 -R -f ${env.WORKSPACE}/local_config/pgadmin/sessions
+                sudo chmod 777 -R -f ${env.WORKSPACE}/local_config/pgadmin/sessions                
                 docker build -t web .
                 docker-compose -f docker-compose.yaml down -v
                 docker-compose up -d
@@ -84,16 +84,16 @@ pipeline {
     }
 
     stage('STAGING Git clone') {
-        when { branch 'main' }
+        when { branch 'k8s-staging' }
         steps {
-            git branch: 'main',
-                url: 'https://github.com/PilotDataPlatform/metadata.git',
-                credentialsId: 'pilot-gh'
+            git branch: 'k8s-staging',
+                url: 'https://git.indocresearch.org/pilot/metadata.git',
+                credentialsId: 'lzhao'
         }
     }
 
     stage('STAGING Build and push image') {
-      when {branch "main"}
+      when {branch "k8s-staging"}
       steps {
         script {
           docker.withRegistry('https://ghcr.io', registryCredential) {
@@ -105,14 +105,14 @@ pipeline {
     }
 
     stage('STAGING Remove image') {
-      when {branch "main"}
+      when {branch "k8s-staging"}
       steps{
         sh "docker rmi $imagename:$commit"
       }
     }
 
     stage('STAGING Deploy') {
-      when {branch "main"}
+      when {branch "k8s-staging"}
       steps{
         build(job: "/VRE-IaC/Staging-UpdateAppVersion", parameters: [
           [$class: 'StringParameterValue', name: 'TF_TARGET_ENV', value: 'staging' ],
