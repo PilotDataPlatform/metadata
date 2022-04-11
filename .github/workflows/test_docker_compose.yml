@@ -7,8 +7,8 @@ on:
     branches: [ develop ]
 
 jobs:
-  test-build-publish:
-    name: Test Build and Publish
+  run-docker-compose-tests:
+    name: Run Tests
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
