@@ -28,3 +28,26 @@ jobs:
             poetry-${{ hashFiles('**/poetry.lock') }}
       - name: Poetry Version
         run: poetry version
+      - name: Start Docker Compose
+        run: |
+          echo "OPSDB_UTILILT_USERNAME=postgres" >> $GITHUB_ENV
+          echo "OPSDB_UTILILT_PASSWORD=postgres" >> $GITHUB_ENV
+          echo "OPSDB_UTILILT_HOST=db" >> $GITHUB_ENV
+          echo "OPSDB_UTILILT_NAME=metadata" >> $GITHUB_ENV
+          [ ! -f .env ] && touch .env
+          [ -d local_config/pgadmin/sessions ] && sudo chmod 777 -R -f local_config/pgadmin/sessions
+          sudo chmod 777 -R -f local_config/pgadmin/sessions                
+          docker build -t web .
+          docker-compose -f docker-compose.yaml down -v
+          docker-compose up -d
+      - name: Run Tests Inside Compose
+        run: |
+          docker-compose exec -T web /bin/bash
+          pwd
+          hostname
+          docker-compose exec -T web pip install --user poetry==1.1.12
+          docker-compose exec -T web poetry config virtualenvs.in-project false
+          docker-compose exec -T web poetry install --no-root --no-interaction
+          docker-compose exec -T web poetry run pytest --verbose -c tests/pytest.ini
+      - name: Tear Down Docker Compose
+        run: docker-compose -f docker-compose.yaml down -v
