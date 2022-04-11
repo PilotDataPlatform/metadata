@@ -12,5 +12,6 @@ kubernetes
 .gitignore
 .gitlab-ci*
 gitlab-ci*
+.github
 Dockerfile*
 Jenkinsfile

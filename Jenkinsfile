@@ -10,16 +10,16 @@ pipeline {
     stages {
 
     stage('DEV Git clone') {
-        when { branch 'k8s-dev' }
+        when { branch 'develop' }
         steps {
-            git branch: 'k8s-dev',
-                url: 'https://git.indocresearch.org/pilot/metadata.git',
-                credentialsId: 'lzhao'
+            git branch: 'develop',
+                url: 'https://github.com/PilotDataPlatform/metadata.git',
+                credentialsId: 'pilot-gh'
         }
     }
 
     stage('DEV Run unit tests') {
-        when { branch 'k8s-dev' }
+        when { branch 'develop' }
         steps {
             withCredentials([
                 usernamePassword(credentialsId: 'indoc-ssh', usernameVariable: 'SUDO_USERNAME', passwordVariable: 'SUDO_PASSWORD'),
@@ -54,7 +54,7 @@ pipeline {
     }
 
     stage('DEV Build and push image') {
-      when {branch "k8s-dev"}
+      when {branch "develop"}
       steps {
         script {
           docker.withRegistry('https://ghcr.io', registryCredential) {
@@ -66,14 +66,14 @@ pipeline {
     }
 
     stage('DEV Remove image') {
-      when {branch "k8s-dev"}
+      when {branch "develop"}
       steps{
         sh "docker rmi $imagename:$commit"
       }
     }
 
     stage('DEV Deploy') {
-      when {branch "k8s-dev"}
+      when {branch "develop"}
       steps{
         build(job: "/VRE-IaC/UpdateAppVersion", parameters: [
           [$class: 'StringParameterValue', name: 'TF_TARGET_ENV', value: 'dev' ],
