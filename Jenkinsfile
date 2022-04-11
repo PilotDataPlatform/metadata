@@ -1,10 +1,9 @@
 pipeline {
     agent { label 'small' }
     environment {
-      imagename_dev = "registry-gitlab.indocresearch.org/pilot/metadata"
-      imagename_staging = "registry-gitlab.indocresearch.org/pilot/metadata"
+      imagename = "ghcr.io/pilotdataplatform/metadata"
       commit = sh(returnStdout: true, script: 'git describe --always').trim()
-      registryCredential = 'pilot-gitlab-registry'
+      registryCredential = 'pilot-ghcr'
       dockerImage = ''
     }
 
@@ -34,10 +33,10 @@ pipeline {
                 export OPSDB_UTILILT_HOST=db
                 export OPSDB_UTILILT_PORT=5432
                 export OPSDB_UTILILT_NAME=metadata
-                [ ! -f /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/.env ] && touch /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/.env
-                [ -d /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions ] && sudo chmod 777 -R -f /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions
-                sudo chmod 777 -R -f /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions                
-                docker build --add-host git.indocresearch.org:10.4.3.151 -t web .
+                [ ! -f ${env.WORKSPACE}/.env ] && touch ${env.WORKSPACE}/.env
+                [ -d ${env.WORKSPACE}/local_config/pgadmin/sessions ] && sudo chmod 777 -R -f ${env.WORKSPACE}/local_config/pgadmin/sessions
+                sudo chmod 777 -R -f ${env.WORKSPACE}/local_config/pgadmin/sessions                
+                docker build -t web .
                 docker-compose -f docker-compose.yaml down -v
                 docker-compose up -d
                 sleep 10s
@@ -58,8 +57,8 @@ pipeline {
       when {branch "k8s-dev"}
       steps {
         script {
-          docker.withRegistry('https://registry-gitlab.indocresearch.org', registryCredential) {
-              customImage = docker.build("registry-gitlab.indocresearch.org/pilot/metadata:$commit", "--add-host git.indocresearch.org:10.4.3.151 .")
+          docker.withRegistry('https://ghcr.io', registryCredential) {
+              customImage = docker.build("$imagename:$commit")
               customImage.push()
           }
         }
@@ -69,7 +68,7 @@ pipeline {
     stage('DEV Remove image') {
       when {branch "k8s-dev"}
       steps{
-        sh "docker rmi $imagename_dev:$commit"
+        sh "docker rmi $imagename:$commit"
       }
     }
 
@@ -97,8 +96,8 @@ pipeline {
       when {branch "k8s-staging"}
       steps {
         script {
-          docker.withRegistry('https://registry-gitlab.indocresearch.org', registryCredential) {
-              customImage = docker.build("registry-gitlab.indocresearch.org/pilot/metadata:$commit", "--add-host git.indocresearch.org:10.4.3.151 .")
+          docker.withRegistry('https://ghcr.io', registryCredential) {
+              customImage = docker.build("$imagename:$commit")
               customImage.push()
           }
         }
@@ -108,7 +107,7 @@ pipeline {
     stage('STAGING Remove image') {
       when {branch "k8s-staging"}
       steps{
-        sh "docker rmi $imagename_staging:$commit"
+        sh "docker rmi $imagename:$commit"
       }
     }
 
