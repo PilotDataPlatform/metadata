@@ -47,6 +47,7 @@ class TestItems:
             'archived': False,
             'zone': 0,
             'container_code': reused_container_code,
+            'recursive': False,
         }
         response = self.app.get('/v1/item/search/', params=params)
         assert response.status_code == 200
@@ -96,8 +97,9 @@ class TestItems:
             'parent_path': 'folder1.folder2',
             'archived': False,
             'container_code': reused_container_code,
+            'recursive': False,
         }
-        response = self.app.get('/v1/item/search', params=params)
+        response = self.app.get('/v1/item/search/', params=params)
         assert response.status_code == 422
 
     def test_08_create_item_wrong_type(self):
