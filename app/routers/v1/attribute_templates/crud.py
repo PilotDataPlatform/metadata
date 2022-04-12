@@ -48,7 +48,7 @@ def format_attributes_for_json(attributes: POSTTemplateAttributes) -> List[dict]
                 'name': attribute.name,
                 'optional': attribute.optional,
                 'type': attribute.type,
-                'value': attribute.value,
+                'options': attribute.options,
             }
         )
     return json_attributes

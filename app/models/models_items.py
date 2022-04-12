@@ -24,11 +24,20 @@ from .base_models import APIResponse
 
 
 class GETItem(BaseModel):
-    id: Optional[UUID]
-    container_code: Optional[str]
-    zone: Optional[int]
+    id: UUID
+
+
+class GETItemsByIDs(BaseModel):
+    page_size: int = 10
+    page: int = 0
+
+
+class GETItemsByLocation(BaseModel):
+    container_code: str
+    zone: int
+    recursive: bool
+    archived: bool = False
     parent_path: Optional[str]
-    archived: Optional[bool]
     page_size: int = 10
     page: int = 0
 
@@ -49,14 +58,15 @@ class GETItemResponse(APIResponse):
             'container_type': 'project',
             'storage': {
                 'id': 'ba623005-8183-419a-972a-e4ce0d539349',
-                'item_id': '85465212-168a-4f0c-a7aa-f3a19795d2ff',
                 'location_uri': 'https://example.com/item',
                 'version': '1.0',
             },
             'extended': {
                 'id': 'dc763d28-7e74-4db3-a702-fa719aa702c6',
-                'item_id': '85465212-168a-4f0c-a7aa-f3a19795d2ff',
-                'extra': {},
+                'extra': {
+                    'tags': ['tag1', 'tag2'],
+                    'attributes': {'101778d7-a628-41ea-823b-e4b377f3476c': {'key1': 'value1', 'key2': 'value2'}},
+                },
             },
         },
     )
@@ -74,7 +84,9 @@ class POSTItem(BaseModel):
     container_type: str = 'project'
     location_uri: str
     version: str
-    extra: dict = {}
+    tags: list[str] = []
+    attribute_template_id: Optional[UUID]
+    attributes: dict = {}
 
     @validator('type')
     def type_validation(cls, v):
@@ -88,11 +100,21 @@ class POSTItem(BaseModel):
             raise ValueError('container_type must be project or dataset')
         return v
 
+    @validator('tags')
+    def tags_count(cls, v):
+        if len(v) > 10:
+            raise ValueError('Maximum of 10 tags')
+        return v
+
     @validator('name')
     def folder_name_validation(cls, v, values):
         if 'type' in values and values['type'] == 'folder' and '.' in v:
             raise ValueError('Folder name cannot contain reserved character .')
         return v
+
+
+class POSTItems(BaseModel):
+    items: list[POSTItem]
 
 
 class PATCHItem(BaseModel):
@@ -110,6 +132,10 @@ class POSTItemResponse(GETItemResponse):
 
 class PUTItem(POSTItem):
     pass
+
+
+class PUTItems(BaseModel):
+    items: list[PUTItem]
 
 
 class PUTItemResponse(GETItemResponse):

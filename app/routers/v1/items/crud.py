@@ -24,14 +24,17 @@ from app.app_utils import decode_label_from_ltree
 from app.app_utils import encode_label_for_ltree
 from app.app_utils import encode_path_for_ltree
 from app.models.base_models import APIResponse
-from app.models.models_items import DELETEItem
 from app.models.models_items import GETItem
 from app.models.models_items import PATCHItem
 from app.models.models_items import POSTItem
+from app.models.models_items import POSTItems
 from app.models.models_items import PUTItem
+from app.models.models_items import PUTItems
+from app.models.sql_attribute_templates import AttributeTemplateModel
 from app.models.sql_extended import ExtendedModel
 from app.models.sql_items import ItemModel
 from app.models.sql_storage import StorageModel
+from app.routers.router_exceptions import BadRequestException
 from app.routers.router_utils import paginate
 
 
@@ -44,94 +47,6 @@ def combine_item_tables(item_result: tuple) -> dict:
     item_data['storage'] = storage_data
     item_data['extended'] = extended_data
     return item_data
-
-
-def get_item_by_id(params: GETItem, api_response: APIResponse):
-    item_query = (
-        db.session.query(ItemModel, StorageModel, ExtendedModel)
-        .join(StorageModel, ExtendedModel)
-        .filter(ItemModel.id == params.id)
-    )
-    item_result = item_query.first()
-    if item_result:
-        api_response.result = combine_item_tables(item_result)
-    else:
-        api_response.total = 0
-        api_response.num_of_pages = 0
-
-
-def get_items_by_location(params: GETItem, api_response: APIResponse):
-    item_query = (
-        db.session.query(ItemModel, StorageModel, ExtendedModel)
-        .join(StorageModel, ExtendedModel)
-        .filter(
-            ItemModel.container_code == params.container_code,
-            ItemModel.zone == params.zone,
-            ItemModel.archived == params.archived,
-        )
-    )
-    if params.parent_path:
-        regex = f'{encode_path_for_ltree(params.parent_path)}'
-        item_query = item_query.filter(ItemModel.parent_path.lquery(expression.cast(regex, LQUERY)))
-    paginate(params, api_response, item_query, combine_item_tables)
-
-
-def create_item(data: POSTItem, api_response: APIResponse):
-    encoded_item_name = encode_label_for_ltree(data.name)
-    item_model_data = {
-        'parent': data.parent,
-        'parent_path': Ltree(f'{encode_path_for_ltree(data.parent_path)}') if data.parent_path else None,
-        'archived': False,
-        'type': data.type,
-        'zone': data.zone,
-        'name': encoded_item_name,
-        'size': data.size,
-        'owner': data.owner,
-        'container_code': data.container_code,
-        'container_type': data.container_type,
-    }
-    item = ItemModel(**item_model_data)
-    storage_model_data = {
-        'item_id': item.id,
-        'location_uri': data.location_uri,
-        'version': data.version,
-    }
-    storage = StorageModel(**storage_model_data)
-    extended_model_data = {
-        'item_id': item.id,
-        'extra': data.extra,
-    }
-    extended = ExtendedModel(**extended_model_data)
-    db.session.add_all([item, storage, extended])
-    db.session.commit()
-    db.session.refresh(item)
-    db.session.refresh(storage)
-    db.session.refresh(extended)
-    api_response.result = combine_item_tables((item, storage, extended))
-
-
-def update_item(item_id: UUID, data: PUTItem, api_response: APIResponse):
-    item = db.session.query(ItemModel).filter_by(id=item_id).first()
-    encoded_item_name = encode_label_for_ltree(data.name)
-    item.parent = data.parent
-    item.parent_path = Ltree(f'{encode_path_for_ltree(data.parent_path)}') if data.parent_path else None
-    item.type = data.type
-    item.zone = data.zone
-    item.name = encoded_item_name
-    item.size = data.size
-    item.owner = data.owner
-    item.container_code = data.container_code
-    item.container_type = data.container_type
-    storage = db.session.query(StorageModel).filter_by(item_id=item_id).first()
-    storage.location_uri = data.location_uri
-    storage.version = data.version
-    extended = db.session.query(ExtendedModel).filter_by(item_id=item_id).first()
-    extended.extra = data.extra
-    db.session.commit()
-    db.session.refresh(item)
-    db.session.refresh(storage)
-    db.session.refresh(extended)
-    api_response.result = combine_item_tables((item, storage, extended))
 
 
 def get_available_file_name(
@@ -159,10 +74,156 @@ def get_available_file_name(
     decoded_new_name = (
         f'{decoded_item_name}_{recursions}' if '_copy' in decoded_item_name else f'{decoded_item_name}_copy'
     )
-    encoded_new_name = encode_label_for_ltree(decoded_new_name)
     return get_available_file_name(
-        container_code, zone, encoded_new_name, encoded_item_path, archived, recursions + 1
+        container_code, zone, encode_label_for_ltree(decoded_new_name), encoded_item_path, archived, recursions + 1
     )
+
+
+def attributes_match_template(attributes: dict, template_id: UUID) -> bool:
+    if attributes == {} and not template_id:
+        return True
+    try:
+        attribute_template = db.session.query(AttributeTemplateModel).filter_by(id=template_id).first().to_dict()
+        if len(attributes) > len(attribute_template['attributes']):
+            return False
+        for format in attribute_template['attributes']:
+            if not format['optional']:
+                input_value = attributes[format['name']]
+                if 'options' in format:
+                    if format['options']:
+                        if input_value not in format['options']:
+                            return False
+        return True
+    except Exception:
+        return False
+
+
+def get_item_by_id(params: GETItem, api_response: APIResponse):
+    item_query = (
+        db.session.query(ItemModel, StorageModel, ExtendedModel)
+        .join(StorageModel, ExtendedModel)
+        .filter(ItemModel.id == params.id)
+    )
+    item_result = item_query.first()
+    if item_result:
+        api_response.result = combine_item_tables(item_result)
+    else:
+        api_response.total = 0
+        api_response.num_of_pages = 0
+
+
+def get_items_by_ids(params: GETItem, ids: list[UUID], api_response: APIResponse):
+    item_query = (
+        db.session.query(ItemModel, StorageModel, ExtendedModel)
+        .join(StorageModel, ExtendedModel)
+        .filter(ItemModel.id.in_(ids))
+    )
+    paginate(params, api_response, item_query, combine_item_tables)
+
+
+def get_items_by_location(params: GETItem, api_response: APIResponse):
+    item_query = (
+        db.session.query(ItemModel, StorageModel, ExtendedModel)
+        .join(StorageModel, ExtendedModel)
+        .filter(
+            ItemModel.container_code == params.container_code,
+            ItemModel.zone == params.zone,
+            ItemModel.archived == params.archived,
+        )
+    )
+    if params.parent_path:
+        regex = f'{encode_path_for_ltree(params.parent_path)}'
+        if params.recursive:
+            regex += '.*'
+        item_query = item_query.filter(ItemModel.parent_path.lquery(expression.cast(regex, LQUERY)))
+    else:
+        if not params.recursive:
+            item_query = item_query.filter(ItemModel.parent_path == None)
+    paginate(params, api_response, item_query, combine_item_tables)
+
+
+def create_item(data: POSTItem) -> dict:
+    if not attributes_match_template(data.attributes, data.attribute_template_id):
+        raise BadRequestException('Attributes do not match attribute template')
+    encoded_item_name = encode_label_for_ltree(data.name)
+    item_model_data = {
+        'parent': data.parent,
+        'parent_path': Ltree(f'{encode_path_for_ltree(data.parent_path)}') if data.parent_path else None,
+        'archived': False,
+        'type': data.type,
+        'zone': data.zone,
+        'name': encoded_item_name,
+        'size': data.size,
+        'owner': data.owner,
+        'container_code': data.container_code,
+        'container_type': data.container_type,
+    }
+    item = ItemModel(**item_model_data)
+    storage_model_data = {
+        'item_id': item.id,
+        'location_uri': data.location_uri,
+        'version': data.version,
+    }
+    storage = StorageModel(**storage_model_data)
+    extended_model_data = {
+        'item_id': item.id,
+        'extra': {
+            'tags': data.tags,
+            'attributes': {str(data.attribute_template_id): data.attributes} if data.attributes else {},
+        },
+    }
+    extended = ExtendedModel(**extended_model_data)
+    db.session.add_all([item, storage, extended])
+    db.session.commit()
+    db.session.refresh(item)
+    db.session.refresh(storage)
+    db.session.refresh(extended)
+    return combine_item_tables((item, storage, extended))
+
+
+def create_items(data: POSTItems, api_response: APIResponse):
+    results = []
+    for item in data.items:
+        results.append(create_item(item))
+    api_response.result = results
+    api_response.total = len(results)
+
+
+def update_item(item_id: UUID, data: PUTItem) -> dict:
+    if not attributes_match_template(data.attributes, data.attribute_template_id):
+        raise BadRequestException('Attributes do not match attribute template')
+    item = db.session.query(ItemModel).filter_by(id=item_id).first()
+    encoded_item_name = encode_label_for_ltree(data.name)
+    item.parent = data.parent
+    item.parent_path = Ltree(f'{encode_path_for_ltree(data.parent_path)}') if data.parent_path else None
+    item.type = data.type
+    item.zone = data.zone
+    item.name = encoded_item_name
+    item.size = data.size
+    item.owner = data.owner
+    item.container_code = data.container_code
+    item.container_type = data.container_type
+    storage = db.session.query(StorageModel).filter_by(item_id=item_id).first()
+    storage.location_uri = data.location_uri
+    storage.version = data.version
+    extended = db.session.query(ExtendedModel).filter_by(item_id=item_id).first()
+    extended.extra = {
+        'tags': data.tags,
+        'attributes': {str(data.attribute_template_id): data.attributes} if data.attributes else {},
+    }
+    db.session.commit()
+    db.session.refresh(item)
+    db.session.refresh(storage)
+    db.session.refresh(extended)
+    return combine_item_tables((item, storage, extended))
+
+
+def update_items(ids: list[UUID], data: PUTItems, api_response: APIResponse):
+    results = []
+    for i in range(0, len(ids)):
+        results.append(update_item(ids[i], data.items[i]))
+    api_response.result = results
+    api_response.total = len(results)
 
 
 def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
@@ -187,14 +248,19 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
     api_response.result = combine_item_tables(item_result)
 
 
-def delete_item_by_id(params: DELETEItem, api_response: APIResponse):
+def delete_item_by_id(id: UUID, api_response: APIResponse):
     item_query = (
         db.session.query(ItemModel, StorageModel, ExtendedModel)
         .join(StorageModel, ExtendedModel)
-        .filter(ItemModel.id == params.id)
+        .filter(ItemModel.id == id)
     )
     for row in item_query.first():
         db.session.delete(row)
     db.session.commit()
     api_response.total = 0
     api_response.num_of_pages = 0
+
+
+def delete_items_by_ids(ids: list[UUID], api_response: APIResponse):
+    for id in ids:
+        delete_item_by_id(id, api_response)

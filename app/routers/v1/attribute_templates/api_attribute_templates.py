@@ -18,6 +18,7 @@ from uuid import UUID
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi_utils.cbv import cbv
+from common import LoggerFactory
 
 from app.models.base_models import EAPIResponseCode
 from app.models.models_attribute_templates import DELETETemplate
@@ -39,6 +40,7 @@ from .crud import get_templates_by_project_id
 from .crud import update_template
 
 router = APIRouter()
+_logger = LoggerFactory('api_attribute_templates').get_logger()
 
 
 @cbv(router)
@@ -48,7 +50,8 @@ class APIAttributeTemplates:
         try:
             api_response = GETTemplateResponse()
             get_template_by_id(params, api_response)
-        except Exception:
+        except Exception as e:
+            _logger.exception(e)
             set_api_response_error(
                 api_response, f'Failed to get template with id {params.id}', EAPIResponseCode.not_found
             )
@@ -59,7 +62,8 @@ class APIAttributeTemplates:
         try:
             api_response = GETTemplateResponse()
             get_templates_by_project_id(params, api_response)
-        except Exception:
+        except Exception as e:
+            _logger.exception(e)
             set_api_response_error(
                 api_response, f'Failed to get templates with project_id {params.project_id}', EAPIResponseCode.not_found
             )
@@ -70,7 +74,8 @@ class APIAttributeTemplates:
         try:
             api_response = POSTTemplateResponse()
             create_template(data, api_response)
-        except Exception:
+        except Exception as e:
+            _logger.exception(e)
             set_api_response_error(api_response, 'Failed to create attribute template', EAPIResponseCode.internal_error)
         return api_response.json_response()
 
@@ -81,7 +86,8 @@ class APIAttributeTemplates:
             update_template(id, data, api_response)
         except EntityNotFoundException:
             set_api_response_error(api_response, f'Failed to get template with id {id}', EAPIResponseCode.not_found)
-        except Exception:
+        except Exception as e:
+            _logger.exception(e)
             set_api_response_error(api_response, 'Failed to update attribute template', EAPIResponseCode.internal_error)
         return api_response.json_response()
 
@@ -94,6 +100,7 @@ class APIAttributeTemplates:
             set_api_response_error(
                 api_response, f'Failed to get template with id {params.id}', EAPIResponseCode.not_found
             )
-        except Exception:
+        except Exception as e:
+            _logger.exception(e)
             set_api_response_error(api_response, 'Failed to delete template', EAPIResponseCode.internal_error)
         return api_response.json_response()
