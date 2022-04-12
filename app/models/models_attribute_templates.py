@@ -1,4 +1,5 @@
 from typing import List
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -35,7 +36,7 @@ class GETTemplateResponse(APIResponse):
                     'name': 'attribute_2',
                     'optional': True,
                     'type': 'multiple_choice',
-                    'value': 'val1, val2',
+                    'options': ['val1, val2'],
                 },
             ],
         },
@@ -46,7 +47,7 @@ class POSTTemplateAttributes(BaseModel):
     name: str
     optional: bool = True
     type: str = 'text'
-    value: str
+    options: Optional[list[str]]
 
     @validator('type')
     def type_validation(cls, v):
