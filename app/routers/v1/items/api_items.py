@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import Query
 from fastapi_utils.cbv import cbv
+from common import LoggerFactory
 
 from app.models.base_models import EAPIResponseCode
 from app.models.models_items import DELETEItem
@@ -36,6 +37,7 @@ from .crud import update_item
 from .crud import update_items
 
 router = APIRouter()
+_logger = LoggerFactory('api_items').get_logger()
 
 
 @cbv(router)
@@ -45,7 +47,8 @@ class APIItems:
         try:
             api_response = GETItemResponse()
             get_item_by_id(params, api_response)
-        except Exception:
+        except Exception as e:
+            _logger.exception(e)
             set_api_response_error(api_response, f'Failed to get item with id {params.id}', EAPIResponseCode.not_found)
         return api_response.json_response()
 
@@ -54,7 +57,8 @@ class APIItems:
         try:
             api_response = GETItemResponse()
             get_items_by_ids(params, ids, api_response)
-        except Exception:
+        except Exception as e:
+            _logger.exception(e)
             set_api_response_error(api_response, 'Failed to get item', EAPIResponseCode.not_found)
         return api_response.json_response()
 
@@ -63,7 +67,8 @@ class APIItems:
         try:
             api_response = GETItemResponse()
             get_items_by_location(params, api_response)
-        except Exception:
+        except Exception as e:
+            _logger.exception(e)
             set_api_response_error(api_response, 'Failed to get item', EAPIResponseCode.not_found)
         return api_response.json_response()
 
@@ -74,7 +79,8 @@ class APIItems:
             api_response.result = create_item(data)
         except BadRequestException as e:
             set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
-        except Exception:
+        except Exception as e:
+            _logger.exception(e)
             set_api_response_error(api_response, 'Failed to create item', EAPIResponseCode.internal_error)
         return api_response.json_response()
 
@@ -85,7 +91,8 @@ class APIItems:
             create_items(data, api_response)
         except BadRequestException as e:
             set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
-        except Exception:
+        except Exception as e:
+            _logger.exception(e)
             set_api_response_error(api_response, 'Failed to create items', EAPIResponseCode.internal_error)
         return api_response.json_response()
 
@@ -96,7 +103,8 @@ class APIItems:
             api_response.result = update_item(id, data)
         except BadRequestException as e:
             set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
-        except Exception:
+        except Exception as e:
+            _logger.exception(e)
             set_api_response_error(api_response, 'Failed to update item', EAPIResponseCode.internal_error)
         return api_response.json_response()
 
@@ -109,7 +117,8 @@ class APIItems:
             update_items(ids, data, api_response)
         except BadRequestException as e:
             set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
-        except Exception:
+        except Exception as e:
+            _logger.exception(e)
             set_api_response_error(api_response, 'Failed to update items', EAPIResponseCode.internal_error)
         return api_response.json_response()
 
@@ -118,7 +127,8 @@ class APIItems:
         try:
             api_response = PATCHItemResponse()
             archive_item_by_id(params, api_response)
-        except Exception:
+        except Exception as e:
+            _logger.exception(e)
             set_api_response_error(api_response, 'Failed to archive item', EAPIResponseCode.internal_error)
         return api_response.json_response()
 
@@ -127,7 +137,8 @@ class APIItems:
         try:
             api_response = DELETEItemResponse()
             delete_item_by_id(params.id, api_response)
-        except Exception:
+        except Exception as e:
+            _logger.exception(e)
             set_api_response_error(api_response, 'Failed to delete item', EAPIResponseCode.internal_error)
         return api_response.json_response()
 
@@ -136,6 +147,7 @@ class APIItems:
         try:
             api_response = DELETEItemResponse()
             delete_items_by_ids(ids, api_response)
-        except Exception:
+        except Exception as e:
+            _logger.exception(e)
             set_api_response_error(api_response, 'Failed to delete items', EAPIResponseCode.not_found)
         return api_response.json_response()
