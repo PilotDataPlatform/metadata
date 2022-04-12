@@ -1,5 +1,10 @@
 # Metadata
 
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=for-the-badge)](https://www.gnu.org/licenses/agpl-3.0)
+[![Python 3.9](https://img.shields.io/badge/python-3.9-green?style=for-the-badge)](https://www.python.org/)
+![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/pilotdataplatform/metadata/Run%20Docker%20Compose%20Tests/develop?style=for-the-badge)
+
+
 ## About
 Manages metadata such as file hierarchy, project and user ownership, names, types, etc.
 
