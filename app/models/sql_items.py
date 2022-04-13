@@ -1,22 +1,24 @@
 # Copyright (C) 2022 Indoc Research
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Affero General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import uuid
+from datetime import datetime
 
 from sqlalchemy import Boolean
 from sqlalchemy import Column
+from sqlalchemy import DateTime
 from sqlalchemy import Enum
 from sqlalchemy import Integer
 from sqlalchemy import String
@@ -45,6 +47,8 @@ class ItemModel(Base):
     owner = Column(String())
     container_code = Column(String(), nullable=False)
     container_type = Column(Enum('project', 'dataset', name='container_enum', create_type=False), nullable=False)
+    created_time = Column(DateTime(), default=datetime.utcnow, nullable=False)
+    last_updated_time = Column(DateTime(), default=datetime.utcnow, nullable=False)
 
     __table_args__ = ({'schema': ConfigClass.METADATA_SCHEMA},)
 
@@ -75,4 +79,6 @@ class ItemModel(Base):
             'owner': self.owner,
             'container_code': self.container_code,
             'container_type': self.container_type,
+            'created_time': str(self.created_time),
+            'last_updated_time': str(self.last_updated_time),
         }
