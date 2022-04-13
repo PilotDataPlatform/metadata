@@ -1,15 +1,15 @@
 # Copyright (C) 2022 Indoc Research
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Affero General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -56,6 +56,8 @@ class GETItemResponse(APIResponse):
             'owner': 'username',
             'container_code': 'project_code',
             'container_type': 'project',
+            'created_time': '2022-04-13 13:30:10.890347',
+            'last_updated_time': '2022-04-13 13:30:10.890347',
             'storage': {
                 'id': 'ba623005-8183-419a-972a-e4ce0d539349',
                 'location_uri': 'https://example.com/item',

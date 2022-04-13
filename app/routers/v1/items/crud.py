@@ -1,18 +1,19 @@
 # Copyright (C) 2022 Indoc Research
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
 # published by the Free Software Foundation, either version 3 of the
 # License, or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Affero General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from datetime import datetime
 from uuid import UUID
 
 from fastapi_sqlalchemy import db
@@ -203,6 +204,7 @@ def update_item(item_id: UUID, data: PUTItem) -> dict:
     item.owner = data.owner
     item.container_code = data.container_code
     item.container_type = data.container_type
+    item.last_updated_time = datetime.utcnow()
     storage = db.session.query(StorageModel).filter_by(item_id=item_id).first()
     storage.location_uri = data.location_uri
     storage.version = data.version
@@ -235,6 +237,7 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
     item_result = item_query.first()
     item = item_result[0]
     item.archived = params.archived
+    item.last_updated_time = datetime.utcnow()
     if params.archived:
         item.name = get_available_file_name(item.container_code, item.zone, item.name, None, True)
         item.restore_path = item.parent_path
