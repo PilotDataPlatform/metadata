@@ -18,41 +18,6 @@ pipeline {
         }
     }
 
-    stage('DEV Run unit tests') {
-        when { branch 'develop' }
-        steps {
-            withCredentials([
-                usernamePassword(credentialsId: 'indoc-ssh', usernameVariable: 'SUDO_USERNAME', passwordVariable: 'SUDO_PASSWORD'),
-                string(credentialsId:'VAULT_TOKEN', variable: 'VAULT_TOKEN'),
-                string(credentialsId:'VAULT_URL', variable: 'VAULT_URL'),
-                file(credentialsId:'VAULT_CRT', variable: 'VAULT_CRT')
-            ]) {
-                sh """
-                export OPSDB_UTILILT_USERNAME=postgres
-                export OPSDB_UTILILT_PASSWORD=postgres
-                export OPSDB_UTILILT_HOST=db
-                export OPSDB_UTILILT_PORT=5432
-                export OPSDB_UTILILT_NAME=metadata
-                [ ! -f ${env.WORKSPACE}/.env ] && touch ${env.WORKSPACE}/.env
-                [ -d ${env.WORKSPACE}/local_config/pgadmin/sessions ] && sudo chmod 777 -R -f ${env.WORKSPACE}/local_config/pgadmin/sessions
-                sudo chmod 777 -R -f ${env.WORKSPACE}/local_config/pgadmin/sessions
-                docker build -t web .
-                docker-compose -f docker-compose.yaml down -v
-                docker-compose up -d
-                sleep 10s
-                docker-compose exec -T web /bin/bash
-                pwd
-                hostname
-                docker-compose exec -T web pip install --user poetry==1.1.12
-                docker-compose exec -T web poetry config virtualenvs.in-project false
-                docker-compose exec -T web poetry install --no-root --no-interaction
-                docker-compose exec -T web poetry run pytest --verbose -c tests/pytest.ini
-                docker-compose -f docker-compose.yaml down -v
-                """
-            }
-        }
-    }
-
     stage('DEV Build and push image') {
       when {branch "develop"}
       steps {
