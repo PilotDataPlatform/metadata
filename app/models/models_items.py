@@ -77,7 +77,7 @@ class GETItemResponse(APIResponse):
 
 
 class POSTItem(BaseModel):
-    parent: UUID
+    parent: Optional[UUID]
     parent_path: Optional[str]
     type: str = 'file'
     zone: int = 0
@@ -94,33 +94,43 @@ class POSTItem(BaseModel):
     attributes: dict = {}
 
     @validator('type')
-    def type_validation(cls, v):
-        if v not in ['file', 'folder']:
-            raise ValueError('type must be file or folder')
+    def type_is_valid(cls, v, values):
+        if v not in ['file', 'folder', 'name_folder']:
+            raise ValueError('type must be one of: file, folder, name_folder')
+        if 'parent' in values and values['parent'] and v == 'name_folder':
+            raise ValueError('Name folders cannot have a parent')
+        if 'parent_path' in values and values['parent_path'] and v == 'name_folder':
+            raise ValueError('Name folders cannot have a parent_path')
+        if 'parent' not in values or not values['parent'] and v != 'name_folder':
+            raise ValueError('Files and folders must have a parent')
+        if 'parent_path' not in values or not values['parent_path'] and v != 'name_folder':
+            raise ValueError('Files and folders must have a parent_path')
         return v
 
     @validator('container_type')
-    def container_type_validation(cls, v):
+    def container_type_is_valid(cls, v, values):
         if v not in ['project', 'dataset']:
             raise ValueError('container_type must be project or dataset')
+        if 'type' in values and values['type'] == 'name_folder' and v != 'project':
+            raise ValueError('Name folders are only allowed in projects')
         return v
 
     @validator('tags')
-    def tags_count(cls, v):
+    def tags_max_10(cls, v):
         if len(v) > 10:
             raise ValueError('Maximum of 10 tags')
         return v
-    
+
     @validator('system_tags')
-    def system_tags_count(cls, v):
+    def system_tags_max_10(cls, v):
         if len(v) > 10:
             raise ValueError('Maximum of 10 system tags')
         return v
 
     @validator('name')
-    def folder_name_validation(cls, v, values):
+    def folder_name_is_valid(cls, v, values):
         if 'type' in values and values['type'] == 'folder' and '.' in v:
-            raise ValueError('Folder name cannot contain reserved character .')
+            raise ValueError('Folder name cannot contain reserved character: .')
         return v
 
 

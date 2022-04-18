@@ -150,7 +150,7 @@ def create_item(data: POSTItem) -> dict:
         raise BadRequestException('Attributes do not match attribute template')
     encoded_item_name = encode_label_for_ltree(data.name)
     item_model_data = {
-        'parent': data.parent,
+        'parent': data.parent if data.parent else None,
         'parent_path': Ltree(f'{encode_path_for_ltree(data.parent_path)}') if data.parent_path else None,
         'archived': False,
         'type': data.type,
@@ -198,7 +198,7 @@ def update_item(item_id: UUID, data: PUTItem) -> dict:
         raise BadRequestException('Attributes do not match attribute template')
     item = db.session.query(ItemModel).filter_by(id=item_id).first()
     encoded_item_name = encode_label_for_ltree(data.name)
-    item.parent = data.parent
+    item.parent = data.parent if data.parent else None,
     item.parent_path = Ltree(f'{encode_path_for_ltree(data.parent_path)}') if data.parent_path else None
     item.type = data.type
     item.zone = data.zone
