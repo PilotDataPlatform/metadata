@@ -152,7 +152,21 @@ class POSTItemResponse(GETItemResponse):
 
 
 class PUTItem(POSTItem):
-    pass
+    parent: Optional[UUID]
+    parent_path: Optional[str]
+    type: Optional[str]
+    zone: Optional[int]
+    name: Optional[str]
+    size: Optional[int]
+    owner: Optional[str]
+    container_code: Optional[str]
+    container_type: Optional[str]
+    location_uri: Optional[str]
+    version: Optional[str]
+    tags: Optional[list[str]]
+    system_tags: Optional[list[str]]
+    attribute_template_id: Optional[UUID]
+    attributes: Optional[dict]
 
 
 class PUTItems(BaseModel):

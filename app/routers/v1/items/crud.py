@@ -194,29 +194,43 @@ def create_items(data: POSTItems, api_response: APIResponse):
 
 
 def update_item(item_id: UUID, data: PUTItem) -> dict:
-    if not attributes_match_template(data.attributes, data.attribute_template_id):
-        raise BadRequestException('Attributes do not match attribute template')
     item = db.session.query(ItemModel).filter_by(id=item_id).first()
-    encoded_item_name = encode_label_for_ltree(data.name)
-    item.parent = data.parent if data.parent else None,
-    item.parent_path = Ltree(f'{encode_path_for_ltree(data.parent_path)}') if data.parent_path else None
-    item.type = data.type
-    item.zone = data.zone
-    item.name = encoded_item_name
-    item.size = data.size
-    item.owner = data.owner
-    item.container_code = data.container_code
-    item.container_type = data.container_type
+    if data.parent != None:
+        item.parent = data.parent if data.parent != '' else None
+    if data.parent_path != None:
+        item.parent_path = Ltree(f'{encode_path_for_ltree(data.parent_path)}') if data.parent_path != '' else None
+    if data.type:
+        item.type = data.type
+    if data.zone:
+        item.zone = data.zone
+    if data.name:
+        item.name = encode_label_for_ltree(data.name)
+    if data.size:
+        item.size = data.size
+    if data.owner:
+        item.owner = data.owner
+    if data.container_code:
+        item.container_code = data.container_code
+    if data.container_type:
+        item.container_type = data.container_type
     item.last_updated_time = datetime.utcnow()
     storage = db.session.query(StorageModel).filter_by(item_id=item_id).first()
-    storage.location_uri = data.location_uri
-    storage.version = data.version
+    if data.location_uri:
+        storage.location_uri = data.location_uri
+    if data.version:
+        storage.version = data.version
     extended = db.session.query(ExtendedModel).filter_by(item_id=item_id).first()
-    extended.extra = {
-        'tags': data.tags,
-        'system_tags': data.system_tags,
-        'attributes': {str(data.attribute_template_id): data.attributes} if data.attributes else {},
-    }
+    extra = {}
+    if data.tags:
+        extra['tags'] = data.tags
+    if data.system_tags:
+        extra['system_tags'] = data.system_tags
+    if data.attribute_template_id and data.attributes:
+        if not attributes_match_template(data.attributes, data.attribute_template_id):
+            raise BadRequestException('Attributes do not match attribute template')
+        extra['attributes'] = ({str(data.attribute_template_id): data.attributes} if data.attributes else {},)
+    if extra:
+        extended.extra = extra
     db.session.commit()
     db.session.refresh(item)
     db.session.refresh(storage)

@@ -373,22 +373,22 @@ class TestItems:
         assert response.status_code == 200
 
     def test_create_name_folder_with_parent_422(self):
-            payload = {
-                'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-                'parent_path': 'folder1.folder2',
-                'type': 'name_folder',
-                'zone': 0,
-                'name': 'file',
-                'size': 0,
-                'owner': 'admin',
-                'container_code': reused_container_code,
-                'container_type': 'project',
-                'location_uri': 'https://example.com',
-                'version': '1.0',
-                'tags': [],
-                'system_tags': [],
-                'attribute_template_id': None,
-                'attributes': {},
-            }
-            response = self.app.post('/v1/item/', json=payload)
-            assert response.status_code == 422
+        payload = {
+            'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+            'parent_path': 'folder1.folder2',
+            'type': 'name_folder',
+            'zone': 0,
+            'name': 'file',
+            'size': 0,
+            'owner': 'admin',
+            'container_code': reused_container_code,
+            'container_type': 'project',
+            'location_uri': 'https://example.com',
+            'version': '1.0',
+            'tags': [],
+            'system_tags': [],
+            'attribute_template_id': None,
+            'attributes': {},
+        }
+        response = self.app.post('/v1/item/', json=payload)
+        assert response.status_code == 422
