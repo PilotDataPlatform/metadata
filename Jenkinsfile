@@ -30,11 +30,11 @@ pipeline {
                 file(credentialsId:'VAULT_CRT', variable: 'VAULT_CRT')
             ]) {
                 sh """
-                export OPSDB_UTILILT_USERNAME=postgres
-                export OPSDB_UTILILT_PASSWORD=postgres
-                export OPSDB_UTILILT_HOST=db
-                export OPSDB_UTILILT_PORT=5432
-                export OPSDB_UTILILT_NAME=metadata
+                export OPSDB_UTILITY_USERNAME=postgres
+                export OPSDB_UTILITY_PASSWORD=postgres
+                export OPSDB_UTILITY_HOST=db
+                export OPSDB_UTILITY_PORT=5432
+                export OPSDB_UTILITY_NAME=metadata
                 [ ! -f /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/.env ] && touch /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/.env
                 [ -d /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions ] && sudo chmod 777 -R -f /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions
                 sudo chmod 777 -R -f /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions                
