@@ -28,11 +28,11 @@ pipeline {
     //             file(credentialsId:'VAULT_CRT', variable: 'VAULT_CRT')
     //         ]) {
     //             sh """
-    //             export OPSDB_UTILILT_USERNAME=postgres
-    //             export OPSDB_UTILILT_PASSWORD=postgres
-    //             export OPSDB_UTILILT_HOST=db
-    //             export OPSDB_UTILILT_PORT=5432
-    //             export OPSDB_UTILILT_NAME=metadata
+    //             export OPSDB_UTILILY_USERNAME=postgres
+    //             export OPSDB_UTILILY_PASSWORD=postgres
+    //             export OPSDB_UTILILY_HOST=db
+    //             export OPSDB_UTILILY_PORT=5432
+    //             export OPSDB_UTILILY_NAME=metadata
     //             [ ! -f ${env.WORKSPACE}/.env ] && touch ${env.WORKSPACE}/.env
     //             [ -d ${env.WORKSPACE}/local_config/pgadmin/sessions ] && sudo chmod 777 -R -f ${env.WORKSPACE}/local_config/pgadmin/sessions
     //             sudo chmod 777 -R -f ${env.WORKSPACE}/local_config/pgadmin/sessions
@@ -84,16 +84,16 @@ pipeline {
     }
 
     stage('STAGING Git clone') {
-        when { branch 'k8s-staging' }
+        when { branch 'main' }
         steps {
-            git branch: 'k8s-staging',
+            git branch: 'main',
                 url: 'https://git.indocresearch.org/pilot/metadata.git',
                 credentialsId: 'lzhao'
         }
     }
 
     stage('STAGING Build and push image') {
-      when {branch "k8s-staging"}
+      when {branch "main"}
       steps {
         script {
           docker.withRegistry('https://ghcr.io', registryCredential) {
@@ -105,14 +105,14 @@ pipeline {
     }
 
     stage('STAGING Remove image') {
-      when {branch "k8s-staging"}
+      when {branch "main"}
       steps{
         sh "docker rmi $imagename:$commit"
       }
     }
 
     stage('STAGING Deploy') {
-      when {branch "k8s-staging"}
+      when {branch "main"}
       steps{
         build(job: "/VRE-IaC/Staging-UpdateAppVersion", parameters: [
           [$class: 'StringParameterValue', name: 'TF_TARGET_ENV', value: 'staging' ],

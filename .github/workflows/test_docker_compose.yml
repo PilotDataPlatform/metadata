@@ -30,10 +30,10 @@ jobs:
         run: poetry version
       - name: Start Docker Compose
         run: |
-          echo "OPSDB_UTILILT_USERNAME=postgres" >> $GITHUB_ENV
-          echo "OPSDB_UTILILT_PASSWORD=postgres" >> $GITHUB_ENV
-          echo "OPSDB_UTILILT_HOST=db" >> $GITHUB_ENV
-          echo "OPSDB_UTILILT_NAME=metadata" >> $GITHUB_ENV
+          echo "OPSDB_UTILILY_USERNAME=postgres" >> $GITHUB_ENV
+          echo "OPSDB_UTILILY_PASSWORD=postgres" >> $GITHUB_ENV
+          echo "OPSDB_UTILILY_HOST=db" >> $GITHUB_ENV
+          echo "OPSDB_UTILILY_NAME=metadata" >> $GITHUB_ENV
           [ ! -f .env ] && touch .env
           [ -d local_config/pgadmin/sessions ] && sudo chmod 777 -R -f local_config/pgadmin/sessions
           sudo chmod 777 -R -f local_config/pgadmin/sessions
