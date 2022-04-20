@@ -257,7 +257,7 @@ class TestItems:
         }
         response = self.app.patch('/v1/item/', params=params)
         assert response.status_code == 200
-        assert loads(response.text)['result']['name'] == 'conflict_copy'
+        assert '_' in loads(response.text)['result']['name']
         params = {'id': item_1_id}
         self.app.delete('/v1/item/', params=params)
         params = {'id': item_2_id}
