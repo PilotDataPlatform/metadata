@@ -42,6 +42,7 @@ class TestItems:
             'location_uri': 'https://example.com',
             'version': '1.0',
             'tags': [],
+            'system_tags': [],
             'attribute_template_id': None,
             'attributes': {},
         }
@@ -83,6 +84,7 @@ class TestItems:
             'location_uri': 'https://example.com',
             'version': '1.0',
             'tags': [],
+            'system_tags': [],
             'attribute_template_id': None,
             'attributes': {},
         }
@@ -131,6 +133,7 @@ class TestItems:
             'location_uri': 'https://example.com',
             'version': '1.0',
             'tags': [],
+            'system_tags': [],
             'attribute_template_id': None,
             'attributes': None,
         }
@@ -151,6 +154,7 @@ class TestItems:
             'location_uri': 'https://example.com',
             'version': '1.0',
             'tags': [],
+            'system_tags': [],
             'attribute_template_id': None,
             'attributes': None,
         }
@@ -173,6 +177,7 @@ class TestItems:
             'location_uri': 'https://example.com',
             'version': '1.0',
             'tags': [],
+            'system_tags': [],
             'attribute_template_id': None,
             'attributes': None,
         }
@@ -195,6 +200,7 @@ class TestItems:
             'location_uri': 'https://example.com',
             'version': '1.0',
             'tags': [],
+            'system_tags': [],
             'attribute_template_id': None,
             'attributes': None,
         }
@@ -215,6 +221,7 @@ class TestItems:
             'location_uri': 'https://example.com',
             'version': '1.0',
             'tags': [],
+            'system_tags': [],
             'attribute_template_id': None,
             'attributes': {},
         }
@@ -238,6 +245,7 @@ class TestItems:
             'location_uri': 'https://example.com',
             'version': '1.0',
             'tags': [],
+            'system_tags': [],
             'attribute_template_id': None,
             'attributes': {},
         }
@@ -277,6 +285,7 @@ class TestItems:
                     'location_uri': 'https://example.com',
                     'version': '1.0',
                     'tags': [],
+                    'system_tags': [],
                     'attribute_template_id': None,
                     'attributes': {},
                 },
@@ -293,6 +302,7 @@ class TestItems:
                     'location_uri': 'https://example.com',
                     'version': '1.0',
                     'tags': [],
+                    'system_tags': [],
                     'attribute_template_id': None,
                     'attributes': {},
                 },
@@ -328,6 +338,7 @@ class TestItems:
                     'location_uri': 'https://example.com',
                     'version': '1.0',
                     'tags': [],
+                    'system_tags': [],
                     'attribute_template_id': None,
                     'attributes': {},
                 },
@@ -344,6 +355,7 @@ class TestItems:
                     'location_uri': 'https://example.com',
                     'version': '1.0',
                     'tags': [],
+                    'system_tags': [],
                     'attribute_template_id': None,
                     'attributes': {},
                 },

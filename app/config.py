@@ -54,6 +54,9 @@ class Settings(BaseSettings):
 
     METADATA_SCHEMA = str = 'metadata'
 
+    MAX_TAGS = 10
+    MAX_SYSTEM_TAGS = 10
+
     def __init__(self):
         super().__init__()
         self.SQLALCHEMY_DATABASE_URI = f'postgresql://{self.OPSDB_UTILILT_USERNAME}:{self.OPSDB_UTILILT_PASSWORD}@{self.OPSDB_UTILILT_HOST}:{self.OPSDB_UTILILT_PORT}/{self.OPSDB_UTILILT_NAME}'

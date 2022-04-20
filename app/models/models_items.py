@@ -20,6 +20,8 @@ from pydantic import BaseModel
 from pydantic import Field
 from pydantic import validator
 
+from app.config import ConfigClass
+
 from .base_models import APIResponse
 
 
@@ -38,6 +40,7 @@ class GETItemsByLocation(BaseModel):
     recursive: bool
     archived: bool = False
     parent_path: Optional[str]
+    name: Optional[str]
     page_size: int = 10
     page: int = 0
 
@@ -67,6 +70,7 @@ class GETItemResponse(APIResponse):
                 'id': 'dc763d28-7e74-4db3-a702-fa719aa702c6',
                 'extra': {
                     'tags': ['tag1', 'tag2'],
+                    'system_tags': ['tag1', 'tag2'],
                     'attributes': {'101778d7-a628-41ea-823b-e4b377f3476c': {'key1': 'value1', 'key2': 'value2'}},
                 },
             },
@@ -87,6 +91,7 @@ class POSTItem(BaseModel):
     location_uri: str
     version: str
     tags: list[str] = []
+    system_tags: list[str] = []
     attribute_template_id: Optional[UUID]
     attributes: dict = {}
 
@@ -104,8 +109,14 @@ class POSTItem(BaseModel):
 
     @validator('tags')
     def tags_count(cls, v):
-        if len(v) > 10:
-            raise ValueError('Maximum of 10 tags')
+        if len(v) > ConfigClass.MAX_TAGS:
+            raise ValueError(f'Maximum of {ConfigClass.MAX_TAGS} tags')
+        return v
+
+    @validator('system_tags')
+    def system_tags_count(cls, v):
+        if len(v) > ConfigClass.MAX_SYSTEM_TAGS:
+            raise ValueError(f'Maximum of {ConfigClass.MAX_SYSTEM_TAGS} system tags')
         return v
 
     @validator('name')

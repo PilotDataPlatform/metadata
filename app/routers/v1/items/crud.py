@@ -132,6 +132,8 @@ def get_items_by_location(params: GETItem, api_response: APIResponse):
             ItemModel.archived == params.archived,
         )
     )
+    if params.name:
+        item_query = item_query.filter(ItemModel.name == encode_label_for_ltree(params.name))
     if params.parent_path:
         regex = f'{encode_path_for_ltree(params.parent_path)}'
         if params.recursive:
@@ -170,6 +172,7 @@ def create_item(data: POSTItem) -> dict:
         'item_id': item.id,
         'extra': {
             'tags': data.tags,
+            'system_tags': data.system_tags,
             'attributes': {str(data.attribute_template_id): data.attributes} if data.attributes else {},
         },
     }
@@ -211,6 +214,7 @@ def update_item(item_id: UUID, data: PUTItem) -> dict:
     extended = db.session.query(ExtendedModel).filter_by(item_id=item_id).first()
     extended.extra = {
         'tags': data.tags,
+        'system_tags': data.system_tags,
         'attributes': {str(data.attribute_template_id): data.attributes} if data.attributes else {},
     }
     db.session.commit()
