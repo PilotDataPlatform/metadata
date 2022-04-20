@@ -20,6 +20,8 @@ from pydantic import BaseModel
 from pydantic import Field
 from pydantic import validator
 
+from app.config import ConfigClass
+
 from .base_models import APIResponse
 
 
@@ -107,14 +109,14 @@ class POSTItem(BaseModel):
 
     @validator('tags')
     def tags_count(cls, v):
-        if len(v) > 10:
-            raise ValueError('Maximum of 10 tags')
+        if len(v) > ConfigClass.MAX_TAGS:
+            raise ValueError(f'Maximum of {ConfigClass.MAX_TAGS} tags')
         return v
-    
+
     @validator('system_tags')
     def system_tags_count(cls, v):
-        if len(v) > 10:
-            raise ValueError('Maximum of 10 system tags')
+        if len(v) > ConfigClass.MAX_SYSTEM_TAGS:
+            raise ValueError(f'Maximum of {ConfigClass.MAX_SYSTEM_TAGS} system tags')
         return v
 
     @validator('name')

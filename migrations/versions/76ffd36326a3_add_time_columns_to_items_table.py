@@ -1,12 +1,11 @@
-"""Add time columns to items table
+"""Add time columns to items table.
 
 Revision ID: 76ffd36326a3
 Revises: cad81b7e09aa
 Create Date: 2022-04-13 13:23:46.380997
-
 """
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '76ffd36326a3'
@@ -18,6 +17,7 @@ depends_on = None
 def upgrade():
     op.add_column('items', sa.Column('created_time', sa.DateTime(), nullable=False), schema='metadata')
     op.add_column('items', sa.Column('last_updated_time', sa.DateTime(), nullable=False), schema='metadata')
+
 
 def downgrade():
     op.drop_column('items', 'created_time', schema='metadata')
