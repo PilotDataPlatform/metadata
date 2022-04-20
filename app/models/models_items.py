@@ -42,6 +42,9 @@ class GETItemsByLocation(BaseModel):
     page_size: int = 10
     page: int = 0
 
+    class Config:
+        anystr_strip_whitespace = True
+
 
 class GETItemResponse(APIResponse):
     result: dict = Field(
@@ -92,6 +95,9 @@ class POSTItem(BaseModel):
     system_tags: list[str] = []
     attribute_template_id: Optional[UUID]
     attributes: dict = {}
+
+    class Config:
+        anystr_strip_whitespace = True
 
     @validator('type')
     def type_is_valid(cls, v, values):
@@ -167,6 +173,9 @@ class PUTItem(POSTItem):
     system_tags: Optional[list[str]]
     attribute_template_id: Optional[UUID]
     attributes: Optional[dict]
+
+    class Config:
+        anystr_strip_whitespace = True
 
 
 class PUTItems(BaseModel):
