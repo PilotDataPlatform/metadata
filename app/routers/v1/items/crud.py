@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import time
 from datetime import datetime
 from uuid import UUID
 
@@ -56,7 +57,6 @@ def get_available_file_name(
     encoded_item_name: str,
     encoded_item_path: Ltree,
     archived: bool,
-    recursions: int = 1,
 ) -> str:
     item = (
         db.session.query(ItemModel)
@@ -69,15 +69,18 @@ def get_available_file_name(
         )
         .first()
     )
-    if item is None:
+    if not item:
         return encoded_item_name
     decoded_item_name = decode_label_from_ltree(encoded_item_name)
-    decoded_new_name = (
-        f'{decoded_item_name}_{recursions}' if '_copy' in decoded_item_name else f'{decoded_item_name}_copy'
-    )
-    return get_available_file_name(
-        container_code, zone, encode_label_for_ltree(decoded_new_name), encoded_item_path, archived, recursions + 1
-    )
+    decoded_item_extension = ''
+    if '.' in decoded_item_name:
+        item_name_split = decoded_item_name.split('.', 1)
+        decoded_item_name = item_name_split[0]
+        decoded_item_extension = '.' + item_name_split[1]
+    timestamp = round(time.time())
+    decoded_item_name_new = f'{decoded_item_name}_{timestamp}{decoded_item_extension}'
+    encoded_item_name_new = encode_label_for_ltree(decoded_item_name_new)
+    return encoded_item_name_new
 
 
 def attributes_match_template(attributes: dict, template_id: UUID) -> bool:
