@@ -46,11 +46,11 @@ class Settings(BaseSettings):
     HOST: str = '0.0.0.0'
     ENV: str = 'test'
 
-    OPSDB_UTILILT_USERNAME: str
-    OPSDB_UTILILT_PASSWORD: str
-    OPSDB_UTILILT_HOST: str
-    OPSDB_UTILILT_PORT: str
-    OPSDB_UTILILT_NAME: str = 'metadata'
+    OPSDB_UTILILY_USERNAME: str
+    OPSDB_UTILILY_PASSWORD: str
+    OPSDB_UTILILY_HOST: str
+    OPSDB_UTILILY_PORT: str
+    OPSDB_UTILILY_NAME: str = 'metadata'
 
     METADATA_SCHEMA = str = 'metadata'
 
@@ -59,7 +59,7 @@ class Settings(BaseSettings):
 
     def __init__(self):
         super().__init__()
-        self.SQLALCHEMY_DATABASE_URI = f'postgresql://{self.OPSDB_UTILILT_USERNAME}:{self.OPSDB_UTILILT_PASSWORD}@{self.OPSDB_UTILILT_HOST}:{self.OPSDB_UTILILT_PORT}/{self.OPSDB_UTILILT_NAME}'
+        self.SQLALCHEMY_DATABASE_URI = f'postgresql://{self.OPSDB_UTILILY_USERNAME}:{self.OPSDB_UTILILY_PASSWORD}@{self.OPSDB_UTILILY_HOST}:{self.OPSDB_UTILILY_PORT}/{self.OPSDB_UTILILY_NAME}'
 
     class Config:
         env_file = '.env'

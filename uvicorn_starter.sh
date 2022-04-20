@@ -4,7 +4,7 @@ set -e
 
 if [ $RUN_MIGRATIONS_ON_BUILD == "true" ]
 then
-    export SQLALCHEMY_DATABASE_URI="postgresql://$OPSDB_UTILILT_USERNAME:$OPSDB_UTILILT_PASSWORD@$OPSDB_UTILILT_HOST:$OPSDB_UTILILT_PORT/metadata"
+    export SQLALCHEMY_DATABASE_URI="postgresql://$OPSDB_UTILILY_USERNAME:$OPSDB_UTILILY_PASSWORD@$OPSDB_UTILILY_HOST:$OPSDB_UTILILY_PORT/metadata"
     pip install alembic
     alembic upgrade head
 fi
