@@ -1,84 +1,79 @@
 pipeline {
     agent { label 'small' }
     environment {
-      imagename_dev = "registry-gitlab.indocresearch.org/pilot/metadata"
-      imagename_staging = "registry-gitlab.indocresearch.org/pilot/metadata"
+      imagename = "ghcr.io/pilotdataplatform/metadata"
       commit = sh(returnStdout: true, script: 'git describe --always').trim()
-      registryCredential = 'pilot-gitlab-registry'
+      registryCredential = 'pilot-ghcr'
       dockerImage = ''
     }
 
     stages {
 
     stage('DEV Git clone') {
-        when { branch 'k8s-dev' }
+        when { branch 'develop' }
         steps {
-            git branch: 'k8s-dev',
-                url: 'https://git.indocresearch.org/pilot/metadata.git',
-                credentialsId: 'lzhao'
+            git branch: 'develop',
+                url: 'https://github.com/PilotDataPlatform/metadata.git',
+                credentialsId: 'pilot-gh'
         }
     }
 
-    stage('DEV Run unit tests') {
-        when { branch 'k8s-dev' }
-        steps {
-            withCredentials([
-                usernamePassword(credentialsId: 'readonly', usernameVariable: 'PIP_USERNAME', passwordVariable: 'PIP_PASSWORD'),
-                usernamePassword(credentialsId: 'indoc-ssh', usernameVariable: 'SUDO_USERNAME', passwordVariable: 'SUDO_PASSWORD'),
-                string(credentialsId:'VAULT_TOKEN', variable: 'VAULT_TOKEN'),
-                string(credentialsId:'VAULT_URL', variable: 'VAULT_URL'),
-                file(credentialsId:'VAULT_CRT', variable: 'VAULT_CRT')
-            ]) {
-                sh """
-                export OPSDB_UTILITY_USERNAME=postgres
-                export OPSDB_UTILITY_PASSWORD=postgres
-                export OPSDB_UTILITY_HOST=db
-                export OPSDB_UTILITY_PORT=5432
-                export OPSDB_UTILITY_NAME=metadata
-                [ ! -f /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/.env ] && touch /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/.env
-                [ -d /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions ] && sudo chmod 777 -R -f /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions
-                sudo chmod 777 -R -f /data/docker2/jenkins/workspace/VRE_metadata_k8s-dev/local_config/pgadmin/sessions                
-                docker build --add-host git.indocresearch.org:10.4.3.151 --build-arg PIP_USERNAME=${PIP_USERNAME} --build-arg PIP_PASSWORD=${PIP_PASSWORD} -t web .
-                docker-compose -f docker-compose.yaml down -v
-                docker-compose up -d
-                sleep 10s
-                docker-compose exec -T web /bin/bash
-                pwd
-                hostname
-                docker-compose exec -T web pip install --user poetry==1.1.12
-                docker-compose exec -T web poetry config virtualenvs.in-project false
-                docker-compose exec -T web poetry config http-basic.pilot ${PIP_USERNAME} ${PIP_PASSWORD}
-                docker-compose exec -T web poetry install --no-root --no-interaction
-                docker-compose exec -T web poetry run pytest --verbose -c tests/pytest.ini
-                docker-compose -f docker-compose.yaml down -v
-                """
-            }
-        }
-    }
+    // stage('DEV Run unit tests') {
+    //     when { branch 'develop' }
+    //     steps {
+    //         withCredentials([
+    //             usernamePassword(credentialsId: 'indoc-ssh', usernameVariable: 'SUDO_USERNAME', passwordVariable: 'SUDO_PASSWORD'),
+    //             string(credentialsId:'VAULT_TOKEN', variable: 'VAULT_TOKEN'),
+    //             string(credentialsId:'VAULT_URL', variable: 'VAULT_URL'),
+    //             file(credentialsId:'VAULT_CRT', variable: 'VAULT_CRT')
+    //         ]) {
+    //             sh """
+    //             export OPSDB_UTILILT_USERNAME=postgres
+    //             export OPSDB_UTILILT_PASSWORD=postgres
+    //             export OPSDB_UTILILT_HOST=db
+    //             export OPSDB_UTILILT_PORT=5432
+    //             export OPSDB_UTILILT_NAME=metadata
+    //             [ ! -f ${env.WORKSPACE}/.env ] && touch ${env.WORKSPACE}/.env
+    //             [ -d ${env.WORKSPACE}/local_config/pgadmin/sessions ] && sudo chmod 777 -R -f ${env.WORKSPACE}/local_config/pgadmin/sessions
+    //             sudo chmod 777 -R -f ${env.WORKSPACE}/local_config/pgadmin/sessions
+    //             docker build -t web .
+    //             docker-compose -f docker-compose.yaml down -v
+    //             docker-compose up -d
+    //             sleep 10s
+    //             docker-compose exec -T web /bin/bash
+    //             pwd
+    //             hostname
+    //             docker-compose exec -T web pip install --user poetry==1.1.12
+    //             docker-compose exec -T web poetry config virtualenvs.in-project false
+    //             docker-compose exec -T web poetry install --no-root --no-interaction
+    //             docker-compose exec -T web poetry run pytest --verbose -c tests/pytest.ini
+    //             docker-compose -f docker-compose.yaml down -v
+    //             """
+    //         }
+    //     }
+    // }
 
     stage('DEV Build and push image') {
-      when {branch "k8s-dev"}
+      when {branch "develop"}
       steps {
         script {
-          withCredentials([usernamePassword(credentialsId:'readonly', usernameVariable: 'PIP_USERNAME', passwordVariable: 'PIP_PASSWORD')]) {
-            docker.withRegistry('https://registry-gitlab.indocresearch.org', registryCredential) {
-                customImage = docker.build("registry-gitlab.indocresearch.org/pilot/metadata:$commit", "--build-arg PIP_USERNAME=${PIP_USERNAME} --build-arg PIP_PASSWORD=${PIP_PASSWORD} --add-host git.indocresearch.org:10.4.3.151 .")
-                customImage.push()
-            }
+          docker.withRegistry('https://ghcr.io', registryCredential) {
+              customImage = docker.build("$imagename:$commit")
+              customImage.push()
           }
         }
       }
     }
 
     stage('DEV Remove image') {
-      when {branch "k8s-dev"}
+      when {branch "develop"}
       steps{
-        sh "docker rmi $imagename_dev:$commit"
+        sh "docker rmi $imagename:$commit"
       }
     }
 
     stage('DEV Deploy') {
-      when {branch "k8s-dev"}
+      when {branch "develop"}
       steps{
         build(job: "/VRE-IaC/UpdateAppVersion", parameters: [
           [$class: 'StringParameterValue', name: 'TF_TARGET_ENV', value: 'dev' ],
@@ -101,12 +96,10 @@ pipeline {
       when {branch "k8s-staging"}
       steps {
         script {
-            withCredentials([usernamePassword(credentialsId:'readonly', usernameVariable: 'PIP_USERNAME', passwordVariable: 'PIP_PASSWORD')]) {
-              docker.withRegistry('https://registry-gitlab.indocresearch.org', registryCredential) {
-                  customImage = docker.build("registry-gitlab.indocresearch.org/pilot/metadata:$commit", "--build-arg PIP_USERNAME=${PIP_USERNAME} --build-arg PIP_PASSWORD=${PIP_PASSWORD} --add-host git.indocresearch.org:10.4.3.151 .")
-                  customImage.push()
-              }
-            }
+          docker.withRegistry('https://ghcr.io', registryCredential) {
+              customImage = docker.build("$imagename:$commit")
+              customImage.push()
+          }
         }
       }
     }
@@ -114,7 +107,7 @@ pipeline {
     stage('STAGING Remove image') {
       when {branch "k8s-staging"}
       steps{
-        sh "docker rmi $imagename_staging:$commit"
+        sh "docker rmi $imagename:$commit"
       }
     }
 

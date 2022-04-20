@@ -1,3 +1,18 @@
+# Copyright (C) 2022 Indoc Research
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 from json import loads
 
 import pytest
@@ -17,7 +32,9 @@ class TestAttributeTemplates:
         payload = {
             'name': 'template_1',
             'project_id': reused_project_id,
-            'attributes': [{'name': 'attribute_1', 'optional': True, 'type': 'multiple_choice', 'value': 'val1, val2'}],
+            'attributes': [
+                {'name': 'attribute_1', 'optional': True, 'type': 'multiple_choice', 'options': ['val1', 'val2']}
+            ],
         }
         response = self.app.post('/v1/template/', json=payload)
         global reused_template_id
@@ -42,8 +59,8 @@ class TestAttributeTemplates:
             'name': 'template_1',
             'project_id': reused_project_id,
             'attributes': [
-                {'name': 'attribute_1', 'optional': True, 'type': 'multiple_choice', 'value': 'val1, val2'},
-                {'name': 'attribute_2', 'optional': True, 'type': 'text', 'value': ''},
+                {'name': 'attribute_1', 'optional': True, 'type': 'multiple_choice', 'options': ['val1', 'val2']},
+                {'name': 'attribute_2', 'optional': True, 'type': 'text', 'options': []},
             ],
         }
         response = self.app.put('/v1/template/', json=payload, params=params)
@@ -60,7 +77,7 @@ class TestAttributeTemplates:
         payload = {
             'name': 'template_1',
             'project_id': reused_project_id,
-            'attributes': [{'name': 'attribute_1', 'optional': True, 'type': 'invalid', 'value': 'val1, val2'}],
+            'attributes': [{'name': 'attribute_1', 'optional': True, 'type': 'invalid', 'options': 'val1, val2'}],
         }
         response = self.app.post('/v1/template/', json=payload)
         assert response.status_code == 422

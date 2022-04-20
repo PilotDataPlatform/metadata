@@ -1,8 +1,8 @@
 version: '3'
 services:
   web:
-    image: 'web'
-    restart: always
+    build:
+      context: .
     ports:
       - "8000:8000"
     environment:
@@ -12,8 +12,6 @@ services:
       OPSDB_UTILITY_PORT: 5432
       OPSDB_UTILITY_NAME: metadata
       SQLALCHEMY_DATABASE_URI: postgresql://postgres:postgres@db:5432/metadata
-    env_file:
-      - .env
     volumes:
       - .:/usr/src/app
     depends_on:

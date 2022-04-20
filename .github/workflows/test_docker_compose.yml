@@ -1,0 +1,54 @@
+name: Run Docker Compose Tests
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  run-docker-compose-tests:
+    name: Run Tests
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Init Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+      - name: Cache Poetry virtualenv
+        uses: actions/cache@v1
+        id: cache
+        with:
+          path: ~/.virtualenvs
+          key: poetry-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            poetry-${{ hashFiles('**/poetry.lock') }}
+      - name: Poetry Version
+        run: poetry version
+      - name: Start Docker Compose
+        run: |
+          echo "OPSDB_UTILILT_USERNAME=postgres" >> $GITHUB_ENV
+          echo "OPSDB_UTILILT_PASSWORD=postgres" >> $GITHUB_ENV
+          echo "OPSDB_UTILILT_HOST=db" >> $GITHUB_ENV
+          echo "OPSDB_UTILILT_NAME=metadata" >> $GITHUB_ENV
+          [ ! -f .env ] && touch .env
+          [ -d local_config/pgadmin/sessions ] && sudo chmod 777 -R -f local_config/pgadmin/sessions
+          sudo chmod 777 -R -f local_config/pgadmin/sessions
+          docker build -t web .
+          docker network create pilot-network
+          docker-compose -f docker-compose.yaml down -v
+          docker-compose up -d
+      - name: Run Tests Inside Compose
+        run: |
+          docker-compose exec -T web /bin/bash
+          pwd
+          hostname
+          docker-compose exec -T web pip install --user poetry==1.1.12
+          docker-compose exec -T web poetry config virtualenvs.in-project false
+          docker-compose exec -T web poetry install --no-root --no-interaction
+          docker-compose exec -T web poetry run pytest --verbose -c tests/pytest.ini
+      - name: Tear Down Docker Compose
+        run: docker-compose -f docker-compose.yaml down -v

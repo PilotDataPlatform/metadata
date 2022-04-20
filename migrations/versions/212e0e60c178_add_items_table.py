@@ -22,7 +22,7 @@ def upgrade():
         'items',
         sa.Column('id', UUID(), nullable=False),
         sa.Column('parent', UUID()),
-        sa.Column('path', LtreeType(), nullable=False),
+        sa.Column('parent_path', LtreeType()),
         sa.Column('restore_path', LtreeType()),
         sa.Column('archived', sa.Boolean(), nullable=False),
         sa.Column('type', pg.ENUM('file', 'folder', name='type_enum', create_type=True), nullable=False),
@@ -30,13 +30,13 @@ def upgrade():
         sa.Column('name', sa.String(), nullable=False),
         sa.Column('size', sa.Integer()),
         sa.Column('owner', sa.String()),
-        sa.Column('container', UUID()),
+        sa.Column('container_code', sa.String()),
         sa.Column(
             'container_type', pg.ENUM('project', 'dataset', name='container_enum', create_type=True), nullable=False
         ),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('id'),
-        sa.UniqueConstraint('path', 'container', 'container_type', 'archived'),
+        sa.UniqueConstraint('parent_path', 'archived', 'zone', 'name', 'container_code'),
         schema='metadata',
     )
 
