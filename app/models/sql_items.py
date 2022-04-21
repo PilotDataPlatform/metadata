@@ -20,6 +20,7 @@ from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import DateTime
 from sqlalchemy import Enum
+from sqlalchemy import Index
 from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy.dialects.postgresql import UUID
@@ -40,7 +41,7 @@ class ItemModel(Base):
     parent_path = Column(LtreeType())
     restore_path = Column(LtreeType())
     archived = Column(Boolean(), nullable=False)
-    type = Column(Enum('file', 'folder', name='type_enum', create_type=False), nullable=False)
+    type = Column(Enum('file', 'folder', 'name_folder', name='type_enum', create_type=False), nullable=False)
     zone = Column(Integer(), nullable=False)
     name = Column(String(), nullable=False)
     size = Column(Integer())
@@ -50,7 +51,17 @@ class ItemModel(Base):
     created_time = Column(DateTime(), default=datetime.utcnow, nullable=False)
     last_updated_time = Column(DateTime(), default=datetime.utcnow, nullable=False)
 
-    __table_args__ = ({'schema': ConfigClass.METADATA_SCHEMA},)
+    __table_args__ = (
+        Index(
+            'zone',
+            'name',
+            'container_code',
+            'container_type',
+            unique=True,
+            postgresql_where=Column('type') == 'name_folder',
+        ),
+        {'schema': ConfigClass.METADATA_SCHEMA},
+    )
 
     def __init__(self, parent, parent_path, archived, type, zone, name, size, owner, container_code, container_type):
         self.id = uuid.uuid4()
@@ -68,7 +79,7 @@ class ItemModel(Base):
     def to_dict(self):
         return {
             'id': str(self.id),
-            'parent': str(self.parent),
+            'parent': str(self.parent) if self.parent else None,
             'parent_path': decode_path_from_ltree(str(self.parent_path)) if self.parent_path else None,
             'restore_path': decode_path_from_ltree(str(self.restore_path)) if self.restore_path else None,
             'archived': self.archived,

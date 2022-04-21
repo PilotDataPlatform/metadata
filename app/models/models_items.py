@@ -44,6 +44,9 @@ class GETItemsByLocation(BaseModel):
     page_size: int = 10
     page: int = 0
 
+    class Config:
+        anystr_strip_whitespace = True
+
 
 class GETItemResponse(APIResponse):
     result: dict = Field(
@@ -79,11 +82,11 @@ class GETItemResponse(APIResponse):
 
 
 class POSTItem(BaseModel):
-    parent: UUID
-    parent_path: Optional[str]
+    parent: Optional[UUID] = Field(example='3fa85f64-5717-4562-b3fc-2c963f66afa6')
+    parent_path: Optional[str] = Field(example='path.to.file')
     type: str = 'file'
     zone: int = 0
-    name: str
+    name: str = Field(example='file_name.txt')
     size: int
     owner: str
     container_code: str
@@ -95,16 +98,29 @@ class POSTItem(BaseModel):
     attribute_template_id: Optional[UUID]
     attributes: dict = {}
 
+    class Config:
+        anystr_strip_whitespace = True
+
     @validator('type')
-    def type_validation(cls, v):
-        if v not in ['file', 'folder']:
-            raise ValueError('type must be file or folder')
+    def type_is_valid(cls, v, values):
+        if v not in ['file', 'folder', 'name_folder']:
+            raise ValueError('type must be one of: file, folder, name_folder')
+        if 'parent' in values and values['parent'] and v == 'name_folder':
+            raise ValueError('Name folders cannot have a parent')
+        if 'parent_path' in values and values['parent_path'] and v == 'name_folder':
+            raise ValueError('Name folders cannot have a parent_path')
+        if 'parent' not in values or not values['parent'] and v != 'name_folder':
+            raise ValueError('Files and folders must have a parent')
+        if 'parent_path' not in values or not values['parent_path'] and v != 'name_folder':
+            raise ValueError('Files and folders must have a parent_path')
         return v
 
     @validator('container_type')
-    def container_type_validation(cls, v):
+    def container_type_is_valid(cls, v, values):
         if v not in ['project', 'dataset']:
             raise ValueError('container_type must be project or dataset')
+        if 'type' in values and values['type'] == 'name_folder' and v != 'project':
+            raise ValueError('Name folders are only allowed in projects')
         return v
 
     @validator('tags')
@@ -120,9 +136,9 @@ class POSTItem(BaseModel):
         return v
 
     @validator('name')
-    def folder_name_validation(cls, v, values):
+    def folder_name_is_valid(cls, v, values):
         if 'type' in values and values['type'] == 'folder' and '.' in v:
-            raise ValueError('Folder name cannot contain reserved character .')
+            raise ValueError('Folder name cannot contain reserved character: .')
         return v
 
 
@@ -144,7 +160,24 @@ class POSTItemResponse(GETItemResponse):
 
 
 class PUTItem(POSTItem):
-    pass
+    parent: Optional[UUID] = Field(example='3fa85f64-5717-4562-b3fc-2c963f66afa6', default='')
+    parent_path: Optional[str] = Field(example='path.to.file', default='')
+    type: Optional[str]
+    zone: Optional[int]
+    name: Optional[str] = Field(example='file_name.txt')
+    size: Optional[int]
+    owner: Optional[str]
+    container_code: Optional[str]
+    container_type: Optional[str]
+    location_uri: Optional[str]
+    version: Optional[str]
+    tags: Optional[list[str]]
+    system_tags: Optional[list[str]]
+    attribute_template_id: Optional[UUID]
+    attributes: Optional[dict]
+
+    class Config:
+        anystr_strip_whitespace = True
 
 
 class PUTItems(BaseModel):

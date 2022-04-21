@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import time
 from datetime import datetime
 from uuid import UUID
 
@@ -56,7 +57,6 @@ def get_available_file_name(
     encoded_item_name: str,
     encoded_item_path: Ltree,
     archived: bool,
-    recursions: int = 1,
 ) -> str:
     item = (
         db.session.query(ItemModel)
@@ -69,15 +69,18 @@ def get_available_file_name(
         )
         .first()
     )
-    if item is None:
+    if not item:
         return encoded_item_name
     decoded_item_name = decode_label_from_ltree(encoded_item_name)
-    decoded_new_name = (
-        f'{decoded_item_name}_{recursions}' if '_copy' in decoded_item_name else f'{decoded_item_name}_copy'
-    )
-    return get_available_file_name(
-        container_code, zone, encode_label_for_ltree(decoded_new_name), encoded_item_path, archived, recursions + 1
-    )
+    decoded_item_extension = ''
+    if '.' in decoded_item_name:
+        item_name_split = decoded_item_name.split('.', 1)
+        decoded_item_name = item_name_split[0]
+        decoded_item_extension = '.' + item_name_split[1]
+    timestamp = round(time.time())
+    decoded_item_name_new = f'{decoded_item_name}_{timestamp}{decoded_item_extension}'
+    encoded_item_name_new = encode_label_for_ltree(decoded_item_name_new)
+    return encoded_item_name_new
 
 
 def attributes_match_template(attributes: dict, template_id: UUID) -> bool:
@@ -150,7 +153,7 @@ def create_item(data: POSTItem) -> dict:
         raise BadRequestException('Attributes do not match attribute template')
     encoded_item_name = encode_label_for_ltree(data.name)
     item_model_data = {
-        'parent': data.parent,
+        'parent': data.parent if data.parent else None,
         'parent_path': Ltree(f'{encode_path_for_ltree(data.parent_path)}') if data.parent_path else None,
         'archived': False,
         'type': data.type,
@@ -194,29 +197,43 @@ def create_items(data: POSTItems, api_response: APIResponse):
 
 
 def update_item(item_id: UUID, data: PUTItem) -> dict:
-    if not attributes_match_template(data.attributes, data.attribute_template_id):
-        raise BadRequestException('Attributes do not match attribute template')
     item = db.session.query(ItemModel).filter_by(id=item_id).first()
-    encoded_item_name = encode_label_for_ltree(data.name)
-    item.parent = data.parent
-    item.parent_path = Ltree(f'{encode_path_for_ltree(data.parent_path)}') if data.parent_path else None
-    item.type = data.type
-    item.zone = data.zone
-    item.name = encoded_item_name
-    item.size = data.size
-    item.owner = data.owner
-    item.container_code = data.container_code
-    item.container_type = data.container_type
+    if data.parent != '':
+        item.parent = data.parent if data.parent else None
+    if data.parent_path != '':
+        item.parent_path = Ltree(f'{encode_path_for_ltree(data.parent_path)}') if data.parent_path else None
+    if data.type:
+        item.type = data.type
+    if data.zone:
+        item.zone = data.zone
+    if data.name:
+        item.name = encode_label_for_ltree(data.name)
+    if data.size:
+        item.size = data.size
+    if data.owner:
+        item.owner = data.owner
+    if data.container_code:
+        item.container_code = data.container_code
+    if data.container_type:
+        item.container_type = data.container_type
     item.last_updated_time = datetime.utcnow()
     storage = db.session.query(StorageModel).filter_by(item_id=item_id).first()
-    storage.location_uri = data.location_uri
-    storage.version = data.version
+    if data.location_uri:
+        storage.location_uri = data.location_uri
+    if data.version:
+        storage.version = data.version
     extended = db.session.query(ExtendedModel).filter_by(item_id=item_id).first()
-    extended.extra = {
-        'tags': data.tags,
-        'system_tags': data.system_tags,
-        'attributes': {str(data.attribute_template_id): data.attributes} if data.attributes else {},
-    }
+    extra = {}
+    if data.tags:
+        extra['tags'] = data.tags
+    if data.system_tags:
+        extra['system_tags'] = data.system_tags
+    if data.attribute_template_id and data.attributes:
+        if not attributes_match_template(data.attributes, data.attribute_template_id):
+            raise BadRequestException('Attributes do not match attribute template')
+        extra['attributes'] = ({str(data.attribute_template_id): data.attributes} if data.attributes else {},)
+    if extra:
+        extended.extra = extra
     db.session.commit()
     db.session.refresh(item)
     db.session.refresh(storage)

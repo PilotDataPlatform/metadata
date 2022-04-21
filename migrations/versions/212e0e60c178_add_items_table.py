@@ -25,7 +25,7 @@ def upgrade():
         sa.Column('parent_path', LtreeType()),
         sa.Column('restore_path', LtreeType()),
         sa.Column('archived', sa.Boolean(), nullable=False),
-        sa.Column('type', pg.ENUM('file', 'folder', name='type_enum', create_type=True), nullable=False),
+        sa.Column('type', pg.ENUM('file', 'folder', 'name_folder', name='type_enum', create_type=True), nullable=False),
         sa.Column('zone', sa.Integer(), nullable=False),
         sa.Column('name', sa.String(), nullable=False),
         sa.Column('size', sa.Integer()),
@@ -36,10 +36,19 @@ def upgrade():
         ),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('id'),
-        sa.UniqueConstraint('parent_path', 'archived', 'zone', 'name', 'container_code'),
+        sa.UniqueConstraint('parent_path', 'archived', 'zone', 'name', 'container_code', 'container_type'),
+        sa.Index(
+            'zone',
+            'name',
+            'container_code',
+            'container_type',
+            unique=True,
+            postgresql_where=sa.Column('type') == 'name_folder',
+        ),
         schema='metadata',
     )
 
 
 def downgrade():
     op.drop_table('items', schema='metadata')
+    op.execute('drop type type_enum; drop type container_enum;')

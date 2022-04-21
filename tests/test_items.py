@@ -28,7 +28,7 @@ class TestItems:
     app = TestClient(app)
 
     @pytest.mark.dependency(name='test_01')
-    def test_01_create_item(self):
+    def test_create_item_200(self):
         payload = {
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
             'parent_path': 'folder1.folder2',
@@ -52,12 +52,12 @@ class TestItems:
         assert response.status_code == 200
 
     @pytest.mark.dependency(depends=['test_01'])
-    def test_02_get_item_by_id(self):
+    def test_get_item_by_id_200(self):
         response = self.app.get(f'/v1/item/{reused_item_ids[0]}')
         assert response.status_code == 200
 
     @pytest.mark.dependency(depends=['test_01'])
-    def test_03_get_item_by_location(self):
+    def test_get_item_by_location_200(self):
         params = {
             'parent_path': 'folder1.folder2',
             'archived': False,
@@ -69,7 +69,7 @@ class TestItems:
         assert response.status_code == 200
 
     @pytest.mark.dependency(depends=['test_01'])
-    def test_04_update_item(self):
+    def test_update_item_200(self):
         params = {'id': reused_item_ids[0]}
         payload = {
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
@@ -92,7 +92,7 @@ class TestItems:
         assert response.status_code == 200
 
     @pytest.mark.dependency(depends=['test_01'])
-    def test_05_trash_item(self):
+    def test_trash_item_200(self):
         params = {
             'id': reused_item_ids[0],
             'archived': True,
@@ -101,7 +101,7 @@ class TestItems:
         assert response.status_code == 200
 
     @pytest.mark.dependency(depends=['test_01'])
-    def test_06_restore_item(self):
+    def test_restore_item_200(self):
         params = {
             'id': reused_item_ids[0],
             'archived': False,
@@ -109,7 +109,7 @@ class TestItems:
         response = self.app.patch('/v1/item/', params=params)
         assert response.status_code == 200
 
-    def test_07_get_item_by_location_missing_zone(self):
+    def test_get_item_by_location_missing_zone_422(self):
         params = {
             'parent_path': 'folder1.folder2',
             'archived': False,
@@ -119,7 +119,7 @@ class TestItems:
         response = self.app.get('/v1/item/search/', params=params)
         assert response.status_code == 422
 
-    def test_08_create_item_wrong_type(self):
+    def test_create_item_wrong_type_422(self):
         payload = {
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
             'parent_path': 'folder1.folder2',
@@ -140,7 +140,7 @@ class TestItems:
         response = self.app.post('/v1/item/', json=payload)
         assert response.status_code == 422
 
-    def test_09_create_item_wrong_container_type(self):
+    def test_create_item_wrong_container_type_422(self):
         payload = {
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
             'parent_path': 'folder1.folder2',
@@ -162,7 +162,7 @@ class TestItems:
         assert response.status_code == 422
 
     @pytest.mark.dependency(depends=['test_01'])
-    def test_10_update_item_wrong_type(self):
+    def test_update_item_wrong_type_422(self):
         params = {'id': reused_item_ids[0]}
         payload = {
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
@@ -185,7 +185,7 @@ class TestItems:
         assert response.status_code == 422
 
     @pytest.mark.dependency(depends=['test_01'])
-    def test_11_update_item_wrong_container_type(self):
+    def test_update_item_wrong_container_type_422(self):
         params = {'id': reused_item_ids[0]}
         payload = {
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
@@ -207,7 +207,7 @@ class TestItems:
         response = self.app.put('/v1/item/', json=payload, params=params)
         assert response.status_code == 422
 
-    def test_12_rename_item_on_conflict(self):
+    def test_rename_item_on_conflict_200(self):
         payload = {
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
             'parent_path': 'folder1.folder2',
@@ -256,20 +256,21 @@ class TestItems:
             'archived': False,
         }
         response = self.app.patch('/v1/item/', params=params)
-        assert loads(response.text)['result']['name'] == 'conflict_copy'
+        assert response.status_code == 200
+        assert '_' in loads(response.text)['result']['name']
         params = {'id': item_1_id}
         self.app.delete('/v1/item/', params=params)
         params = {'id': item_2_id}
         self.app.delete('/v1/item/', params=params)
 
     @pytest.mark.dependency(depends=['test_01'])
-    def test_13_delete_item(self):
+    def test_delete_item_200(self):
         params = {'id': reused_item_ids[0]}
         response = self.app.delete('/v1/item/', params=params)
         assert response.status_code == 200
 
     @pytest.mark.dependency(name='test_14')
-    def test_14_create_items_batch(self):
+    def test_create_items_batch_200(self):
         payload = {
             'items': [
                 {
@@ -315,13 +316,13 @@ class TestItems:
         assert response.status_code == 200
 
     @pytest.mark.dependency(depends=['test_14'])
-    def test_15_get_items_by_id_batch(self):
+    def test_get_items_by_id_batch_200(self):
         params = {'ids': [reused_item_ids[1], reused_item_ids[2]]}
         response = self.app.get('/v1/item/batch/', params=params)
         assert response.status_code == 200
 
     @pytest.mark.dependency(depends=['test_14'])
-    def test_16_update_items_batch(self):
+    def test_update_items_batch_200(self):
         params = {'ids': [reused_item_ids[1], reused_item_ids[2]]}
         payload = {
             'items': [
@@ -366,7 +367,28 @@ class TestItems:
         assert loads(response.text)['result'][0]['parent_path'] == 'folder1.folder2.folder3'
 
     @pytest.mark.dependency(depends=['test_14'])
-    def test_17_delete_items_by_id_batch(self):
+    def test_delete_items_by_id_batch_200(self):
         params = {'ids': [reused_item_ids[1], reused_item_ids[2]]}
         response = self.app.delete('/v1/item/batch/', params=params)
         assert response.status_code == 200
+
+    def test_create_name_folder_with_parent_422(self):
+        payload = {
+            'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+            'parent_path': 'folder1.folder2',
+            'type': 'name_folder',
+            'zone': 0,
+            'name': 'file',
+            'size': 0,
+            'owner': 'admin',
+            'container_code': reused_container_code,
+            'container_type': 'project',
+            'location_uri': 'https://example.com',
+            'version': '1.0',
+            'tags': [],
+            'system_tags': [],
+            'attribute_template_id': None,
+            'attributes': {},
+        }
+        response = self.app.post('/v1/item/', json=payload)
+        assert response.status_code == 422
