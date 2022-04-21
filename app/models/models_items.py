@@ -82,11 +82,11 @@ class GETItemResponse(APIResponse):
 
 
 class POSTItem(BaseModel):
-    parent: Optional[UUID]
-    parent_path: Optional[str]
+    parent: Optional[UUID] = Field(example='3fa85f64-5717-4562-b3fc-2c963f66afa6')
+    parent_path: Optional[str] = Field(example='path.to.file')
     type: str = 'file'
     zone: int = 0
-    name: str
+    name: str = Field(example='file_name.txt')
     size: int
     owner: str
     container_code: str
@@ -160,11 +160,11 @@ class POSTItemResponse(GETItemResponse):
 
 
 class PUTItem(POSTItem):
-    parent: Optional[UUID]
-    parent_path: Optional[str]
+    parent: Optional[UUID] = Field(example='3fa85f64-5717-4562-b3fc-2c963f66afa6', default='')
+    parent_path: Optional[str] = Field(example='path.to.file', default='')
     type: Optional[str]
     zone: Optional[int]
-    name: Optional[str]
+    name: Optional[str] = Field(example='file_name.txt')
     size: Optional[int]
     owner: Optional[str]
     container_code: Optional[str]

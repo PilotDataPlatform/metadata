@@ -198,10 +198,10 @@ def create_items(data: POSTItems, api_response: APIResponse):
 
 def update_item(item_id: UUID, data: PUTItem) -> dict:
     item = db.session.query(ItemModel).filter_by(id=item_id).first()
-    if data.parent != None:
-        item.parent = data.parent if data.parent != '' else None
-    if data.parent_path != None:
-        item.parent_path = Ltree(f'{encode_path_for_ltree(data.parent_path)}') if data.parent_path != '' else None
+    if data.parent != '':
+        item.parent = data.parent if data.parent else None
+    if data.parent_path != '':
+        item.parent_path = Ltree(f'{encode_path_for_ltree(data.parent_path)}') if data.parent_path else None
     if data.type:
         item.type = data.type
     if data.zone:
