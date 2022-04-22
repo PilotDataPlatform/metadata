@@ -38,6 +38,7 @@ def upgrade():
         sa.UniqueConstraint('id'),
         sa.UniqueConstraint('parent_path', 'archived', 'zone', 'name', 'container_code', 'container_type'),
         sa.Index(
+            'name_folder_unique',
             'zone',
             'name',
             'container_code',

@@ -53,6 +53,7 @@ class ItemModel(Base):
 
     __table_args__ = (
         Index(
+            'name_folder_unique',
             'zone',
             'name',
             'container_code',
