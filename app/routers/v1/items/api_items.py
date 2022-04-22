@@ -52,12 +52,13 @@ from .crud import update_item
 from .crud import update_items
 
 router = APIRouter()
+router_bulk = APIRouter()
 _logger = LoggerFactory('api_items').get_logger()
 
 
 @cbv(router)
 class APIItems:
-    @router.get('/{id}', response_model=GETItemResponse, summary='Get an item by ID or check if an item exists')
+    @router.get('/{id}/', response_model=GETItemResponse, summary='Get an item by ID or check if an item exists')
     async def get_item(self, params: GETItem = Depends(GETItem)):
         try:
             api_response = GETItemResponse()
@@ -65,26 +66,6 @@ class APIItems:
         except Exception as e:
             _logger.exception(e)
             set_api_response_error(api_response, f'Failed to get item with id {params.id}', EAPIResponseCode.not_found)
-        return api_response.json_response()
-
-    @router.get('/batch/', response_model=GETItemResponse, summary='Get many items by IDs')
-    async def get_items_by_ids(self, ids: List[UUID] = Query(None), params: GETItemsByIDs = Depends(GETItemsByIDs)):
-        try:
-            api_response = GETItemResponse()
-            get_items_by_ids(params, ids, api_response)
-        except Exception as e:
-            _logger.exception(e)
-            set_api_response_error(api_response, 'Failed to get item', EAPIResponseCode.not_found)
-        return api_response.json_response()
-
-    @router.get('/search/', response_model=GETItemResponse, summary='Get all items by location')
-    async def get_items_by_location(self, params: GETItemsByLocation = Depends(GETItemsByLocation)):
-        try:
-            api_response = GETItemResponse()
-            get_items_by_location(params, api_response)
-        except Exception as e:
-            _logger.exception(e)
-            set_api_response_error(api_response, 'Failed to get item', EAPIResponseCode.not_found)
         return api_response.json_response()
 
     @router.post('/', response_model=POSTItemResponse, summary='Create a new item')
@@ -99,18 +80,6 @@ class APIItems:
             set_api_response_error(api_response, 'Failed to create item', EAPIResponseCode.internal_error)
         return api_response.json_response()
 
-    @router.post('/batch/', response_model=POSTItemResponse, summary='Create many new items')
-    async def create_items(self, data: POSTItems):
-        try:
-            api_response = POSTItemResponse()
-            create_items(data, api_response)
-        except BadRequestException as e:
-            set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
-        except Exception as e:
-            _logger.exception(e)
-            set_api_response_error(api_response, 'Failed to create items', EAPIResponseCode.internal_error)
-        return api_response.json_response()
-
     @router.put('/', response_model=PUTItemResponse, summary='Update an item')
     async def update_item(self, id: UUID, data: PUTItem):
         try:
@@ -121,20 +90,6 @@ class APIItems:
         except Exception as e:
             _logger.exception(e)
             set_api_response_error(api_response, 'Failed to update item', EAPIResponseCode.internal_error)
-        return api_response.json_response()
-
-    @router.put('/batch/', response_model=PUTItemResponse, summary='Update many items')
-    async def update_items(self, data: PUTItems, ids: List[UUID] = Query(None)):
-        try:
-            api_response = PUTItemResponse()
-            if len(data.items) != len(ids):
-                raise BadRequestException('Number of IDs does not match number of update data')
-            update_items(ids, data, api_response)
-        except BadRequestException as e:
-            set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
-        except Exception as e:
-            _logger.exception(e)
-            set_api_response_error(api_response, 'Failed to update items', EAPIResponseCode.internal_error)
         return api_response.json_response()
 
     @router.patch('/', response_model=PATCHItemResponse, summary='Move an item to or out of the trash')
@@ -157,7 +112,56 @@ class APIItems:
             set_api_response_error(api_response, 'Failed to delete item', EAPIResponseCode.internal_error)
         return api_response.json_response()
 
-    @router.delete('/batch/', response_model=DELETEItemResponse, summary='Permanently delete many items by IDs')
+
+@cbv(router_bulk)
+class APIItemsBulk:
+    @router_bulk.get('/batch/', response_model=GETItemResponse, summary='Get many items by IDs')
+    async def get_items_by_ids(self, ids: List[UUID] = Query(None), params: GETItemsByIDs = Depends(GETItemsByIDs)):
+        try:
+            api_response = GETItemResponse()
+            get_items_by_ids(params, ids, api_response)
+        except Exception as e:
+            _logger.exception(e)
+            set_api_response_error(api_response, 'Failed to get item', EAPIResponseCode.not_found)
+        return api_response.json_response()
+
+    @router_bulk.get('/search/', response_model=GETItemResponse, summary='Get all items by location')
+    async def get_items_by_location(self, params: GETItemsByLocation = Depends(GETItemsByLocation)):
+        try:
+            api_response = GETItemResponse()
+            get_items_by_location(params, api_response)
+        except Exception as e:
+            _logger.exception(e)
+            set_api_response_error(api_response, 'Failed to get item', EAPIResponseCode.not_found)
+        return api_response.json_response()
+
+    @router_bulk.post('/batch/', response_model=POSTItemResponse, summary='Create many new items')
+    async def create_items(self, data: POSTItems):
+        try:
+            api_response = POSTItemResponse()
+            create_items(data, api_response)
+        except BadRequestException as e:
+            set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
+        except Exception as e:
+            _logger.exception(e)
+            set_api_response_error(api_response, 'Failed to create items', EAPIResponseCode.internal_error)
+        return api_response.json_response()
+
+    @router_bulk.put('/batch/', response_model=PUTItemResponse, summary='Update many items')
+    async def update_items(self, data: PUTItems, ids: List[UUID] = Query(None)):
+        try:
+            api_response = PUTItemResponse()
+            if len(data.items) != len(ids):
+                raise BadRequestException('Number of IDs does not match number of update data')
+            update_items(ids, data, api_response)
+        except BadRequestException as e:
+            set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
+        except Exception as e:
+            _logger.exception(e)
+            set_api_response_error(api_response, 'Failed to update items', EAPIResponseCode.internal_error)
+        return api_response.json_response()
+
+    @router_bulk.delete('/batch/', response_model=DELETEItemResponse, summary='Permanently delete many items by IDs')
     async def delete_items_by_ids(self, ids: List[UUID] = Query(None)):
         try:
             api_response = DELETEItemResponse()

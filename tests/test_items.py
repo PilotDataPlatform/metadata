@@ -53,7 +53,7 @@ class TestItems:
 
     @pytest.mark.dependency(depends=['test_01'])
     def test_get_item_by_id_200(self):
-        response = self.app.get(f'/v1/item/{reused_item_ids[0]}')
+        response = self.app.get(f'/v1/item/{reused_item_ids[0]}/')
         assert response.status_code == 200
 
     @pytest.mark.dependency(depends=['test_01'])
@@ -65,7 +65,7 @@ class TestItems:
             'container_code': reused_container_code,
             'recursive': False,
         }
-        response = self.app.get('/v1/item/search/', params=params)
+        response = self.app.get('/v1/items/search/', params=params)
         assert response.status_code == 200
 
     @pytest.mark.dependency(depends=['test_01'])
@@ -259,9 +259,9 @@ class TestItems:
         assert response.status_code == 200
         assert '_' in loads(response.text)['result']['name']
         params = {'id': item_1_id}
-        self.app.delete('/v1/item/', params=params)
+        self.app.delete('/v1/item', params=params)
         params = {'id': item_2_id}
-        self.app.delete('/v1/item/', params=params)
+        self.app.delete('/v1/item', params=params)
 
     @pytest.mark.dependency(depends=['test_01'])
     def test_delete_item_200(self):
@@ -309,7 +309,7 @@ class TestItems:
                 },
             ]
         }
-        response = self.app.post('/v1/item/batch/', json=payload)
+        response = self.app.post('/v1/items/batch/', json=payload)
         global reused_item_ids
         reused_item_ids.append(loads(response.text)['result'][0]['id'])
         reused_item_ids.append(loads(response.text)['result'][1]['id'])
@@ -318,7 +318,7 @@ class TestItems:
     @pytest.mark.dependency(depends=['test_14'])
     def test_get_items_by_id_batch_200(self):
         params = {'ids': [reused_item_ids[1], reused_item_ids[2]]}
-        response = self.app.get('/v1/item/batch/', params=params)
+        response = self.app.get('/v1/items/batch/', params=params)
         assert response.status_code == 200
 
     @pytest.mark.dependency(depends=['test_14'])
@@ -362,14 +362,14 @@ class TestItems:
                 },
             ]
         }
-        response = self.app.put('/v1/item/batch/', params=params, json=payload)
+        response = self.app.put('/v1/items/batch/', params=params, json=payload)
         assert response.status_code == 200
         assert loads(response.text)['result'][0]['parent_path'] == 'folder1.folder2.folder3'
 
     @pytest.mark.dependency(depends=['test_14'])
     def test_delete_items_by_id_batch_200(self):
         params = {'ids': [reused_item_ids[1], reused_item_ids[2]]}
-        response = self.app.delete('/v1/item/batch/', params=params)
+        response = self.app.delete('/v1/items/batch/', params=params)
         assert response.status_code == 200
 
     def test_create_name_folder_with_parent_422(self):

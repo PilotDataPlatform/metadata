@@ -28,4 +28,5 @@ def is_db_online():
 def api_registry(app: FastAPI):
     app.add_api_route('/v1/health', health([is_db_online]), tags=['Health'])
     app.include_router(api_items.router, prefix='/v1/item', tags=['Items'])
+    app.include_router(api_items.router_bulk, prefix='/v1/items', tags=['Items'])
     app.include_router(api_attribute_templates.router, prefix='/v1/template', tags=['Attribute templates'])
