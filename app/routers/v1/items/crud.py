@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import time
+import uuid
 from datetime import datetime
 from uuid import UUID
 
@@ -153,6 +154,7 @@ def create_item(data: POSTItem) -> dict:
         raise BadRequestException('Attributes do not match attribute template')
     encoded_item_name = encode_label_for_ltree(data.name)
     item_model_data = {
+        'id': data.id if data.id else uuid.uuid4(),
         'parent': data.parent if data.parent else None,
         'parent_path': Ltree(f'{encode_path_for_ltree(data.parent_path)}') if data.parent_path else None,
         'archived': False,

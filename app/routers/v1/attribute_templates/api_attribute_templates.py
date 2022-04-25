@@ -45,7 +45,7 @@ _logger = LoggerFactory('api_attribute_templates').get_logger()
 
 @cbv(router)
 class APIAttributeTemplates:
-    @router.get('/{id}', response_model=GETTemplateResponse, summary='Get an attribute template')
+    @router.get('/{id}/', response_model=GETTemplateResponse, summary='Get an attribute template')
     async def get_attribute_template(self, params: GETTemplate = Depends(GETTemplate)):
         try:
             api_response = GETTemplateResponse()

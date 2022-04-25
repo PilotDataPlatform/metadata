@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import uuid
 from datetime import datetime
 
 from sqlalchemy import Boolean
@@ -64,8 +63,10 @@ class ItemModel(Base):
         {'schema': ConfigClass.METADATA_SCHEMA},
     )
 
-    def __init__(self, parent, parent_path, archived, type, zone, name, size, owner, container_code, container_type):
-        self.id = uuid.uuid4()
+    def __init__(
+        self, id, parent, parent_path, archived, type, zone, name, size, owner, container_code, container_type
+    ):
+        self.id = id
         self.parent = parent
         self.parent_path = parent_path
         self.archived = archived

@@ -82,6 +82,7 @@ class GETItemResponse(APIResponse):
 
 
 class POSTItem(BaseModel):
+    id: Optional[UUID]
     parent: Optional[UUID] = Field(example='3fa85f64-5717-4562-b3fc-2c963f66afa6')
     parent_path: Optional[str] = Field(example='path.to.file')
     type: str = 'file'
