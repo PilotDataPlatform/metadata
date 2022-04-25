@@ -28,6 +28,8 @@ from app.app_utils import encode_label_for_ltree
 from app.app_utils import encode_path_for_ltree
 from app.models.base_models import APIResponse
 from app.models.models_items import GETItem
+from app.models.models_items import GETItemsByIDs
+from app.models.models_items import GETItemsByLocation
 from app.models.models_items import PATCHItem
 from app.models.models_items import POSTItem
 from app.models.models_items import POSTItems
@@ -117,7 +119,7 @@ def get_item_by_id(params: GETItem, api_response: APIResponse):
         api_response.num_of_pages = 0
 
 
-def get_items_by_ids(params: GETItem, ids: list[UUID], api_response: APIResponse):
+def get_items_by_ids(params: GETItemsByIDs, ids: list[UUID], api_response: APIResponse):
     item_query = (
         db.session.query(ItemModel, StorageModel, ExtendedModel)
         .join(StorageModel, ExtendedModel)
@@ -126,7 +128,7 @@ def get_items_by_ids(params: GETItem, ids: list[UUID], api_response: APIResponse
     paginate(params, api_response, item_query, combine_item_tables)
 
 
-def get_items_by_location(params: GETItem, api_response: APIResponse):
+def get_items_by_location(params: GETItemsByLocation, api_response: APIResponse):
     item_query = (
         db.session.query(ItemModel, StorageModel, ExtendedModel)
         .join(StorageModel, ExtendedModel)
@@ -139,10 +141,14 @@ def get_items_by_location(params: GETItem, api_response: APIResponse):
     if params.name:
         item_query = item_query.filter(ItemModel.name == encode_label_for_ltree(params.name))
     if params.parent_path:
-        regex = f'{encode_path_for_ltree(params.parent_path)}'
+        search_path = f'{encode_path_for_ltree(params.parent_path)}'
         if params.recursive:
-            regex += '.*'
-        item_query = item_query.filter(ItemModel.parent_path.lquery(expression.cast(regex, LQUERY)))
+            search_path += '.*'
+        item_query = item_query.filter(
+            ItemModel.restore_path.lquery(expression.cast(search_path, LQUERY))
+            if params.archived
+            else ItemModel.parent_path.lquery(expression.cast(search_path, LQUERY)),
+        )
     else:
         if not params.recursive:
             item_query = item_query.filter(ItemModel.parent_path == None)
@@ -251,6 +257,22 @@ def update_items(ids: list[UUID], data: PUTItems, api_response: APIResponse):
     api_response.total = len(results)
 
 
+def archive_item(item: ItemModel, trash_item: bool, check_for_rename: bool):
+    if item.archived != trash_item:
+        item.archived = trash_item
+        item.last_updated_time = datetime.utcnow()
+        if trash_item:
+            if check_for_rename:
+                item.name = get_available_file_name(item.container_code, item.zone, item.name, None, True)
+            item.restore_path = item.parent_path
+            item.parent_path = None
+        else:
+            if check_for_rename:
+                item.name = get_available_file_name(item.container_code, item.zone, item.name, item.restore_path, False)
+            item.parent_path = item.restore_path
+            item.restore_path = None
+
+
 def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
     item_query = (
         db.session.query(ItemModel, StorageModel, ExtendedModel)
@@ -259,16 +281,21 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
     )
     item_result = item_query.first()
     item = item_result[0]
-    item.archived = params.archived
-    item.last_updated_time = datetime.utcnow()
-    if params.archived:
-        item.name = get_available_file_name(item.container_code, item.zone, item.name, None, True)
-        item.restore_path = item.parent_path
-        item.parent_path = None
-    else:
-        item.name = get_available_file_name(item.container_code, item.zone, item.name, item.restore_path, False)
-        item.parent_path = item.restore_path
-        item.restore_path = None
+    item_children = []
+    if item.type == 'folder':
+        search_path = f'{item.restore_path}.{item.name}.*' if item.archived else f'{item.parent_path}.{item.name}.*'
+        children_item_query = db.session.query(ItemModel).filter(
+            ItemModel.container_code == item.container_code,
+            ItemModel.zone == item.zone,
+            ItemModel.archived == item.archived,
+            ItemModel.restore_path.lquery(expression.cast(search_path, LQUERY))
+            if item.archived
+            else ItemModel.parent_path.lquery(expression.cast(search_path, LQUERY)),
+        )
+        item_children = children_item_query.all()
+    archive_item(item, params.archived, True)
+    for child in item_children:
+        archive_item(child, params.archived, False)
     db.session.commit()
     db.session.refresh(item)
     api_response.result = combine_item_tables(item_result)
