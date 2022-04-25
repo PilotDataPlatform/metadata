@@ -35,8 +35,8 @@ def get_template_by_id(params: GETTemplate, api_response: APIResponse):
     api_response.result = template_query.first().to_dict()
 
 
-def get_templates_by_project_id(params: GETTemplates, api_response: APIResponse):
-    template_query = db.session.query(AttributeTemplateModel).filter_by(project_id=params.project_id)
+def get_templates_by_project_code(params: GETTemplates, api_response: APIResponse):
+    template_query = db.session.query(AttributeTemplateModel).filter_by(project_code=params.project_code)
     paginate(params, api_response, template_query, None)
 
 
@@ -57,7 +57,7 @@ def format_attributes_for_json(attributes: POSTTemplateAttributes) -> List[dict]
 def create_template(data: POSTTemplate, api_response: APIResponse):
     template_model_data = {
         'name': data.name,
-        'project_id': data.project_id,
+        'project_code': data.project_code,
         'attributes': format_attributes_for_json(data.attributes),
     }
     template = AttributeTemplateModel(**template_model_data)
@@ -72,7 +72,7 @@ def update_template(template_id: UUID, data: PUTTemplate, api_response: APIRespo
     if not template:
         raise EntityNotFoundException()
     template.name = data.name
-    template.project_id = data.project_id
+    template.project_code = data.project_code
     template.attributes = format_attributes_for_json(data.attributes)
     db.session.commit()
     db.session.refresh(template)
