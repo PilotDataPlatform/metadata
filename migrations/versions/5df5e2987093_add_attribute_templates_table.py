@@ -20,7 +20,7 @@ def upgrade():
         'attribute_templates',
         sa.Column('id', UUID(), nullable=False),
         sa.Column('name', sa.String(), nullable=False),
-        sa.Column('project_id', UUID(), nullable=False),
+        sa.Column('project_code', sa.String(), nullable=False),
         sa.Column('attributes', sa.JSON()),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('id'),

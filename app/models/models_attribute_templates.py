@@ -29,7 +29,7 @@ class GETTemplate(BaseModel):
 
 
 class GETTemplates(BaseModel):
-    project_id: UUID
+    project_code: str
     page_size: int = 10
     page: int = 0
 
@@ -40,7 +40,7 @@ class GETTemplateResponse(APIResponse):
         example={
             'id': '85465212-168a-4f0c-a7aa-f3a19795d2ff',
             'name': 'template_name',
-            'project_id': '28c608ac-1693-4318-a1c4-412caf2cd74a',
+            'project_code': 'project0422',
             'attributes': [
                 {
                     'name': 'attribute_1',
@@ -73,7 +73,7 @@ class POSTTemplateAttributes(BaseModel):
 
 class POSTTemplate(BaseModel):
     name: str
-    project_id: UUID
+    project_code: str
     attributes: List[POSTTemplateAttributes]
 
 

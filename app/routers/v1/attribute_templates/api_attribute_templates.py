@@ -36,7 +36,7 @@ from app.routers.router_utils import set_api_response_error
 from .crud import create_template
 from .crud import delete_template_by_id
 from .crud import get_template_by_id
-from .crud import get_templates_by_project_id
+from .crud import get_templates_by_project_code
 from .crud import update_template
 
 router = APIRouter()
@@ -45,7 +45,7 @@ _logger = LoggerFactory('api_attribute_templates').get_logger()
 
 @cbv(router)
 class APIAttributeTemplates:
-    @router.get('/{id}', response_model=GETTemplateResponse, summary='Get an attribute template')
+    @router.get('/{id}/', response_model=GETTemplateResponse, summary='Get an attribute template')
     async def get_attribute_template(self, params: GETTemplate = Depends(GETTemplate)):
         try:
             api_response = GETTemplateResponse()
@@ -61,11 +61,11 @@ class APIAttributeTemplates:
     async def get_attribute_templates(self, params: GETTemplates = Depends(GETTemplates)):
         try:
             api_response = GETTemplateResponse()
-            get_templates_by_project_id(params, api_response)
+            get_templates_by_project_code(params, api_response)
         except Exception as e:
             _logger.exception(e)
             set_api_response_error(
-                api_response, f'Failed to get templates with project_id {params.project_id}', EAPIResponseCode.not_found
+                api_response, f'Failed to get templates with code {params.project_code}', EAPIResponseCode.not_found
             )
         return api_response.json_response()
 
