@@ -24,6 +24,7 @@ from sqlalchemy_utils import Ltree
 from sqlalchemy_utils.types.ltree import LQUERY
 
 from app.app_utils import decode_label_from_ltree
+from app.app_utils import decode_path_from_ltree
 from app.app_utils import encode_label_for_ltree
 from app.app_utils import encode_path_for_ltree
 from app.models.base_models import APIResponse
@@ -257,20 +258,48 @@ def update_items(ids: list[UUID], data: PUTItems, api_response: APIResponse):
     api_response.total = len(results)
 
 
-def archive_item(item: ItemModel, trash_item: bool, check_for_rename: bool):
+def get_restore_destination_id(container_code: str, zone: int, restore_path: Ltree) -> UUID:
+    decoded_restore_path = decode_path_from_ltree(str(restore_path))
+    destination_name = decoded_restore_path
+    destination_path = None
+    decoded_restore_path_labels = decoded_restore_path.split('.')
+    if len(decoded_restore_path_labels) > 1:
+        destination_name = decoded_restore_path_labels[:-1]
+        destination_path = '.'.join(decoded_restore_path_labels[:-1])
+    destination_query = db.session.query(ItemModel).filter(
+        ItemModel.container_code == container_code,
+        ItemModel.zone == zone,
+        ItemModel.archived == False,
+        ItemModel.name == encode_label_for_ltree(destination_name),
+    )
+    if destination_path:
+        destination_query = destination_query.filter(
+            ItemModel.parent_path.lquery(expression.cast(encode_path_for_ltree(destination_path), LQUERY))
+        )
+    destination = destination_query.first()
+    if destination:
+        return destination.id
+
+
+def archive_item(item: ItemModel, trash_item: bool, parent: bool):
     if item.archived != trash_item:
-        item.archived = trash_item
-        item.last_updated_time = datetime.utcnow()
         if trash_item:
-            if check_for_rename:
+            if parent:
                 item.name = get_available_file_name(item.container_code, item.zone, item.name, None, True)
+                item.parent = None
             item.restore_path = item.parent_path
             item.parent_path = None
         else:
-            if check_for_rename:
+            if parent:
+                restore_destination_id = get_restore_destination_id(item.container_code, item.zone, item.restore_path)
+                if not restore_destination_id:
+                    raise BadRequestException('Restore destination does not exist')
+                item.parent = restore_destination_id
                 item.name = get_available_file_name(item.container_code, item.zone, item.name, item.restore_path, False)
             item.parent_path = item.restore_path
             item.restore_path = None
+        item.archived = trash_item
+        item.last_updated_time = datetime.utcnow()
 
 
 def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
@@ -293,9 +322,12 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
             else ItemModel.parent_path.lquery(expression.cast(search_path, LQUERY)),
         )
         item_children = children_item_query.all()
-    archive_item(item, params.archived, True)
-    for child in item_children:
-        archive_item(child, params.archived, False)
+    try:
+        archive_item(item, params.archived, True)
+        for child in item_children:
+            archive_item(child, params.archived, False)
+    except BadRequestException:
+        raise
     db.session.commit()
     db.session.refresh(item)
     api_response.result = combine_item_tables(item_result)

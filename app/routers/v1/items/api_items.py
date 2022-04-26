@@ -97,6 +97,8 @@ class APIItems:
         try:
             api_response = PATCHItemResponse()
             archive_item_by_id(params, api_response)
+        except BadRequestException as e:
+            set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
         except Exception as e:
             _logger.exception(e)
             set_api_response_error(api_response, 'Failed to archive item', EAPIResponseCode.internal_error)
