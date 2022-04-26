@@ -264,7 +264,7 @@ def get_restore_destination_id(container_code: str, zone: int, restore_path: Ltr
     destination_path = None
     decoded_restore_path_labels = decoded_restore_path.split('.')
     if len(decoded_restore_path_labels) > 1:
-        destination_name = decoded_restore_path_labels[:-1]
+        destination_name = decoded_restore_path_labels[-1]
         destination_path = '.'.join(decoded_restore_path_labels[:-1])
     destination_query = db.session.query(ItemModel).filter(
         ItemModel.container_code == container_code,
