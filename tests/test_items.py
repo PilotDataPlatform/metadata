@@ -13,8 +13,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from json import loads
 import uuid
+from json import loads
 
 from fastapi.testclient import TestClient
 
@@ -35,7 +35,7 @@ class TestItems:
     def test_get_item_by_id_200(self, test_items):
         response = app.get(f'/v1/item/{test_items["file"]}/')
         assert response.status_code == 200
-    
+
     def test_get_item_by_location_200(self):
         params = {
             'parent_path': 'user.test_folder',
@@ -47,7 +47,7 @@ class TestItems:
         }
         response = app.get('/v1/items/search/', params=params)
         assert response.status_code == 200
-    
+
     def test_get_item_by_location_missing_zone_422(self):
         params = {
             'parent_path': 'user.test_folder',
@@ -58,7 +58,7 @@ class TestItems:
         }
         response = app.get('/v1/item/search/', params=params)
         assert response.status_code == 422
-    
+
     def test_get_items_by_id_batch_200(self, test_items):
         params = {'ids': [test_items['name_folder'], test_items['folder'], test_items['file']]}
         response = app.get('/v1/items/batch/', params=params)
@@ -87,7 +87,7 @@ class TestItems:
         }
         response = app.post('/v1/item/', json=payload)
         assert response.status_code == 200
-    
+
     def test_create_items_batch_200(self):
         item_ids = [str(uuid.uuid4()), str(uuid.uuid4())]
         for id in item_ids:
@@ -134,7 +134,7 @@ class TestItems:
         }
         response = app.post('/v1/items/batch/', json=payload)
         assert response.status_code == 200
-    
+
     def test_create_item_wrong_type_422(self):
         payload = {
             'id': str(uuid.uuid4()),
@@ -156,7 +156,7 @@ class TestItems:
         }
         response = app.post('/v1/item/', json=payload)
         assert response.status_code == 422
-    
+
     def test_create_item_wrong_container_type_422(self):
         payload = {
             'id': str(uuid.uuid4()),
@@ -178,7 +178,7 @@ class TestItems:
         }
         response = app.post('/v1/item/', json=payload)
         assert response.status_code == 422
-    
+
     def test_create_name_folder_with_parent_422(self):
         payload = {
             'parent': str(uuid.uuid4()),
@@ -198,13 +198,11 @@ class TestItems:
 
     def test_update_item_200(self, test_items):
         params = {'id': test_items['file']}
-        payload = {
-            'name': 'test_file_updated.txt'
-        }
+        payload = {'name': 'test_file_updated.txt'}
         response = app.put('/v1/item/', json=payload, params=params)
         assert response.status_code == 200
         assert loads(response.text)['result']['name'] == 'test_file_updated.txt'
-    
+
     def test_update_items_batch_200(self, test_items):
         params = {'ids': [test_items['name_folder'], test_items['folder'], test_items['file']]}
         payload = {'items': [{'owner': 'user_2'}, {'tags': ['update_items_batch']}, {'size': 500}]}
@@ -213,20 +211,16 @@ class TestItems:
         assert loads(response.text)['result'][0]['owner'] == 'user_2'
         assert loads(response.text)['result'][1]['extended']['extra']['tags'] == ['update_items_batch']
         assert loads(response.text)['result'][2]['size'] == 500
-    
+
     def test_update_item_wrong_type_422(self, test_items):
         params = {'id': test_items['file']}
-        payload = {
-            'type': 'invalid'
-        }
+        payload = {'type': 'invalid'}
         response = app.put('/v1/item/', json=payload, params=params)
         assert response.status_code == 422
-    
+
     def test_update_item_wrong_container_type_422(self, test_items):
         params = {'id': test_items['file']}
-        payload = {
-            'container_type': 'invalid'
-        }
+        payload = {'container_type': 'invalid'}
         response = app.put('/v1/item/', json=payload, params=params)
         assert response.status_code == 422
 

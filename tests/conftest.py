@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import uuid
+from json import loads
 
 import pytest
 from fastapi.testclient import TestClient
@@ -22,8 +23,9 @@ from app.main import app
 
 app = TestClient(app)
 
+
 @pytest.fixture(scope='session')
-def test_items():
+def test_items() -> list[str]:
     test_item_ids = {
         'name_folder': str(uuid.uuid4()),
         'folder': str(uuid.uuid4()),
@@ -126,3 +128,19 @@ def test_items():
     for id in test_item_ids.values():
         params = {'id': id}
         app.delete('/v1/item/', params=params)
+
+
+@pytest.fixture(scope='session')
+def test_attribute_template() -> str:
+    payload = {
+        'name': 'test_template',
+        'project_code': 'test_project',
+        'attributes': [
+            {'name': 'attribute_1', 'optional': True, 'type': 'multiple_choice', 'options': ['val1', 'val2']}
+        ],
+    }
+    response = app.post('/v1/template/', json=payload)
+    attribute_template_id = loads(response.text)['result']['id']
+    yield attribute_template_id
+    params = {'id': attribute_template_id}
+    app.delete('/v1/template/', params=params)
