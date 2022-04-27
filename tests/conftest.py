@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import random
 import uuid
 from json import loads
 
@@ -24,19 +25,29 @@ from app.main import app
 app = TestClient(app)
 
 
-@pytest.fixture(scope='session')
-def test_items() -> list[str]:
-    test_item_ids = {
-        'name_folder': str(uuid.uuid4()),
-        'folder': str(uuid.uuid4()),
-        'file_1': str(uuid.uuid4()),
-        'file_2': str(uuid.uuid4()),
-        'file_3': str(uuid.uuid4()),
+def generate_random_container_code() -> str:
+    random_container_code = 'test_'
+    for _ in range(8):
+        random_container_code += chr(random.randint(32, 126))
+    return random_container_code
+
+
+@pytest.fixture(scope='function')
+def test_items() -> dict:
+    props = {
+        'container_code': generate_random_container_code(),
+        'ids': {
+            'name_folder': str(uuid.uuid4()),
+            'folder': str(uuid.uuid4()),
+            'file_1': str(uuid.uuid4()),
+            'file_2': str(uuid.uuid4()),
+            'file_3': str(uuid.uuid4()),
+        },
     }
     payload = {
         'items': [
             {
-                'id': test_item_ids['name_folder'],
+                'id': props['ids']['name_folder'],
                 'parent': None,
                 'parent_path': None,
                 'type': 'name_folder',
@@ -44,21 +55,21 @@ def test_items() -> list[str]:
                 'name': 'user',
                 'size': 0,
                 'owner': 'user',
-                'container_code': 'test_project',
+                'container_code': props['container_code'],
                 'container_type': 'project',
                 'location_uri': '',
                 'version': '',
             },
             {
-                'id': test_item_ids['folder'],
-                'parent': test_item_ids['name_folder'],
+                'id': props['ids']['folder'],
+                'parent': props['ids']['name_folder'],
                 'parent_path': 'user',
                 'type': 'folder',
                 'zone': 0,
                 'name': 'test_folder',
                 'size': 0,
                 'owner': 'user',
-                'container_code': 'test_project',
+                'container_code': props['container_code'],
                 'container_type': 'project',
                 'location_uri': '',
                 'version': '',
@@ -68,15 +79,15 @@ def test_items() -> list[str]:
                 'attributes': {},
             },
             {
-                'id': test_item_ids['file_1'],
-                'parent': test_item_ids['folder'],
+                'id': props['ids']['file_1'],
+                'parent': props['ids']['folder'],
                 'parent_path': 'user.test_folder',
                 'type': 'file',
                 'zone': 0,
                 'name': 'test_file_1.txt',
                 'size': 100,
                 'owner': 'user',
-                'container_code': 'test_project',
+                'container_code': props['container_code'],
                 'container_type': 'project',
                 'location_uri': '',
                 'version': '',
@@ -86,15 +97,15 @@ def test_items() -> list[str]:
                 'attributes': {},
             },
             {
-                'id': test_item_ids['file_2'],
-                'parent': test_item_ids['folder'],
+                'id': props['ids']['file_2'],
+                'parent': props['ids']['folder'],
                 'parent_path': 'user.test_folder',
                 'type': 'file',
                 'zone': 0,
                 'name': 'test_file_2.txt',
                 'size': 100,
                 'owner': 'user',
-                'container_code': 'test_project',
+                'container_code': props['container_code'],
                 'container_type': 'project',
                 'location_uri': '',
                 'version': '',
@@ -104,15 +115,15 @@ def test_items() -> list[str]:
                 'attributes': {},
             },
             {
-                'id': test_item_ids['file_3'],
-                'parent': test_item_ids['folder'],
+                'id': props['ids']['file_3'],
+                'parent': props['ids']['folder'],
                 'parent_path': 'user.test_folder',
                 'type': 'file',
                 'zone': 0,
                 'name': 'test_file_3.txt',
                 'size': 100,
                 'owner': 'user',
-                'container_code': 'test_project',
+                'container_code': props['container_code'],
                 'container_type': 'project',
                 'location_uri': '',
                 'version': '',
@@ -124,13 +135,13 @@ def test_items() -> list[str]:
         ],
     }
     app.post('/v1/items/batch/', json=payload)
-    yield test_item_ids
-    for id in test_item_ids.values():
+    yield props
+    for id in props['ids'].values():
         params = {'id': id}
         app.delete('/v1/item/', params=params)
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def test_attribute_template() -> str:
     payload = {
         'name': 'test_template',
