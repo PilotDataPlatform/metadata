@@ -41,6 +41,7 @@ from app.models.sql_extended import ExtendedModel
 from app.models.sql_items import ItemModel
 from app.models.sql_storage import StorageModel
 from app.routers.router_exceptions import BadRequestException
+from app.routers.router_exceptions import EntityNotFoundException
 from app.routers.router_utils import paginate
 
 
@@ -303,34 +304,50 @@ def archive_item(item: ItemModel, trash_item: bool, parent: bool):
 
 
 def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
-    item_query = (
+    root_item_query = (
         db.session.query(ItemModel, StorageModel, ExtendedModel)
         .join(StorageModel, ExtendedModel)
         .filter(ItemModel.id == params.id)
     )
-    item_result = item_query.first()
-    item = item_result[0]
-    item_children = []
-    if item.type == 'folder':
-        search_path = f'{item.restore_path}.{item.name}.*' if item.archived else f'{item.parent_path}.{item.name}.*'
-        children_item_query = db.session.query(ItemModel).filter(
-            ItemModel.container_code == item.container_code,
-            ItemModel.zone == item.zone,
-            ItemModel.archived == item.archived,
-            ItemModel.restore_path.lquery(expression.cast(search_path, LQUERY))
-            if item.archived
-            else ItemModel.parent_path.lquery(expression.cast(search_path, LQUERY)),
+    root_item_result = root_item_query.first()
+    if not root_item_result:
+        raise EntityNotFoundException()
+    children_result = []
+    if root_item_result[0].type == 'folder':
+        search_path = (
+            f'{root_item_result[0].restore_path}.{root_item_result[0].name}.*'
+            if root_item_result[0].archived
+            else f'{root_item_result[0].parent_path}.{root_item_result[0].name}.*'
         )
-        item_children = children_item_query.all()
+        children_item_query = (
+            db.session.query(ItemModel, StorageModel, ExtendedModel)
+            .join(StorageModel, ExtendedModel)
+            .filter(
+                ItemModel.container_code == root_item_result[0].container_code,
+                ItemModel.zone == root_item_result[0].zone,
+                ItemModel.archived == root_item_result[0].archived,
+                ItemModel.restore_path.lquery(expression.cast(search_path, LQUERY))
+                if root_item_result[0].archived
+                else ItemModel.parent_path.lquery(expression.cast(search_path, LQUERY)),
+            )
+        )
+        children_result = children_item_query.all()
+    all_items = []
     try:
-        archive_item(item, params.archived, True)
-        for child in item_children:
-            archive_item(child, params.archived, False)
+        archive_item(root_item_result[0], params.archived, True)
+        all_items.append(root_item_result)
+        for child in children_result:
+            archive_item(child[0], params.archived, False)
+            all_items.append(child)
     except BadRequestException:
         raise
     db.session.commit()
-    db.session.refresh(item)
-    api_response.result = combine_item_tables(item_result)
+    results = []
+    for item in all_items:
+        db.session.refresh(item[0])
+        results.append(combine_item_tables(item))
+    api_response.result = results
+    api_response.total = len(results)
 
 
 def delete_item_by_id(id: UUID, api_response: APIResponse):
