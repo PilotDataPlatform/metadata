@@ -29,7 +29,7 @@ def test_items() -> list[str]:
     test_item_ids = {
         'name_folder': str(uuid.uuid4()),
         'folder': str(uuid.uuid4()),
-        'file': str(uuid.uuid4()),
+        'file_1': str(uuid.uuid4()),
         'file_2': str(uuid.uuid4()),
         'file_3': str(uuid.uuid4()),
     }
@@ -68,12 +68,12 @@ def test_items() -> list[str]:
                 'attributes': {},
             },
             {
-                'id': test_item_ids['file'],
+                'id': test_item_ids['file_1'],
                 'parent': test_item_ids['folder'],
                 'parent_path': 'user.test_folder',
                 'type': 'file',
                 'zone': 0,
-                'name': 'test_file.txt',
+                'name': 'test_file_1.txt',
                 'size': 100,
                 'owner': 'user',
                 'container_code': 'test_project',

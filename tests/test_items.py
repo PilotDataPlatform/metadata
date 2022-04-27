@@ -33,7 +33,7 @@ class TestItems:
             app.delete('/v1/item/', params=params)
 
     def test_get_item_by_id_200(self, test_items):
-        response = app.get(f'/v1/item/{test_items["file"]}/')
+        response = app.get(f'/v1/item/{test_items["file_1"]}/')
         assert response.status_code == 200
 
     def test_get_item_by_location_200(self):
@@ -60,7 +60,7 @@ class TestItems:
         assert response.status_code == 422
 
     def test_get_items_by_id_batch_200(self, test_items):
-        params = {'ids': [test_items['name_folder'], test_items['folder'], test_items['file']]}
+        params = {'ids': [test_items['name_folder'], test_items['folder'], test_items['file_1']]}
         response = app.get('/v1/items/batch/', params=params)
         assert response.status_code == 200
 
@@ -197,14 +197,14 @@ class TestItems:
         assert response.status_code == 422
 
     def test_update_item_200(self, test_items):
-        params = {'id': test_items['file']}
+        params = {'id': test_items['file_1']}
         payload = {'name': 'test_file_updated.txt'}
         response = app.put('/v1/item/', json=payload, params=params)
         assert response.status_code == 200
         assert loads(response.text)['result']['name'] == 'test_file_updated.txt'
 
     def test_update_items_batch_200(self, test_items):
-        params = {'ids': [test_items['name_folder'], test_items['folder'], test_items['file']]}
+        params = {'ids': [test_items['name_folder'], test_items['folder'], test_items['file_1']]}
         payload = {'items': [{'owner': 'user_2'}, {'tags': ['update_items_batch']}, {'size': 500}]}
         response = app.put('/v1/items/batch/', params=params, json=payload)
         assert response.status_code == 200
@@ -213,38 +213,60 @@ class TestItems:
         assert loads(response.text)['result'][2]['size'] == 500
 
     def test_update_item_wrong_type_422(self, test_items):
-        params = {'id': test_items['file']}
+        params = {'id': test_items['file_1']}
         payload = {'type': 'invalid'}
         response = app.put('/v1/item/', json=payload, params=params)
         assert response.status_code == 422
 
     def test_update_item_wrong_container_type_422(self, test_items):
-        params = {'id': test_items['file']}
+        params = {'id': test_items['file_1']}
         payload = {'container_type': 'invalid'}
         response = app.put('/v1/item/', json=payload, params=params)
         assert response.status_code == 422
 
     def test_trash_item_200(self, test_items):
         params = {
-            'id': test_items['file'],
+            'id': test_items['file_1'],
             'archived': True,
         }
         response = app.patch('/v1/item/', params=params)
         assert response.status_code == 200
-        assert loads(response.text)['result']['archived'] == True
+        assert loads(response.text)['result'][0]['archived'] == True
 
     def test_restore_item_200(self, test_items):
         params = {
-            'id': test_items['file'],
+            'id': test_items['file_1'],
             'archived': False,
         }
         response = app.patch('/v1/item/', params=params)
         assert response.status_code == 200
-        assert loads(response.text)['result']['archived'] == False
+        assert loads(response.text)['result'][0]['archived'] == False
+
+    def test_trash_folder_with_children_200(self, test_items):
+        params = {
+            'id': test_items['folder'],
+            'archived': True,
+        }
+        response = app.patch('/v1/item/', params=params)
+        assert response.status_code == 200
+        assert len(loads(response.text)['result']) == 4
+        for i in range(4):
+            assert loads(response.text)['result'][i]['archived'] == True
+
+    def test_restore_folder_with_children_200(self, test_items):
+        params = {
+            'id': test_items['folder'],
+            'archived': False,
+        }
+        response = app.patch('/v1/item/', params=params)
+        assert response.status_code == 200
+        assert len(loads(response.text)['result']) == 4
+        for i in range(4):
+            assert loads(response.text)['result'][i]['archived'] == False
 
     def test_rename_item_on_conflict_200(self, test_items):
         params = {
-            'id': test_items['file'],
+            'id': test_items['file_1'],
             'archived': True,
         }
         app.patch('/v1/item/', params=params)
@@ -270,16 +292,16 @@ class TestItems:
         }
         app.post('/v1/item/', json=payload)
         params = {
-            'id': test_items['file'],
+            'id': test_items['file_1'],
             'archived': False,
         }
         response = app.patch('/v1/item/', params=params)
         print(response.text)
         assert response.status_code == 200
-        assert '_' in loads(response.text)['result']['name']
+        assert '_' in loads(response.text)['result'][0]['name']
 
     def test_delete_item_200(self, test_items):
-        params = {'id': test_items['file']}
+        params = {'id': test_items['file_1']}
         response = app.delete('/v1/item/', params=params)
         assert response.status_code == 200
 
