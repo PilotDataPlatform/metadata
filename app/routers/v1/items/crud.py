@@ -143,7 +143,7 @@ def get_items_by_location(params: GETItemsByLocation, api_response: APIResponse)
     if params.name:
         item_query = item_query.filter(ItemModel.name == encode_label_for_ltree(params.name))
     if params.parent_path:
-        search_path = f'{encode_path_for_ltree(params.parent_path)}'
+        search_path = encode_path_for_ltree(params.parent_path)
         if params.recursive:
             search_path += '.*'
         item_query = item_query.filter(
