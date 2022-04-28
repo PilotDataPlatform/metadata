@@ -97,7 +97,7 @@ class POSTItem(BaseModel):
     tags: list[str] = []
     system_tags: list[str] = []
     attribute_template_id: Optional[UUID]
-    attributes: dict = {}
+    attributes: Optional[dict] = {}
 
     class Config:
         anystr_strip_whitespace = True
@@ -146,6 +146,9 @@ class POSTItem(BaseModel):
     def attributes_only_on_files(cls, v, values):
         if v and 'type' in values and values['type'] != 'file':
             raise ValueError('Attributes can only be applied to files')
+        for attribute in v.values():
+            if len(attribute) > ConfigClass.MAX_ATTRIBUTE_LENGTH:
+                raise ValueError(f'Attribute exceeds maximum length of {ConfigClass.MAX_ATTRIBUTE_LENGTH} characters: {attribute}')
 
     @validator('attribute_template_id')
     def attribute_template_only_on_files(cls, v, values):
