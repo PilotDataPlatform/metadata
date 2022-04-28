@@ -92,7 +92,6 @@ class APIItems:
         except BadRequestException as e:
             set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
         except Exception as e:
-            print(e)
             _logger.exception(e)
             set_api_response_error(api_response, 'Failed to update item', EAPIResponseCode.internal_error)
         return api_response.json_response()
