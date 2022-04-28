@@ -148,9 +148,11 @@ class POSTItem(BaseModel):
             raise ValueError('Attributes can only be applied to files')
         for attribute in v.values():
             if len(attribute) > ConfigClass.MAX_ATTRIBUTE_LENGTH:
-                raise ValueError(f'Attribute exceeds maximum length of {ConfigClass.MAX_ATTRIBUTE_LENGTH} characters: {attribute}')
+                raise ValueError(
+                    f'Attribute exceeds maximum length of {ConfigClass.MAX_ATTRIBUTE_LENGTH} characters: {attribute}'
+                )
         return v
-    
+
     @validator('attribute_template_id')
     def attribute_template_only_on_files(cls, v, values):
         if 'type' in values and values['type'] != 'file':
