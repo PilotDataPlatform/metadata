@@ -37,14 +37,14 @@ from app.models.models_items import POSTItems
 from app.models.models_items import PUTItem
 from app.models.models_items import PUTItemResponse
 from app.models.models_items import PUTItems
-from app.models.models_items import PUTItemsBequeathAttributes
-from app.models.models_items import PUTItemsBequeathAttributesResponse
+from app.models.models_items import PUTItemsBequeath
+from app.models.models_items import PUTItemsBequeathResponse
 from app.routers.router_exceptions import BadRequestException
 from app.routers.router_exceptions import EntityNotFoundException
 from app.routers.router_utils import set_api_response_error
 
 from .crud import archive_item_by_id
-from .crud import bequeath_attributes
+from .crud import bequeath_to_children
 from .crud import create_item
 from .crud import create_items
 from .crud import delete_item_by_id
@@ -180,14 +180,14 @@ class APIItemsBulk:
         return api_response.json_response()
 
     @router_bulk.put(
-        '/batch/attributes/',
-        response_model=PUTItemsBequeathAttributesResponse,
-        summary='Bequeath attributes to an item\'s children',
+        '/batch/bequeath/',
+        response_model=PUTItemsBequeathResponse,
+        summary='Bequeath properties to a folder\'s children',
     )
-    async def update_items_bequeath_attributes(self, data: PUTItemsBequeathAttributes, id: UUID = Query(None)):
+    async def update_items_bequeath(self, data: PUTItemsBequeath, id: UUID = Query(None)):
         try:
-            api_response = PUTItemsBequeathAttributesResponse()
-            bequeath_attributes(id, data, api_response)
+            api_response = PUTItemsBequeathResponse()
+            bequeath_to_children(id, data, api_response)
         except BadRequestException as e:
             set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
         except Exception as e:

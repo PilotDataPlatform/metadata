@@ -207,10 +207,11 @@ class DELETEItemResponse(APIResponse):
     pass
 
 
-class PUTItemsBequeathAttributes(BaseModel):
-    attribute_template_id: UUID
-    attributes: dict
+class PUTItemsBequeath(BaseModel):
+    attribute_template_id: Optional[UUID]
+    attributes: Optional[dict]
+    system_tags: Optional[list[str]]
 
 
-class PUTItemsBequeathAttributesResponse(GETItemResponse):
+class PUTItemsBequeathResponse(GETItemResponse):
     pass

@@ -36,7 +36,7 @@ from app.models.models_items import POSTItem
 from app.models.models_items import POSTItems
 from app.models.models_items import PUTItem
 from app.models.models_items import PUTItems
-from app.models.models_items import PUTItemsBequeathAttributes
+from app.models.models_items import PUTItemsBequeath
 from app.models.sql_attribute_templates import AttributeTemplateModel
 from app.models.sql_extended import ExtendedModel
 from app.models.sql_items import ItemModel
@@ -90,7 +90,7 @@ def get_available_file_name(
 
 
 def attributes_match_template(attributes: dict, template_id: UUID) -> bool:
-    if attributes == {} and not template_id:
+    if not template_id and not attributes:
         return True
     try:
         attribute_template = db.session.query(AttributeTemplateModel).filter_by(id=template_id).first().to_dict()
@@ -373,7 +373,7 @@ def delete_items_by_ids(ids: list[UUID], api_response: APIResponse):
         delete_item_by_id(id, api_response)
 
 
-def bequeath_attributes(id: UUID, data: PUTItemsBequeathAttributes, api_response: APIResponse):
+def bequeath_to_children(id: UUID, data: PUTItemsBequeath, api_response: APIResponse):
     if not attributes_match_template(data.attributes, data.attribute_template_id):
         raise BadRequestException('Attributes do not match attribute template')
     root_item_query = (
@@ -385,11 +385,15 @@ def bequeath_attributes(id: UUID, data: PUTItemsBequeathAttributes, api_response
     if not root_item_result:
         raise EntityNotFoundException()
     if root_item_result[0].type != 'folder':
-        raise BadRequestException('Attributes can only be bequeathed from folders')
+        raise BadRequestException('Properties can only be bequeathed from folders')
     children_result = get_children_of_item(root_item_result)
     results = []
     for child in children_result:
-        extra = {'attributes': {str(data.attribute_template_id): data.attributes} if data.attributes else {}}
+        extra = {}
+        if data.attribute_template_id and data.attributes:
+            extra = {'attributes': {str(data.attribute_template_id): data.attributes} if data.attributes else {}}
+        if data.system_tags:
+            extra['system_tags'] = data.system_tags
         child[2].extra = extra
     db.session.commit()
     for child in children_result:
