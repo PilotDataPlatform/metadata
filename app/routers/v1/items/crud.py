@@ -36,6 +36,7 @@ from app.models.models_items import POSTItem
 from app.models.models_items import POSTItems
 from app.models.models_items import PUTItem
 from app.models.models_items import PUTItems
+from app.models.models_items import PUTItemsBequeathAttributes
 from app.models.sql_attribute_templates import AttributeTemplateModel
 from app.models.sql_extended import ExtendedModel
 from app.models.sql_items import ItemModel
@@ -241,7 +242,7 @@ def update_item(item_id: UUID, data: PUTItem) -> dict:
     if data.attribute_template_id and data.attributes:
         if not attributes_match_template(data.attributes, data.attribute_template_id):
             raise BadRequestException('Attributes do not match attribute template')
-        extra['attributes'] = ({str(data.attribute_template_id): data.attributes} if data.attributes else {},)
+        extra['attributes'] = {str(data.attribute_template_id): data.attributes} if data.attributes else {}
     if extra:
         extended.extra = extra
     db.session.commit()
@@ -303,6 +304,27 @@ def archive_item(item: ItemModel, trash_item: bool, parent: bool):
         item.last_updated_time = datetime.utcnow()
 
 
+def get_children_of_item(root_item: ItemModel) -> list[tuple]:
+    search_path = (
+        f'{root_item[0].restore_path}.{root_item[0].name}.*'
+        if root_item[0].archived
+        else f'{root_item[0].parent_path}.{root_item[0].name}.*'
+    )
+    children_item_query = (
+        db.session.query(ItemModel, StorageModel, ExtendedModel)
+        .join(StorageModel, ExtendedModel)
+        .filter(
+            ItemModel.container_code == root_item[0].container_code,
+            ItemModel.zone == root_item[0].zone,
+            ItemModel.archived == root_item[0].archived,
+            ItemModel.restore_path.lquery(expression.cast(search_path, LQUERY))
+            if root_item[0].archived
+            else ItemModel.parent_path.lquery(expression.cast(search_path, LQUERY)),
+        )
+    )
+    return children_item_query.all()
+
+
 def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
     root_item_query = (
         db.session.query(ItemModel, StorageModel, ExtendedModel)
@@ -314,24 +336,7 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
         raise EntityNotFoundException()
     children_result = []
     if root_item_result[0].type == 'folder':
-        search_path = (
-            f'{root_item_result[0].restore_path}.{root_item_result[0].name}.*'
-            if root_item_result[0].archived
-            else f'{root_item_result[0].parent_path}.{root_item_result[0].name}.*'
-        )
-        children_item_query = (
-            db.session.query(ItemModel, StorageModel, ExtendedModel)
-            .join(StorageModel, ExtendedModel)
-            .filter(
-                ItemModel.container_code == root_item_result[0].container_code,
-                ItemModel.zone == root_item_result[0].zone,
-                ItemModel.archived == root_item_result[0].archived,
-                ItemModel.restore_path.lquery(expression.cast(search_path, LQUERY))
-                if root_item_result[0].archived
-                else ItemModel.parent_path.lquery(expression.cast(search_path, LQUERY)),
-            )
-        )
-        children_result = children_item_query.all()
+        children_result = get_children_of_item(root_item_result)
     all_items = []
     try:
         archive_item(root_item_result[0], params.archived, True)
@@ -366,3 +371,29 @@ def delete_item_by_id(id: UUID, api_response: APIResponse):
 def delete_items_by_ids(ids: list[UUID], api_response: APIResponse):
     for id in ids:
         delete_item_by_id(id, api_response)
+
+
+def bequeath_attributes(id: UUID, data: PUTItemsBequeathAttributes, api_response: APIResponse):
+    if not attributes_match_template(data.attributes, data.attribute_template_id):
+        raise BadRequestException('Attributes do not match attribute template')
+    root_item_query = (
+        db.session.query(ItemModel, StorageModel, ExtendedModel)
+        .join(StorageModel, ExtendedModel)
+        .filter(ItemModel.id == id)
+    )
+    root_item_result = root_item_query.first()
+    if not root_item_result:
+        raise EntityNotFoundException()
+    if root_item_result[0].type != 'folder':
+        raise BadRequestException('Attributes can only be bequeathed from folders')
+    children_result = get_children_of_item(root_item_result)
+    results = []
+    for child in children_result:
+        extra = {'attributes': {str(data.attribute_template_id): data.attributes} if data.attributes else {}}
+        child[2].extra = extra
+    db.session.commit()
+    for child in children_result:
+        db.session.refresh(child[2])
+        results.append(combine_item_tables(child))
+    api_response.result = results
+    api_response.total = len(results)

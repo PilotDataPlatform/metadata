@@ -142,6 +142,16 @@ class POSTItem(BaseModel):
             raise ValueError('Folder name cannot contain reserved character: .')
         return v
 
+    @validator('attributes')
+    def attributes_only_on_files(cls, v, values):
+        if v and 'type' in values and values['type'] != 'file':
+            raise ValueError('Attributes can only be applied to files')
+
+    @validator('attribute_template_id')
+    def attribute_template_only_on_files(cls, v, values):
+        if v and 'type' in values and values['type'] != 'file':
+            raise ValueError('Attribute templates can only be applied to files')
+
 
 class POSTItems(BaseModel):
     items: list[POSTItem]
@@ -194,4 +204,13 @@ class DELETEItem(BaseModel):
 
 
 class DELETEItemResponse(APIResponse):
+    pass
+
+
+class PUTItemsBequeathAttributes(BaseModel):
+    attribute_template_id: UUID
+    attributes: dict
+
+
+class PUTItemsBequeathAttributesResponse(GETItemResponse):
     pass

@@ -83,8 +83,6 @@ class TestItems:
             'version': '',
             'tags': [],
             'system_tags': [],
-            'attribute_template_id': None,
-            'attributes': {},
         }
         response = app.post('/v1/item/', json=payload)
         assert response.status_code == 200
@@ -110,8 +108,6 @@ class TestItems:
                     'version': '',
                     'tags': [],
                     'system_tags': [],
-                    'attribute_template_id': None,
-                    'attributes': {},
                 },
                 {
                     'id': item_ids[1],
@@ -128,8 +124,6 @@ class TestItems:
                     'version': '',
                     'tags': [],
                     'system_tags': [],
-                    'attribute_template_id': None,
-                    'attributes': {},
                 },
             ]
         }
@@ -152,8 +146,6 @@ class TestItems:
             'version': '',
             'tags': [],
             'system_tags': [],
-            'attribute_template_id': None,
-            'attributes': {},
         }
         response = app.post('/v1/item/', json=payload)
         assert response.status_code == 422
@@ -174,8 +166,6 @@ class TestItems:
             'version': '',
             'tags': [],
             'system_tags': [],
-            'attribute_template_id': None,
-            'attributes': {},
         }
         response = app.post('/v1/item/', json=payload)
         assert response.status_code == 422
@@ -288,8 +278,6 @@ class TestItems:
             'version': '',
             'tags': [],
             'system_tags': [],
-            'attribute_template_id': None,
-            'attributes': {},
         }
         app.post('/v1/item/', json=payload)
         params = {
