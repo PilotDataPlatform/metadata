@@ -37,8 +37,8 @@ class ExtendedModel(Base):
     __table_args__ = ({'schema': ConfigClass.METADATA_SCHEMA},)
 
     def __init__(self, item_id, extra):
-        self.id = (uuid.uuid4(),)
-        self.item_id = (item_id,)
+        self.id = uuid.uuid4()
+        self.item_id = item_id
         self.extra = extra
 
     def to_dict(self):

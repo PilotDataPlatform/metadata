@@ -97,7 +97,7 @@ class POSTItem(BaseModel):
     tags: list[str] = []
     system_tags: list[str] = []
     attribute_template_id: Optional[UUID]
-    attributes: dict = {}
+    attributes: Optional[dict] = {}
 
     class Config:
         anystr_strip_whitespace = True
@@ -106,13 +106,13 @@ class POSTItem(BaseModel):
     def type_is_valid(cls, v, values):
         if v not in ['file', 'folder', 'name_folder']:
             raise ValueError('type must be one of: file, folder, name_folder')
-        if 'parent' in values and values['parent'] and v == 'name_folder':
+        elif 'parent' in values and values['parent'] and v == 'name_folder':
             raise ValueError('Name folders cannot have a parent')
-        if 'parent_path' in values and values['parent_path'] and v == 'name_folder':
+        elif 'parent_path' in values and values['parent_path'] and v == 'name_folder':
             raise ValueError('Name folders cannot have a parent_path')
-        if 'parent' not in values or not values['parent'] and v != 'name_folder':
+        elif 'parent' not in values or not values['parent'] and v != 'name_folder':
             raise ValueError('Files and folders must have a parent')
-        if 'parent_path' not in values or not values['parent_path'] and v != 'name_folder':
+        elif 'parent_path' not in values or not values['parent_path'] and v != 'name_folder':
             raise ValueError('Files and folders must have a parent_path')
         return v
 
@@ -120,7 +120,7 @@ class POSTItem(BaseModel):
     def container_type_is_valid(cls, v, values):
         if v not in ['project', 'dataset']:
             raise ValueError('container_type must be project or dataset')
-        if 'type' in values and values['type'] == 'name_folder' and v != 'project':
+        elif 'type' in values and values['type'] == 'name_folder' and v != 'project':
             raise ValueError('Name folders are only allowed in projects')
         return v
 
@@ -140,6 +140,23 @@ class POSTItem(BaseModel):
     def folder_name_is_valid(cls, v, values):
         if 'type' in values and values['type'] == 'folder' and '.' in v:
             raise ValueError('Folder name cannot contain reserved character: .')
+        return v
+
+    @validator('attributes')
+    def attributes_are_valid(cls, v, values):
+        if 'type' in values and values['type'] != 'file':
+            raise ValueError('Attributes can only be applied to files')
+        for attribute in v.values():
+            if len(attribute) > ConfigClass.MAX_ATTRIBUTE_LENGTH:
+                raise ValueError(
+                    f'Attribute exceeds maximum length of {ConfigClass.MAX_ATTRIBUTE_LENGTH} characters: {attribute}'
+                )
+        return v
+
+    @validator('attribute_template_id')
+    def attribute_template_only_on_files(cls, v, values):
+        if 'type' in values and values['type'] != 'file':
+            raise ValueError('Attribute templates can only be applied to files')
         return v
 
 
@@ -194,4 +211,14 @@ class DELETEItem(BaseModel):
 
 
 class DELETEItemResponse(APIResponse):
+    pass
+
+
+class PUTItemsBequeath(BaseModel):
+    attribute_template_id: Optional[UUID]
+    attributes: Optional[dict]
+    system_tags: Optional[list[str]]
+
+
+class PUTItemsBequeathResponse(GETItemResponse):
     pass

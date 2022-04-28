@@ -75,8 +75,6 @@ def test_items() -> dict:
                 'version': '',
                 'tags': [],
                 'system_tags': [],
-                'attribute_template_id': None,
-                'attributes': {},
             },
             {
                 'id': props['ids']['file_1'],
@@ -93,8 +91,6 @@ def test_items() -> dict:
                 'version': '',
                 'tags': [],
                 'system_tags': [],
-                'attribute_template_id': None,
-                'attributes': {},
             },
             {
                 'id': props['ids']['file_2'],
@@ -111,8 +107,6 @@ def test_items() -> dict:
                 'version': '',
                 'tags': [],
                 'system_tags': [],
-                'attribute_template_id': None,
-                'attributes': {},
             },
             {
                 'id': props['ids']['file_3'],
@@ -129,8 +123,6 @@ def test_items() -> dict:
                 'version': '',
                 'tags': [],
                 'system_tags': [],
-                'attribute_template_id': None,
-                'attributes': {},
             },
         ],
     }

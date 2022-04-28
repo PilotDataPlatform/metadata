@@ -37,11 +37,14 @@ from app.models.models_items import POSTItems
 from app.models.models_items import PUTItem
 from app.models.models_items import PUTItemResponse
 from app.models.models_items import PUTItems
+from app.models.models_items import PUTItemsBequeath
+from app.models.models_items import PUTItemsBequeathResponse
 from app.routers.router_exceptions import BadRequestException
 from app.routers.router_exceptions import EntityNotFoundException
 from app.routers.router_utils import set_api_response_error
 
 from .crud import archive_item_by_id
+from .crud import bequeath_to_children
 from .crud import create_item
 from .crud import create_items
 from .crud import delete_item_by_id
@@ -174,4 +177,20 @@ class APIItemsBulk:
         except Exception as e:
             _logger.exception(e)
             set_api_response_error(api_response, 'Failed to delete items', EAPIResponseCode.not_found)
+        return api_response.json_response()
+
+    @router_bulk.put(
+        '/batch/bequeath/',
+        response_model=PUTItemsBequeathResponse,
+        summary='Bequeath properties to a folder\'s children',
+    )
+    async def update_items_bequeath(self, data: PUTItemsBequeath, id: UUID = Query(None)):
+        try:
+            api_response = PUTItemsBequeathResponse()
+            bequeath_to_children(id, data, api_response)
+        except BadRequestException as e:
+            set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
+        except Exception as e:
+            _logger.exception(e)
+            set_api_response_error(api_response, f'Failed to get item with id {id}', EAPIResponseCode.not_found)
         return api_response.json_response()
