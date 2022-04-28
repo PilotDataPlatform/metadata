@@ -17,12 +17,9 @@ Manages metadata such as file hierarchy, project and user ownership, names, type
 
 ### Prerequisites
 - Docker
-- Gitlab Package Registry credentials for Poetry installation
 
 ### Installation
-Run Docker compose with Package Registry credentials.
-
-    PIP_USERNAME=[...] PIP_PASSWORD=[...] docker-compose up
+Run `docker-compose up`.
 
 ## Usage
 Local URLs:
