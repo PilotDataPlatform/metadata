@@ -298,3 +298,17 @@ class TestItems:
         params = {'ids': [test_items['ids']['file_2'], test_items['ids']['file_3']]}
         response = app.delete('/v1/items/batch/', params=params)
         assert response.status_code == 200
+
+    def test_bequeath_attributes_200(self, test_items, test_attribute_template):
+        params = {'id': test_items['ids']['folder']}
+        payload = {
+            'attribute_template_id': test_attribute_template,
+            'attributes': {'attribute_1': 'val1'},
+        }
+        response = app.put('/v1/items/batch/attributes/', params=params, json=payload)
+        assert response.status_code == 200
+        assert len(loads(response.text)['result']) == 3
+        assert (
+            loads(response.text)['result'][0]['extended']['extra']['attributes'][test_attribute_template]
+            == payload['attributes']
+        )
