@@ -13,382 +13,300 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
+import uuid
 from json import loads
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
 
-reused_item_ids = []
-reused_container_code = 'test_container'
+app = TestClient(app)
 
 
 class TestItems:
-    app = TestClient(app)
+    cleanup_item_ids = []
 
-    @pytest.mark.dependency(name='test_01')
-    def test_create_item_200(self):
-        payload = {
-            'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            'parent_path': 'folder1.folder2',
-            'type': 'file',
-            'zone': 0,
-            'name': 'file',
-            'size': 0,
-            'owner': 'admin',
-            'container_code': reused_container_code,
-            'container_type': 'project',
-            'location_uri': 'https://example.com',
-            'version': '1.0',
-            'tags': [],
-            'system_tags': [],
-            'attribute_template_id': None,
-            'attributes': {},
-        }
-        response = self.app.post('/v1/item/', json=payload)
-        global reused_item_ids
-        reused_item_ids.append(loads(response.text)['result']['id'])
+    @classmethod
+    def teardown_class(cls):
+        for id in cls.cleanup_item_ids:
+            params = {'id': id}
+            app.delete('/v1/item/', params=params)
+
+    def test_get_item_by_id_200(self, test_items):
+        response = app.get(f'/v1/item/{test_items["ids"]["file_1"]}/')
         assert response.status_code == 200
 
-    @pytest.mark.dependency(depends=['test_01'])
-    def test_get_item_by_id_200(self):
-        response = self.app.get(f'/v1/item/{reused_item_ids[0]}/')
-        assert response.status_code == 200
-
-    @pytest.mark.dependency(depends=['test_01'])
     def test_get_item_by_location_200(self):
         params = {
-            'parent_path': 'folder1.folder2',
+            'parent_path': 'user.test_folder',
+            'name': 'test_file.txt',
             'archived': False,
             'zone': 0,
-            'container_code': reused_container_code,
+            'container_code': 'test_project',
             'recursive': False,
         }
-        response = self.app.get('/v1/items/search/', params=params)
-        assert response.status_code == 200
-
-    @pytest.mark.dependency(depends=['test_01'])
-    def test_update_item_200(self):
-        params = {'id': reused_item_ids[0]}
-        payload = {
-            'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            'parent_path': 'folder1.folder2',
-            'type': 'file',
-            'zone': 0,
-            'name': 'file_renamed',
-            'size': 0,
-            'owner': 'admin',
-            'container_code': reused_container_code,
-            'container_type': 'project',
-            'location_uri': 'https://example.com',
-            'version': '1.0',
-            'tags': [],
-            'system_tags': [],
-            'attribute_template_id': None,
-            'attributes': {},
-        }
-        response = self.app.put('/v1/item/', json=payload, params=params)
-        assert response.status_code == 200
-
-    @pytest.mark.dependency(depends=['test_01'])
-    def test_trash_item_200(self):
-        params = {
-            'id': reused_item_ids[0],
-            'archived': True,
-        }
-        response = self.app.patch('/v1/item/', params=params)
-        assert response.status_code == 200
-
-    @pytest.mark.dependency(depends=['test_01'])
-    def test_restore_item_200(self):
-        params = {
-            'id': reused_item_ids[0],
-            'archived': False,
-        }
-        response = self.app.patch('/v1/item/', params=params)
+        response = app.get('/v1/items/search/', params=params)
         assert response.status_code == 200
 
     def test_get_item_by_location_missing_zone_422(self):
         params = {
-            'parent_path': 'folder1.folder2',
+            'parent_path': 'user.test_folder',
+            'name': 'test_file.txt',
             'archived': False,
-            'container_code': reused_container_code,
+            'container_code': 'test_project',
             'recursive': False,
         }
-        response = self.app.get('/v1/item/search/', params=params)
+        response = app.get('/v1/item/search/', params=params)
         assert response.status_code == 422
 
-    def test_create_item_wrong_type_422(self):
+    def test_get_items_by_id_batch_200(self, test_items):
+        params = {'ids': [test_items['ids']['name_folder'], test_items['ids']['folder'], test_items['ids']['file_1']]}
+        response = app.get('/v1/items/batch/', params=params)
+        assert response.status_code == 200
+
+    def test_create_item_200(self):
+        item_id = str(uuid.uuid4())
+        self.cleanup_item_ids.append(item_id)
         payload = {
+            'id': item_id,
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            'parent_path': 'folder1.folder2',
-            'type': 'invalid',
+            'parent_path': 'user.test_folder',
+            'type': 'file',
             'zone': 0,
-            'name': 'file',
+            'name': 'test_file.txt',
             'size': 0,
             'owner': 'admin',
-            'container_code': reused_container_code,
+            'container_code': 'create_item_200',
             'container_type': 'project',
-            'location_uri': 'https://example.com',
-            'version': '1.0',
+            'location_uri': '',
+            'version': '',
             'tags': [],
             'system_tags': [],
             'attribute_template_id': None,
-            'attributes': None,
+            'attributes': {},
         }
-        response = self.app.post('/v1/item/', json=payload)
+        response = app.post('/v1/item/', json=payload)
+        assert response.status_code == 200
+
+    def test_create_items_batch_200(self):
+        item_ids = [str(uuid.uuid4()), str(uuid.uuid4())]
+        for id in item_ids:
+            self.cleanup_item_ids.append(id)
+        payload = {
+            'items': [
+                {
+                    'id': item_ids[0],
+                    'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+                    'parent_path': 'user.folder',
+                    'type': 'file',
+                    'zone': 0,
+                    'name': 'file_1.txt',
+                    'size': 0,
+                    'owner': 'user',
+                    'container_code': 'create_items_batch',
+                    'container_type': 'project',
+                    'location_uri': '',
+                    'version': '',
+                    'tags': [],
+                    'system_tags': [],
+                    'attribute_template_id': None,
+                    'attributes': {},
+                },
+                {
+                    'id': item_ids[1],
+                    'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+                    'parent_path': 'user.folder',
+                    'type': 'file',
+                    'zone': 0,
+                    'name': 'file_2.txt',
+                    'size': 0,
+                    'owner': 'user',
+                    'container_code': 'create_items_batch',
+                    'container_type': 'project',
+                    'location_uri': '',
+                    'version': '',
+                    'tags': [],
+                    'system_tags': [],
+                    'attribute_template_id': None,
+                    'attributes': {},
+                },
+            ]
+        }
+        response = app.post('/v1/items/batch/', json=payload)
+        assert response.status_code == 200
+
+    def test_create_item_wrong_type_422(self):
+        payload = {
+            'id': str(uuid.uuid4()),
+            'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+            'parent_path': 'user.test_folder',
+            'type': 'invalid',
+            'zone': 0,
+            'name': 'test_file.txt',
+            'size': 0,
+            'owner': 'admin',
+            'container_code': 'create_item_200',
+            'container_type': 'project',
+            'location_uri': '',
+            'version': '',
+            'tags': [],
+            'system_tags': [],
+            'attribute_template_id': None,
+            'attributes': {},
+        }
+        response = app.post('/v1/item/', json=payload)
         assert response.status_code == 422
 
     def test_create_item_wrong_container_type_422(self):
         payload = {
+            'id': str(uuid.uuid4()),
             'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            'parent_path': 'folder1.folder2',
+            'parent_path': 'user.test_folder',
             'type': 'file',
             'zone': 0,
-            'name': 'file',
+            'name': 'test_file.txt',
             'size': 0,
             'owner': 'admin',
-            'container_code': reused_container_code,
+            'container_code': 'create_item_200',
             'container_type': 'invalid',
-            'location_uri': 'https://example.com',
-            'version': '1.0',
-            'tags': [],
-            'system_tags': [],
-            'attribute_template_id': None,
-            'attributes': None,
-        }
-        response = self.app.post('/v1/item/', json=payload)
-        assert response.status_code == 422
-
-    @pytest.mark.dependency(depends=['test_01'])
-    def test_update_item_wrong_type_422(self):
-        params = {'id': reused_item_ids[0]}
-        payload = {
-            'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            'parent_path': 'folder1.folder2',
-            'type': 'invalid',
-            'zone': 0,
-            'name': 'file_renamed',
-            'size': 0,
-            'owner': 'admin',
-            'container_code': reused_container_code,
-            'container_type': 'project',
-            'location_uri': 'https://example.com',
-            'version': '1.0',
-            'tags': [],
-            'system_tags': [],
-            'attribute_template_id': None,
-            'attributes': None,
-        }
-        response = self.app.put('/v1/item/', json=payload, params=params)
-        assert response.status_code == 422
-
-    @pytest.mark.dependency(depends=['test_01'])
-    def test_update_item_wrong_container_type_422(self):
-        params = {'id': reused_item_ids[0]}
-        payload = {
-            'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            'parent_path': 'folder1.folder2',
-            'type': 'file',
-            'zone': 0,
-            'name': 'file_renamed',
-            'size': 0,
-            'owner': 'admin',
-            'container_code': reused_container_code,
-            'container_type': 'invalid',
-            'location_uri': 'https://example.com',
-            'version': '1.0',
-            'tags': [],
-            'system_tags': [],
-            'attribute_template_id': None,
-            'attributes': None,
-        }
-        response = self.app.put('/v1/item/', json=payload, params=params)
-        assert response.status_code == 422
-
-    def test_rename_item_on_conflict_200(self):
-        payload = {
-            'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            'parent_path': 'folder1.folder2',
-            'type': 'file',
-            'zone': 0,
-            'name': 'conflict',
-            'size': 0,
-            'owner': 'admin',
-            'container_code': reused_container_code,
-            'container_type': 'project',
-            'location_uri': 'https://example.com',
-            'version': '1.0',
+            'location_uri': '',
+            'version': '',
             'tags': [],
             'system_tags': [],
             'attribute_template_id': None,
             'attributes': {},
         }
-        response = self.app.post('/v1/item/', json=payload)
-        item_1_id = loads(response.text)['result']['id']
-        params = {
-            'id': item_1_id,
-            'archived': True,
-        }
-        self.app.patch('/v1/item/', params=params)
-        payload = {
-            'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            'parent_path': 'folder1.folder2',
-            'type': 'file',
-            'zone': 0,
-            'name': 'conflict',
-            'size': 0,
-            'owner': 'admin',
-            'container_code': reused_container_code,
-            'container_type': 'project',
-            'location_uri': 'https://example.com',
-            'version': '1.0',
-            'tags': [],
-            'system_tags': [],
-            'attribute_template_id': None,
-            'attributes': {},
-        }
-        response = self.app.post('/v1/item/', json=payload)
-        item_2_id = loads(response.text)['result']['id']
-        params = {
-            'id': item_1_id,
-            'archived': False,
-        }
-        response = self.app.patch('/v1/item/', params=params)
-        assert response.status_code == 200
-        assert '_' in loads(response.text)['result']['name']
-        params = {'id': item_1_id}
-        self.app.delete('/v1/item', params=params)
-        params = {'id': item_2_id}
-        self.app.delete('/v1/item', params=params)
-
-    @pytest.mark.dependency(depends=['test_01'])
-    def test_delete_item_200(self):
-        params = {'id': reused_item_ids[0]}
-        response = self.app.delete('/v1/item/', params=params)
-        assert response.status_code == 200
-
-    @pytest.mark.dependency(name='test_14')
-    def test_create_items_batch_200(self):
-        payload = {
-            'items': [
-                {
-                    'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-                    'parent_path': 'folder1.folder2',
-                    'type': 'file',
-                    'zone': 0,
-                    'name': 'file_1',
-                    'size': 0,
-                    'owner': 'admin',
-                    'container_code': reused_container_code,
-                    'container_type': 'project',
-                    'location_uri': 'https://example.com',
-                    'version': '1.0',
-                    'tags': [],
-                    'system_tags': [],
-                    'attribute_template_id': None,
-                    'attributes': {},
-                },
-                {
-                    'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-                    'parent_path': 'folder1.folder2',
-                    'type': 'file',
-                    'zone': 0,
-                    'name': 'file_2',
-                    'size': 0,
-                    'owner': 'admin',
-                    'container_code': reused_container_code,
-                    'container_type': 'project',
-                    'location_uri': 'https://example.com',
-                    'version': '1.0',
-                    'tags': [],
-                    'system_tags': [],
-                    'attribute_template_id': None,
-                    'attributes': {},
-                },
-            ]
-        }
-        response = self.app.post('/v1/items/batch/', json=payload)
-        global reused_item_ids
-        reused_item_ids.append(loads(response.text)['result'][0]['id'])
-        reused_item_ids.append(loads(response.text)['result'][1]['id'])
-        assert response.status_code == 200
-
-    @pytest.mark.dependency(depends=['test_14'])
-    def test_get_items_by_id_batch_200(self):
-        params = {'ids': [reused_item_ids[1], reused_item_ids[2]]}
-        response = self.app.get('/v1/items/batch/', params=params)
-        assert response.status_code == 200
-
-    @pytest.mark.dependency(depends=['test_14'])
-    def test_update_items_batch_200(self):
-        params = {'ids': [reused_item_ids[1], reused_item_ids[2]]}
-        payload = {
-            'items': [
-                {
-                    'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-                    'parent_path': 'folder1.folder2.folder3',
-                    'type': 'file',
-                    'zone': 0,
-                    'name': 'file_1',
-                    'size': 0,
-                    'owner': 'admin',
-                    'container_code': reused_container_code,
-                    'container_type': 'project',
-                    'location_uri': 'https://example.com',
-                    'version': '1.0',
-                    'tags': [],
-                    'system_tags': [],
-                    'attribute_template_id': None,
-                    'attributes': {},
-                },
-                {
-                    'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-                    'parent_path': 'folder1.folder2.folder3',
-                    'type': 'file',
-                    'zone': 0,
-                    'name': 'file_2',
-                    'size': 0,
-                    'owner': 'admin',
-                    'container_code': reused_container_code,
-                    'container_type': 'project',
-                    'location_uri': 'https://example.com',
-                    'version': '1.0',
-                    'tags': [],
-                    'system_tags': [],
-                    'attribute_template_id': None,
-                    'attributes': {},
-                },
-            ]
-        }
-        response = self.app.put('/v1/items/batch/', params=params, json=payload)
-        assert response.status_code == 200
-        assert loads(response.text)['result'][0]['parent_path'] == 'folder1.folder2.folder3'
-
-    @pytest.mark.dependency(depends=['test_14'])
-    def test_delete_items_by_id_batch_200(self):
-        params = {'ids': [reused_item_ids[1], reused_item_ids[2]]}
-        response = self.app.delete('/v1/items/batch/', params=params)
-        assert response.status_code == 200
+        response = app.post('/v1/item/', json=payload)
+        assert response.status_code == 422
 
     def test_create_name_folder_with_parent_422(self):
         payload = {
-            'parent': '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-            'parent_path': 'folder1.folder2',
+            'parent': str(uuid.uuid4()),
+            'parent_path': None,
             'type': 'name_folder',
             'zone': 0,
-            'name': 'file',
+            'name': 'user',
             'size': 0,
-            'owner': 'admin',
-            'container_code': reused_container_code,
+            'owner': 'user',
+            'container_code': 'test_project',
             'container_type': 'project',
-            'location_uri': 'https://example.com',
-            'version': '1.0',
+            'location_uri': '',
+            'version': '',
+        }
+        response = app.post('/v1/item/', json=payload)
+        assert response.status_code == 422
+
+    def test_update_item_200(self, test_items):
+        params = {'id': test_items['ids']['file_1']}
+        payload = {'name': 'test_file_updated.txt'}
+        response = app.put('/v1/item/', json=payload, params=params)
+        assert response.status_code == 200
+        assert loads(response.text)['result']['name'] == 'test_file_updated.txt'
+
+    def test_update_items_batch_200(self, test_items):
+        params = {'ids': [test_items['ids']['name_folder'], test_items['ids']['folder'], test_items['ids']['file_1']]}
+        payload = {'items': [{'owner': 'user_2'}, {'tags': ['update_items_batch']}, {'size': 500}]}
+        response = app.put('/v1/items/batch/', params=params, json=payload)
+        assert response.status_code == 200
+        assert loads(response.text)['result'][0]['owner'] == 'user_2'
+        assert loads(response.text)['result'][1]['extended']['extra']['tags'] == ['update_items_batch']
+        assert loads(response.text)['result'][2]['size'] == 500
+
+    def test_update_item_wrong_type_422(self, test_items):
+        params = {'id': test_items['ids']['file_1']}
+        payload = {'type': 'invalid'}
+        response = app.put('/v1/item/', json=payload, params=params)
+        assert response.status_code == 422
+
+    def test_update_item_wrong_container_type_422(self, test_items):
+        params = {'id': test_items['ids']['file_1']}
+        payload = {'container_type': 'invalid'}
+        response = app.put('/v1/item/', json=payload, params=params)
+        assert response.status_code == 422
+
+    def test_trash_item_200(self, test_items):
+        params = {
+            'id': test_items['ids']['file_1'],
+            'archived': True,
+        }
+        response = app.patch('/v1/item/', params=params)
+        assert response.status_code == 200
+        assert loads(response.text)['result'][0]['archived'] == True
+
+    def test_restore_item_200(self, test_items):
+        params = {
+            'id': test_items['ids']['file_1'],
+            'archived': False,
+        }
+        response = app.patch('/v1/item/', params=params)
+        assert response.status_code == 200
+        assert loads(response.text)['result'][0]['archived'] == False
+
+    def test_trash_folder_with_children_200(self, test_items):
+        params = {
+            'id': test_items['ids']['folder'],
+            'archived': True,
+        }
+        response = app.patch('/v1/item/', params=params)
+        assert response.status_code == 200
+        assert len(loads(response.text)['result']) == 4
+        for i in range(4):
+            assert loads(response.text)['result'][i]['archived'] == True
+
+    def test_restore_folder_with_children_200(self, test_items):
+        params = {
+            'id': test_items['ids']['folder'],
+            'archived': False,
+        }
+        response = app.patch('/v1/item/', params=params)
+        assert response.status_code == 200
+        assert len(loads(response.text)['result']) == 4
+        for i in range(4):
+            assert loads(response.text)['result'][i]['archived'] == False
+
+    def test_rename_item_on_conflict_200(self, test_items):
+        params = {
+            'id': test_items['ids']['file_1'],
+            'archived': True,
+        }
+        app.patch('/v1/item/', params=params)
+        item_id = str(uuid.uuid4())
+        self.cleanup_item_ids.append(item_id)
+        payload = {
+            'id': item_id,
+            'parent': test_items['ids']['folder'],
+            'parent_path': 'user.test_folder',
+            'type': 'file',
+            'zone': 0,
+            'name': 'test_file_1.txt',
+            'size': 100,
+            'owner': 'user',
+            'container_code': test_items['container_code'],
+            'container_type': 'project',
+            'location_uri': '',
+            'version': '',
             'tags': [],
             'system_tags': [],
             'attribute_template_id': None,
             'attributes': {},
         }
-        response = self.app.post('/v1/item/', json=payload)
-        assert response.status_code == 422
+        app.post('/v1/item/', json=payload)
+        params = {
+            'id': test_items['ids']['file_1'],
+            'archived': False,
+        }
+        response = app.patch('/v1/item/', params=params)
+        assert response.status_code == 200
+        regex = '_\d{10}'
+        assert re.search(regex, loads(response.text)['result'][0]['name'])
+
+    def test_delete_item_200(self, test_items):
+        params = {'id': test_items['ids']['file_1']}
+        response = app.delete('/v1/item/', params=params)
+        assert response.status_code == 200
+
+    def test_delete_items_by_id_batch_200(self, test_items):
+        params = {'ids': [test_items['ids']['file_2'], test_items['ids']['file_3']]}
+        response = app.delete('/v1/items/batch/', params=params)
+        assert response.status_code == 200
