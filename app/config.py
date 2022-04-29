@@ -56,6 +56,7 @@ class Settings(BaseSettings):
 
     MAX_TAGS = 10
     MAX_SYSTEM_TAGS = 10
+    MAX_ATTRIBUTE_LENGTH = 100
 
     def __init__(self):
         super().__init__()

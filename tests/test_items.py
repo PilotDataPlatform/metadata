@@ -83,8 +83,6 @@ class TestItems:
             'version': '',
             'tags': [],
             'system_tags': [],
-            'attribute_template_id': None,
-            'attributes': {},
         }
         response = app.post('/v1/item/', json=payload)
         assert response.status_code == 200
@@ -110,8 +108,6 @@ class TestItems:
                     'version': '',
                     'tags': [],
                     'system_tags': [],
-                    'attribute_template_id': None,
-                    'attributes': {},
                 },
                 {
                     'id': item_ids[1],
@@ -128,8 +124,6 @@ class TestItems:
                     'version': '',
                     'tags': [],
                     'system_tags': [],
-                    'attribute_template_id': None,
-                    'attributes': {},
                 },
             ]
         }
@@ -152,8 +146,6 @@ class TestItems:
             'version': '',
             'tags': [],
             'system_tags': [],
-            'attribute_template_id': None,
-            'attributes': {},
         }
         response = app.post('/v1/item/', json=payload)
         assert response.status_code == 422
@@ -174,8 +166,6 @@ class TestItems:
             'version': '',
             'tags': [],
             'system_tags': [],
-            'attribute_template_id': None,
-            'attributes': {},
         }
         response = app.post('/v1/item/', json=payload)
         assert response.status_code == 422
@@ -288,8 +278,6 @@ class TestItems:
             'version': '',
             'tags': [],
             'system_tags': [],
-            'attribute_template_id': None,
-            'attributes': {},
         }
         app.post('/v1/item/', json=payload)
         params = {
@@ -310,3 +298,19 @@ class TestItems:
         params = {'ids': [test_items['ids']['file_2'], test_items['ids']['file_3']]}
         response = app.delete('/v1/items/batch/', params=params)
         assert response.status_code == 200
+
+    def test_bequeath_to_children_200(self, test_items, test_attribute_template):
+        params = {'id': test_items['ids']['folder']}
+        payload = {
+            'attribute_template_id': test_attribute_template,
+            'attributes': {'attribute_1': 'val1'},
+            'system_tags': ['copied-to-core'],
+        }
+        response = app.put('/v1/items/batch/bequeath/', params=params, json=payload)
+        assert response.status_code == 200
+        assert len(loads(response.text)['result']) == 3
+        assert (
+            loads(response.text)['result'][0]['extended']['extra']['attributes'][test_attribute_template]
+            == payload['attributes']
+        )
+        assert loads(response.text)['result'][0]['extended']['extra']['system_tags'] == payload['system_tags']
