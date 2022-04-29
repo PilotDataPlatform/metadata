@@ -106,7 +106,7 @@ def move_item(item: ItemModel, new_parent_path: str):
     children = get_children_of_item(item, True)
     item.parent_path = Ltree(encode_path_for_ltree(new_parent_path)) if new_parent_path else None
     for child in children:
-        move_item(child[0], f'{new_parent_path}.{decode_label_from_ltree(item.name)}')
+        move_item(child[0], f'{new_parent_path}.{decode_label_from_ltree(item.name)}' if new_parent_path else decode_label_from_ltree(item.name))
 
 
 def attributes_match_template(attributes: dict, template_id: UUID) -> bool:
