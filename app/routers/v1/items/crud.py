@@ -334,6 +334,8 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
     root_item_result = root_item_query.first()
     if not root_item_result:
         raise EntityNotFoundException()
+    if root_item_result[0].type == 'name_folder':
+        raise BadRequestException('Name folders cannot be archived or restored')
     children_result = []
     if root_item_result[0].type == 'folder':
         children_result = get_children_of_item(root_item_result)
