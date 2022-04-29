@@ -44,17 +44,7 @@ from app.models.sql_storage import StorageModel
 from app.routers.router_exceptions import BadRequestException
 from app.routers.router_exceptions import EntityNotFoundException
 from app.routers.router_utils import paginate
-
-
-def combine_item_tables(item_result: tuple) -> dict:
-    item_data = item_result[0].to_dict()
-    storage_data = item_result[1].to_dict()
-    storage_data.pop('item_id')
-    extended_data = item_result[2].to_dict()
-    extended_data.pop('item_id')
-    item_data['storage'] = storage_data
-    item_data['extended'] = extended_data
-    return item_data
+from app.routers.v1.items.utils import combine_item_tables
 
 
 def get_available_file_name(
@@ -87,6 +77,36 @@ def get_available_file_name(
     decoded_item_name_new = f'{decoded_item_name}_{timestamp}{decoded_item_extension}'
     encoded_item_name_new = encode_label_for_ltree(decoded_item_name_new)
     return encoded_item_name_new
+
+
+def get_children_of_item(root_item: ItemModel, first_children_only: bool = False) -> list[tuple]:
+    search_path = (
+        f'{root_item.restore_path}.{root_item.name}'
+        if root_item.archived
+        else f'{root_item.parent_path}.{root_item.name}'
+    )
+    if not first_children_only:
+        search_path += '.*'
+    children_item_query = (
+        db.session.query(ItemModel, StorageModel, ExtendedModel)
+        .join(StorageModel, ExtendedModel)
+        .filter(
+            ItemModel.container_code == root_item.container_code,
+            ItemModel.zone == root_item.zone,
+            ItemModel.archived == root_item.archived,
+            ItemModel.restore_path.lquery(expression.cast(search_path, LQUERY))
+            if root_item.archived
+            else ItemModel.parent_path.lquery(expression.cast(search_path, LQUERY)),
+        )
+    )
+    return children_item_query.all()
+
+
+def move_item(item: ItemModel, new_parent_path: str):
+    children = get_children_of_item(item, True)
+    item.parent_path = Ltree(encode_path_for_ltree(new_parent_path)) if new_parent_path else None
+    for child in children:
+        move_item(child[0], f'{new_parent_path}.{decode_label_from_ltree(item.name)}')
 
 
 def attributes_match_template(attributes: dict, template_id: UUID) -> bool:
@@ -212,7 +232,7 @@ def update_item(item_id: UUID, data: PUTItem) -> dict:
     if data.parent != '':
         item.parent = data.parent if data.parent else None
     if data.parent_path != '':
-        item.parent_path = Ltree(f'{encode_path_for_ltree(data.parent_path)}') if data.parent_path else None
+        move_item(item, data.parent_path)
     if data.type:
         item.type = data.type
     if data.zone:
@@ -304,27 +324,6 @@ def archive_item(item: ItemModel, trash_item: bool, parent: bool):
         item.last_updated_time = datetime.utcnow()
 
 
-def get_children_of_item(root_item: ItemModel) -> list[tuple]:
-    search_path = (
-        f'{root_item[0].restore_path}.{root_item[0].name}.*'
-        if root_item[0].archived
-        else f'{root_item[0].parent_path}.{root_item[0].name}.*'
-    )
-    children_item_query = (
-        db.session.query(ItemModel, StorageModel, ExtendedModel)
-        .join(StorageModel, ExtendedModel)
-        .filter(
-            ItemModel.container_code == root_item[0].container_code,
-            ItemModel.zone == root_item[0].zone,
-            ItemModel.archived == root_item[0].archived,
-            ItemModel.restore_path.lquery(expression.cast(search_path, LQUERY))
-            if root_item[0].archived
-            else ItemModel.parent_path.lquery(expression.cast(search_path, LQUERY)),
-        )
-    )
-    return children_item_query.all()
-
-
 def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
     root_item_query = (
         db.session.query(ItemModel, StorageModel, ExtendedModel)
@@ -336,7 +335,7 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
         raise EntityNotFoundException()
     children_result = []
     if root_item_result[0].type == 'folder':
-        children_result = get_children_of_item(root_item_result)
+        children_result = get_children_of_item(root_item_result[0])
     all_items = []
     try:
         archive_item(root_item_result[0], params.archived, True)
@@ -386,7 +385,7 @@ def bequeath_to_children(id: UUID, data: PUTItemsBequeath, api_response: APIResp
         raise EntityNotFoundException()
     if root_item_result[0].type != 'folder':
         raise BadRequestException('Properties can only be bequeathed from folders')
-    children_result = get_children_of_item(root_item_result)
+    children_result = get_children_of_item(root_item_result[0])
     results = []
     for child in children_result:
         extra = {}
