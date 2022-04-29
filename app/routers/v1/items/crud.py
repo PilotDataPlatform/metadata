@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
 import time
 import uuid
 from datetime import datetime
@@ -112,6 +113,18 @@ def move_item(item: ItemModel, new_parent_path: str):
             if new_parent_path
             else decode_label_from_ltree(item.name),
         )
+
+
+def rename_item(item: ItemModel, old_name: str, new_name: str, root_item: bool = True):
+    children = get_children_of_item(item, True)
+    if root_item:
+        item.name = encode_label_for_ltree(new_name)
+    else:
+        decoded_parent_path = decode_path_from_ltree(str(item.parent_path))
+        new_parent_path = re.sub(old_name, new_name, decoded_parent_path, 1)
+        item.parent_path = Ltree(encode_path_for_ltree(new_parent_path))
+    for child in children:
+        rename_item(child[0], old_name, new_name, False)
 
 
 def attributes_match_template(attributes: dict, template_id: UUID) -> bool:
@@ -243,7 +256,7 @@ def update_item(item_id: UUID, data: PUTItem) -> dict:
     if data.zone:
         item.zone = data.zone
     if data.name:
-        item.name = encode_label_for_ltree(data.name)
+        rename_item(item, decode_label_from_ltree(item.name), data.name)
     if data.size:
         item.size = data.size
     if data.owner:
