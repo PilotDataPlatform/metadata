@@ -310,7 +310,6 @@ def archive_item(item: ItemModel, trash_item: bool, parent: bool):
                 item.name = get_available_file_name(item.container_code, item.zone, item.name, None, True)
                 item.parent = None
             item.restore_path = item.parent_path
-            item.parent_path = None
         else:
             if parent:
                 restore_destination_id = get_restore_destination_id(item.container_code, item.zone, item.restore_path)
@@ -343,6 +342,8 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
         for child in children_result:
             archive_item(child[0], params.archived, False)
             all_items.append(child)
+        if params.archived:
+            move_item(root_item_result[0], None)
     except BadRequestException:
         raise
     db.session.commit()
