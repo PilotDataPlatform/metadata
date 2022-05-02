@@ -107,9 +107,7 @@ def move_item(item: ItemModel, new_parent_path: str):
     for child in children:
         move_item(
             child[0],
-            f'{new_parent_path}.{item.name}'
-            if new_parent_path
-            else item.name,
+            f'{new_parent_path}.{item.name}' if new_parent_path else item.name,
         )
 
 
@@ -168,9 +166,12 @@ def get_items_by_ids(params: GETItemsByIDs, ids: list[UUID], api_response: APIRe
 
 
 def get_items_by_location(params: GETItemsByLocation, api_response: APIResponse):
-    custom_sort = getattr(ItemModel, params.sorting).asc()
-    if params.order == 'desc':
-        custom_sort = getattr(ItemModel, params.sorting).desc()
+    try:
+        custom_sort = getattr(ItemModel, params.sorting).asc()
+        if params.order == 'desc':
+            custom_sort = getattr(ItemModel, params.sorting).desc()
+    except:
+        raise BadRequestException(f'Cannot sort by {params.sorting}')
     item_query = (
         db.session.query(ItemModel, StorageModel, ExtendedModel)
         .join(StorageModel, ExtendedModel)
