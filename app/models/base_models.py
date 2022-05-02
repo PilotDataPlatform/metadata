@@ -54,4 +54,4 @@ class PaginationRequest(BaseModel):
     page: int = 0
     page_size: int = 25
     order: str = 'asc'
-    sorting: str = 'createTime'
+    sorting: str = 'created_time'

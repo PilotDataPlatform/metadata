@@ -170,6 +170,9 @@ def get_items_by_ids(params: GETItemsByIDs, ids: list[UUID], api_response: APIRe
 
 
 def get_items_by_location(params: GETItemsByLocation, api_response: APIResponse):
+    custom_sort = getattr(ItemModel, params.sorting).asc()
+    if params.order == 'desc':
+        custom_sort = getattr(ItemModel, params.sorting).desc()
     item_query = (
         db.session.query(ItemModel, StorageModel, ExtendedModel)
         .join(StorageModel, ExtendedModel)
@@ -178,6 +181,7 @@ def get_items_by_location(params: GETItemsByLocation, api_response: APIResponse)
             ItemModel.zone == params.zone,
             ItemModel.archived == params.archived,
         )
+        .order_by(ItemModel.type, custom_sort)
     )
     if params.name:
         item_query = item_query.filter(ItemModel.name == encode_label_for_ltree(params.name))
