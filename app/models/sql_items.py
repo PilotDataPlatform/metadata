@@ -87,7 +87,7 @@ class ItemModel(Base):
             'archived': self.archived,
             'type': self.type,
             'zone': self.zone,
-            'name': decode_label_from_ltree(self.name),
+            'name': self.name,
             'size': self.size,
             'owner': self.owner,
             'container_code': self.container_code,
