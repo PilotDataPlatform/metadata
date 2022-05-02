@@ -184,6 +184,8 @@ def get_items_by_location(params: GETItemsByLocation, api_response: APIResponse)
     )
     if params.name:
         item_query = item_query.filter(ItemModel.name.like(params.name))
+    if params.owner:
+        item_query = item_query.filter(ItemModel.owner.like(params.owner))
     if params.parent_path:
         search_path = encode_path_for_ltree(params.parent_path)
         if params.recursive:

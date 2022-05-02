@@ -42,6 +42,7 @@ class GETItemsByLocation(PaginationRequest):
     archived: bool = False
     parent_path: Optional[str]
     name: Optional[str]
+    owner: Optional[str]
 
     class Config:
         anystr_strip_whitespace = True
