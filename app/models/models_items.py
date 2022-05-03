@@ -23,6 +23,7 @@ from pydantic import validator
 from app.config import ConfigClass
 
 from .base_models import APIResponse
+from .base_models import PaginationRequest
 
 
 class GETItem(BaseModel):
@@ -34,15 +35,14 @@ class GETItemsByIDs(BaseModel):
     page: int = 0
 
 
-class GETItemsByLocation(BaseModel):
+class GETItemsByLocation(PaginationRequest):
     container_code: str
     zone: int
     recursive: bool
     archived: bool = False
     parent_path: Optional[str]
     name: Optional[str]
-    page_size: int = 10
-    page: int = 0
+    owner: Optional[str]
 
     class Config:
         anystr_strip_whitespace = True

@@ -25,7 +25,7 @@ def upgrade():
         sa.Column('parent_path', LtreeType()),
         sa.Column('restore_path', LtreeType()),
         sa.Column('archived', sa.Boolean(), nullable=False),
-        sa.Column('type', pg.ENUM('file', 'folder', 'name_folder', name='type_enum', create_type=True), nullable=False),
+        sa.Column('type', pg.ENUM('name_folder', 'folder', 'file', name='type_enum', create_type=True), nullable=False),
         sa.Column('zone', sa.Integer(), nullable=False),
         sa.Column('name', sa.String(), nullable=False),
         sa.Column('size', sa.Integer()),

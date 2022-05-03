@@ -40,7 +40,7 @@ class ItemModel(Base):
     parent_path = Column(LtreeType())
     restore_path = Column(LtreeType())
     archived = Column(Boolean(), nullable=False)
-    type = Column(Enum('file', 'folder', 'name_folder', name='type_enum', create_type=False), nullable=False)
+    type = Column(Enum('name_folder', 'folder', 'file', name='type_enum', create_type=False), nullable=False)
     zone = Column(Integer(), nullable=False)
     name = Column(String(), nullable=False)
     size = Column(Integer())
@@ -87,7 +87,7 @@ class ItemModel(Base):
             'archived': self.archived,
             'type': self.type,
             'zone': self.zone,
-            'name': decode_label_from_ltree(self.name),
+            'name': self.name,
             'size': self.size,
             'owner': self.owner,
             'container_code': self.container_code,

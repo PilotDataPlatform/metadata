@@ -51,7 +51,7 @@ from app.routers.v1.items.utils import combine_item_tables
 def get_available_file_name(
     container_code: UUID,
     zone: int,
-    encoded_item_name: str,
+    item_name: str,
     encoded_item_path: Ltree,
     archived: bool,
 ) -> str:
@@ -60,31 +60,29 @@ def get_available_file_name(
         .filter_by(
             container_code=container_code,
             zone=zone,
-            name=encoded_item_name,
+            name=item_name,
             parent_path=encoded_item_path,
             archived=archived,
         )
         .first()
     )
     if not item:
-        return encoded_item_name
-    decoded_item_name = decode_label_from_ltree(encoded_item_name)
-    decoded_item_extension = ''
-    if '.' in decoded_item_name:
-        item_name_split = decoded_item_name.split('.', 1)
-        decoded_item_name = item_name_split[0]
-        decoded_item_extension = '.' + item_name_split[1]
+        return item_name
+    item_extension = ''
+    if '.' in item_name:
+        item_name_split = item_name.split('.', 1)
+        item_name = item_name_split[0]
+        item_extension = '.' + item_name_split[1]
     timestamp = round(time.time())
-    decoded_item_name_new = f'{decoded_item_name}_{timestamp}{decoded_item_extension}'
-    encoded_item_name_new = encode_label_for_ltree(decoded_item_name_new)
-    return encoded_item_name_new
+    item_name_new = f'{item_name}_{timestamp}{item_extension}'
+    return item_name_new
 
 
 def get_children_of_item(root_item: ItemModel, first_children_only: bool = False) -> list[tuple]:
     search_path = (
-        f'{root_item.restore_path}.{root_item.name}'
+        f'{root_item.restore_path}.{encode_label_for_ltree(root_item.name)}'
         if root_item.archived
-        else f'{root_item.parent_path}.{root_item.name}'
+        else f'{root_item.parent_path}.{encode_label_for_ltree(root_item.name)}'
     )
     if not first_children_only:
         search_path += '.*'
@@ -109,16 +107,14 @@ def move_item(item: ItemModel, new_parent_path: str):
     for child in children:
         move_item(
             child[0],
-            f'{new_parent_path}.{decode_label_from_ltree(item.name)}'
-            if new_parent_path
-            else decode_label_from_ltree(item.name),
+            f'{new_parent_path}.{item.name}' if new_parent_path else item.name,
         )
 
 
 def rename_item(item: ItemModel, old_name: str, new_name: str, root_item: bool = True):
     children = get_children_of_item(item, True)
     if root_item:
-        item.name = encode_label_for_ltree(new_name)
+        item.name = new_name
     else:
         decoded_parent_path = decode_path_from_ltree(str(item.parent_path))
         new_parent_path = re.sub(old_name, new_name, decoded_parent_path, 1)
@@ -170,6 +166,12 @@ def get_items_by_ids(params: GETItemsByIDs, ids: list[UUID], api_response: APIRe
 
 
 def get_items_by_location(params: GETItemsByLocation, api_response: APIResponse):
+    try:
+        custom_sort = getattr(ItemModel, params.sorting).asc()
+        if params.order == 'desc':
+            custom_sort = getattr(ItemModel, params.sorting).desc()
+    except:
+        raise BadRequestException(f'Cannot sort by {params.sorting}')
     item_query = (
         db.session.query(ItemModel, StorageModel, ExtendedModel)
         .join(StorageModel, ExtendedModel)
@@ -178,9 +180,12 @@ def get_items_by_location(params: GETItemsByLocation, api_response: APIResponse)
             ItemModel.zone == params.zone,
             ItemModel.archived == params.archived,
         )
+        .order_by(ItemModel.type, custom_sort)
     )
     if params.name:
-        item_query = item_query.filter(ItemModel.name == encode_label_for_ltree(params.name))
+        item_query = item_query.filter(ItemModel.name.like(params.name))
+    if params.owner:
+        item_query = item_query.filter(ItemModel.owner.like(params.owner))
     if params.parent_path:
         search_path = encode_path_for_ltree(params.parent_path)
         if params.recursive:
@@ -199,7 +204,6 @@ def get_items_by_location(params: GETItemsByLocation, api_response: APIResponse)
 def create_item(data: POSTItem) -> dict:
     if not attributes_match_template(data.attributes, data.attribute_template_id):
         raise BadRequestException('Attributes do not match attribute template')
-    encoded_item_name = encode_label_for_ltree(data.name)
     item_model_data = {
         'id': data.id if data.id else uuid.uuid4(),
         'parent': data.parent if data.parent else None,
@@ -207,7 +211,7 @@ def create_item(data: POSTItem) -> dict:
         'archived': False,
         'type': data.type,
         'zone': data.zone,
-        'name': encoded_item_name,
+        'name': data.name,
         'size': data.size,
         'owner': data.owner,
         'container_code': data.container_code,
@@ -256,7 +260,7 @@ def update_item(item_id: UUID, data: PUTItem) -> dict:
     if data.zone:
         item.zone = data.zone
     if data.name:
-        rename_item(item, decode_label_from_ltree(item.name), data.name)
+        rename_item(item, item.name, data.name)
     if data.size:
         item.size = data.size
     if data.owner:
@@ -310,7 +314,7 @@ def get_restore_destination_id(container_code: str, zone: int, restore_path: Ltr
         ItemModel.container_code == container_code,
         ItemModel.zone == zone,
         ItemModel.archived == False,
-        ItemModel.name == encode_label_for_ltree(destination_name),
+        ItemModel.name == destination_name,
     )
     if destination_path:
         destination_query = destination_query.filter(
