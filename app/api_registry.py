@@ -18,6 +18,7 @@ from fastapi_health import health
 from fastapi_sqlalchemy import db
 
 from .routers.v1.attribute_templates import api_attribute_templates
+from .routers.v1.collections import api_collections
 from .routers.v1.items import api_items
 
 
@@ -30,3 +31,4 @@ def api_registry(app: FastAPI):
     app.include_router(api_items.router, prefix='/v1/item', tags=['Items'])
     app.include_router(api_items.router_bulk, prefix='/v1/items', tags=['Items'])
     app.include_router(api_attribute_templates.router, prefix='/v1/template', tags=['Attribute templates'])
+    app.include_router(api_collections.router, prefix='/v1/collections', tags=['Collections'])
