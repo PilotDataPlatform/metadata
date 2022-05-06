@@ -1,12 +1,11 @@
-"""add_collections_tables
+"""add_collections_tables.
 
 Revision ID: c9d07577d8d2
 Revises: 76ffd36326a3
 Create Date: 2022-05-05 16:20:30.559058
-
 """
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects.postgresql import UUID
 
 # revision identifiers, used by Alembic.
@@ -27,8 +26,8 @@ def upgrade():
     )
     op.create_table(
         'items_collections',
-        sa.Column('item_id', UUID(), sa.ForeignKey('metadata.items.id', ondelete="CASCADE"), nullable=False),
-        sa.Column('collection_id', UUID(), sa.ForeignKey('metadata.collections.id', ondelete="CASCADE"),
+        sa.Column('item_id', UUID(), sa.ForeignKey('metadata.items.id', ondelete='CASCADE'), nullable=False),
+        sa.Column('collection_id', UUID(), sa.ForeignKey('metadata.collections.id', ondelete='CASCADE'),
                   nullable=False),
         sa.PrimaryKeyConstraint('item_id', 'collection_id'),
         sa.Index('collection_item_unique', 'collection_id', 'item_id', unique=True),

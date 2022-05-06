@@ -42,4 +42,3 @@ class CollectionsModel(Base):
         for field in ['id', 'name', 'container_code', 'owner']:
             result[field] = str(getattr(self, field))
         return result
-

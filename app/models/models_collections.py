@@ -123,13 +123,14 @@ class PUTCollectionResponse(APIResponse):
 
 
 class POSTCollectionItems(BaseModel):
+    id: UUID
     item_ids: list[UUID]
 
 
 class POSTCollectionItemsResponse(APIResponse):
     result: list = Field(
         [],
-        example=["3b3aad9e-2a39-4153-8146-87fb0923bab8", "95f1c2ac-dd77-43b4-af53-2ce8f901ff78"],
+        example=['3b3aad9e-2a39-4153-8146-87fb0923bab8', '95f1c2ac-dd77-43b4-af53-2ce8f901ff78'],
     )
 
 
@@ -138,6 +139,7 @@ class DELETECollectionResponse(APIResponse):
 
 
 class DELETECollectionItems(BaseModel):
+    id: UUID
     item_ids: list[UUID]
 
 

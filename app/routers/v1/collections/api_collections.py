@@ -29,7 +29,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List
 from uuid import UUID
 
 from common import LoggerFactory
@@ -38,29 +37,29 @@ from fastapi import Depends
 from fastapi_utils.cbv import cbv
 
 from app.models.base_models import EAPIResponseCode
-from app.models.models_collections import GETCollection
-from app.models.models_collections import GETCollectionItems
-from app.models.models_collections import POSTCollection
-from app.models.models_collections import POSTCollectionItems
-from app.models.models_collections import PUTCollections
 from app.models.models_collections import DELETECollectionItems
-from app.models.models_collections import GETCollectionResponse
-from app.models.models_collections import GETCollectionItemsResponse
-from app.models.models_collections import POSTCollectionResponse
-from app.models.models_collections import PUTCollectionResponse
-from app.models.models_collections import POSTCollectionItemsResponse
 from app.models.models_collections import DELETECollectionItemsResponse
 from app.models.models_collections import DELETECollectionResponse
-from app.routers.router_utils import set_api_response_error
+from app.models.models_collections import GETCollection
+from app.models.models_collections import GETCollectionItems
+from app.models.models_collections import GETCollectionItemsResponse
+from app.models.models_collections import GETCollectionResponse
+from app.models.models_collections import POSTCollection
+from app.models.models_collections import POSTCollectionItems
+from app.models.models_collections import POSTCollectionItemsResponse
+from app.models.models_collections import POSTCollectionResponse
+from app.models.models_collections import PUTCollectionResponse
+from app.models.models_collections import PUTCollections
 from app.routers.router_exceptions import BadRequestException
+from app.routers.router_utils import set_api_response_error
 
-from .crud import get_user_collections
-from .crud import get_items_per_collection
-from .crud import create_collection
-from .crud import update_collection
 from .crud import add_items
-from .crud import remove_items
+from .crud import create_collection
+from .crud import get_items_per_collection
+from .crud import get_user_collections
 from .crud import remove_collection
+from .crud import remove_items
+from .crud import update_collection
 
 router = APIRouter()
 router_bulk = APIRouter()
@@ -77,7 +76,7 @@ class APICollections:
         except Exception as e:
             _logger.exception(e)
             set_api_response_error(api_response,
-                                   f'Failed to get collections with user {params.owner} and project {params.container_code}',
+                                   f'Failed to get collections:user {params.owner}; project {params.container_code}',
                                    EAPIResponseCode.not_found)
         return api_response.json_response()
 
@@ -95,7 +94,7 @@ class APICollections:
                                    EAPIResponseCode.internal_error)
         return api_response.json_response()
 
-    @router.get('/{id}/items', response_model=GETCollectionItemsResponse,
+    @router.get('/items/', response_model=GETCollectionItemsResponse,
                 summary='Get items that belong to a collection')
     async def get_collection_items(self, params: GETCollectionItems = Depends(GETCollectionItems)):
         try:
@@ -121,7 +120,7 @@ class APICollections:
                                    EAPIResponseCode.internal_error)
         return api_response.json_response()
 
-    @router.delete('/{id}', response_model=DELETECollectionResponse,
+    @router.delete('/', response_model=DELETECollectionResponse,
                    summary='Delete a collection')
     async def remove_collection(self, id: UUID):
         try:
@@ -135,12 +134,12 @@ class APICollections:
                                    EAPIResponseCode.internal_error)
         return api_response.json_response()
 
-    @router.post('/{id}/items', response_model=POSTCollectionItemsResponse,
+    @router.post('/items/', response_model=POSTCollectionItemsResponse,
                  summary='Add items to a collection')
-    async def add_items_to_collection(self, data: POSTCollectionItems, id: UUID):
+    async def add_items_to_collection(self, data: POSTCollectionItems):
         try:
             api_response = POSTCollectionItemsResponse()
-            add_items(id, data, api_response)
+            add_items(data, api_response)
         except BadRequestException as e:
             set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
         except Exception as e:
@@ -149,12 +148,12 @@ class APICollections:
                                    EAPIResponseCode.internal_error)
         return api_response.json_response()
 
-    @router.delete('/{id}/items', response_model=DELETECollectionItemsResponse,
+    @router.delete('/items/', response_model=DELETECollectionItemsResponse,
                    summary='Remove items from a collection')
-    async def remove_items_from_collection(self, data: DELETECollectionItems, id: UUID):
+    async def remove_items_from_collection(self, data: DELETECollectionItems):
         try:
             api_response = DELETECollectionItemsResponse()
-            remove_items(id, data)
+            remove_items(data)
         except BadRequestException as e:
             set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
         except Exception as e:

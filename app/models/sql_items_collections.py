@@ -16,9 +16,10 @@
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
-from app.models.sql_items import ItemModel
-from app.models.sql_collections import CollectionsModel
+
 from app.config import ConfigClass
+from app.models.sql_collections import CollectionsModel
+from app.models.sql_items import ItemModel
 
 Base = declarative_base()
 

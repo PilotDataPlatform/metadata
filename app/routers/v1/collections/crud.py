@@ -14,24 +14,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
-from fastapi_sqlalchemy import db
 from uuid import UUID
+
+from fastapi_sqlalchemy import db
+
 from app.config import ConfigClass
 from app.models.base_models import APIResponse
+from app.models.base_models import EAPIResponseCode
+from app.models.models_collections import DELETECollectionItems
 from app.models.models_collections import GETCollection
 from app.models.models_collections import GETCollectionItems
 from app.models.models_collections import POSTCollection
-from app.models.models_collections import PUTCollections
 from app.models.models_collections import POSTCollectionItems
-from app.models.models_collections import DELETECollectionItems
+from app.models.models_collections import PUTCollections
 from app.models.sql_collections import CollectionsModel
-from app.models.sql_items_collections import ItemsCollectionsModel
 from app.models.sql_extended import ExtendedModel
 from app.models.sql_items import ItemModel
+from app.models.sql_items_collections import ItemsCollectionsModel
 from app.models.sql_storage import StorageModel
+from app.routers.router_exceptions import BadRequestException
 from app.routers.router_utils import paginate
 from app.routers.v1.items.utils import combine_item_tables
-from app.routers.router_exceptions import BadRequestException
 
 
 def get_user_collections(params: GETCollection, api_response: APIResponse):
@@ -46,6 +49,7 @@ def get_user_collections(params: GETCollection, api_response: APIResponse):
         api_response.result = result
         api_response.total = len(result)
     else:
+        api_response.code = EAPIResponseCode.not_found
         api_response.total = 0
 
 
@@ -60,9 +64,8 @@ def get_items_per_collection(params: GETCollectionItems, api_response: APIRespon
 
     if collection_result:
         item_query = (
-            db.session.query(ItemModel, StorageModel, ExtendedModel)
-                .join(StorageModel, ExtendedModel)
-                .filter(ItemModel.id.in_(requested_uuids))
+            db.session.query(ItemModel, StorageModel, ExtendedModel).join(StorageModel, ExtendedModel)
+            .filter(ItemModel.id.in_(requested_uuids))
         )
         paginate(params, api_response, item_query, combine_item_tables)
     else:
@@ -81,8 +84,8 @@ def create_collection(data: POSTCollection, api_response: APIResponse):
     elif data.name in [collection.name for collection in collection_result]:
         raise BadRequestException(f'Collection {data.name} already exists')
     else:
-        model_data = {"id": data.id, "owner": data.owner, "container_code": data.container_code,
-                      "name": data.name}
+        model_data = {'id': data.id, 'owner': data.owner, 'container_code': data.container_code,
+                      'name': data.name}
         collection = CollectionsModel(**model_data)
         db.session.add(collection)
         db.session.commit()
@@ -92,51 +95,38 @@ def create_collection(data: POSTCollection, api_response: APIResponse):
 
 
 def update_collection(data: PUTCollections, api_response: APIResponse):
-    # check if collection name already exists
-    names = [collection.name for collection in data.collections]
-    collection_query = (
-        db.session.query(CollectionsModel).filter(CollectionsModel.owner == data.owner,
-                                                  CollectionsModel.container_code == data.container_code,
-                                                  CollectionsModel.name.in_(names))
-    )
-    collection_result = collection_query.all()
-    if collection_result:
-        duplicate_names = [collection.name for collection in collection_result]
-        raise BadRequestException(f'Collection name(s) {duplicate_names} already exist')
-    else:
-        # update collections
-        for collection in data.collections:
-            query = (
-                db.session.query(CollectionsModel).filter(CollectionsModel.id == collection.id,
-                                                          CollectionsModel.owner == data.owner,
-                                                          CollectionsModel.container_code == data.container_code)
-            )
-            query_result = query.one()
-            if query_result:
-                query_result.name = collection.name
-                db.session.commit()
-            else:
-                raise BadRequestException(
-                    f'Collection with id {collection.id} and name {collection.name} does not exist')
+    for collection in data.collections:
+        query = (
+            db.session.query(CollectionsModel).filter(CollectionsModel.id == collection.id,
+                CollectionsModel.owner == data.owner,
+                CollectionsModel.container_code == data.container_code)
+        )
+        query_result = query.one()
+        if query_result:
+            query_result.name = collection.name
+            db.session.commit()
+        else:
+            raise BadRequestException(
+                f'Collection with id {collection.id} and name {collection.name} does not exist')
 
-        result = json.loads(data.json())
-        api_response.result = result
-        api_response.total = len(data.collections)
+    result = json.loads(data.json())
+    api_response.result = result
+    api_response.total = len(data.collections)
 
 
-def add_items(collection_id: UUID, data: POSTCollectionItems, api_response: APIResponse):
-    # foreign key constraint ensures collection_id and item_id must exist in collection and items tables for successful insert
+def add_items(data: POSTCollectionItems, api_response: APIResponse):
+    # foreign key constraint ensures collection_id and item_id must exist in collection and items tables
     for item_id in data.item_ids:
-        db.session.merge(ItemsCollectionsModel(collection_id=collection_id, item_id=item_id))
+        db.session.merge(ItemsCollectionsModel(collection_id=data.id, item_id=item_id))
     db.session.commit()
     result = json.loads(data.json())
     api_response.result = result
     api_response.total = len(data.item_ids)
 
 
-def remove_items(collection_id: UUID, data: DELETECollectionItems):
-    # foreign key constraint ensures collection_id and item_id must exist in collection and items tables for successful insert
-    db.session.query(ItemsCollectionsModel).filter(ItemsCollectionsModel.collection_id == collection_id,
+def remove_items(data: DELETECollectionItems):
+    # foreign key constraint ensures collection_id and item_id must exist in collection and items tables
+    db.session.query(ItemsCollectionsModel).filter(ItemsCollectionsModel.collection_id == data.id,
                                                    ItemsCollectionsModel.item_id.in_(data.item_ids)).delete()
 
     db.session.commit()
@@ -145,5 +135,3 @@ def remove_items(collection_id: UUID, data: DELETECollectionItems):
 def remove_collection(collection_id: UUID):
     db.session.query(CollectionsModel).filter(CollectionsModel.id == collection_id).delete()
     db.session.commit()
-
-
