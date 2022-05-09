@@ -125,7 +125,7 @@ class APICollections:
     async def remove_collection(self, id: UUID):
         try:
             api_response = DELETECollectionResponse()
-            remove_collection(id)
+            remove_collection(id, api_response)
         except BadRequestException as e:
             set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
         except Exception as e:
@@ -144,7 +144,7 @@ class APICollections:
             set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
         except Exception as e:
             _logger.exception(e)
-            set_api_response_error(api_response, f'Failed to add items to collection {id}',
+            set_api_response_error(api_response, f'Failed to add items to collection {data.id}',
                                    EAPIResponseCode.internal_error)
         return api_response.json_response()
 
@@ -158,6 +158,6 @@ class APICollections:
             set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
         except Exception as e:
             _logger.exception(e)
-            set_api_response_error(api_response, f'Failed to delete items from collection {id}',
+            set_api_response_error(api_response, f'Failed to delete items from collection {data.id}',
                                    EAPIResponseCode.internal_error)
         return api_response.json_response()

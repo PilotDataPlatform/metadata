@@ -14,13 +14,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
+from datetime import datetime
 from uuid import UUID
 
 from fastapi_sqlalchemy import db
 
 from app.config import ConfigClass
 from app.models.base_models import APIResponse
-from app.models.base_models import EAPIResponseCode
 from app.models.models_collections import DELETECollectionItems
 from app.models.models_collections import GETCollection
 from app.models.models_collections import GETCollectionItems
@@ -38,38 +38,37 @@ from app.routers.v1.items.utils import combine_item_tables
 
 
 def get_user_collections(params: GETCollection, api_response: APIResponse):
+    try:
+        custom_sort = getattr(CollectionsModel, params.sorting).asc()
+        if params.order == 'desc':
+            custom_sort = getattr(CollectionsModel, params.sorting).desc()
+    except Exception:
+        raise BadRequestException(f'Cannot sort by {params.sorting}')
+
     collection_query = (
         db.session.query(CollectionsModel).filter(CollectionsModel.owner == params.owner,
                                                   CollectionsModel.container_code == params.container_code)
+        .order_by(custom_sort)
     )
-    collection_result = collection_query.all()
 
-    if collection_result:
-        result = [collection.to_dict() for collection in collection_result]
-        api_response.result = result
-        api_response.total = len(result)
-    else:
-        api_response.code = EAPIResponseCode.not_found
-        api_response.total = 0
+    paginate(params, api_response, collection_query, expand_func=False)
 
 
 def get_items_per_collection(params: GETCollectionItems, api_response: APIResponse):
-    collection_query = (
-        db.session.query(ItemModel.id).join(ItemsCollectionsModel,
-                                            ItemModel.id == ItemsCollectionsModel.item_id).filter_by(
-            collection_id=params.id)
-    )
-    collection_result = collection_query.all()
-    requested_uuids = [uuid[0] for uuid in collection_result]
+    try:
+        custom_sort = getattr(ItemModel, params.sorting).asc()
+        if params.order == 'desc':
+            custom_sort = getattr(ItemModel, params.sorting).desc()
+    except Exception:
+        raise BadRequestException(f'Cannot sort by {params.sorting}')
 
-    if collection_result:
-        item_query = (
-            db.session.query(ItemModel, StorageModel, ExtendedModel).join(StorageModel, ExtendedModel)
-            .filter(ItemModel.id.in_(requested_uuids))
-        )
-        paginate(params, api_response, item_query, combine_item_tables)
-    else:
-        api_response.total = 0
+    item_query = (
+        db.session.query(ItemModel, StorageModel, ExtendedModel).join(StorageModel, ExtendedModel,
+                                                                      ItemsCollectionsModel)
+        .filter(ItemsCollectionsModel.collection_id == params.id).order_by(ItemModel.container_type, custom_sort)
+    )
+
+    paginate(params, api_response, item_query, combine_item_tables)
 
 
 def create_collection(data: POSTCollection, api_response: APIResponse):
@@ -78,10 +77,9 @@ def create_collection(data: POSTCollection, api_response: APIResponse):
                                                   CollectionsModel.container_code == data.container_code)
     )
     collection_result = collection_query.all()
-
     if len(collection_result) == ConfigClass.MAX_COLLECTIONS:
         raise BadRequestException(f'Cannot create more than {ConfigClass.MAX_COLLECTIONS} collections')
-    elif data.name in [collection.name for collection in collection_result]:
+    elif data.name in (collection.name for collection in collection_result):
         raise BadRequestException(f'Collection {data.name} already exists')
     else:
         model_data = {'id': data.id, 'owner': data.owner, 'container_code': data.container_code,
@@ -95,19 +93,34 @@ def create_collection(data: POSTCollection, api_response: APIResponse):
 
 
 def update_collection(data: PUTCollections, api_response: APIResponse):
-    for collection in data.collections:
-        query = (
-            db.session.query(CollectionsModel).filter(CollectionsModel.id == collection.id,
-                CollectionsModel.owner == data.owner,
-                CollectionsModel.container_code == data.container_code)
-        )
-        query_result = query.one()
-        if query_result:
-            query_result.name = collection.name
-            db.session.commit()
+    payload_ids = [str(collection.id) for collection in data.collections]
+    payload_names = [collection.name for collection in data.collections]
+    query = (
+        db.session.query(CollectionsModel).filter(CollectionsModel.id.in_(payload_ids),
+                                                  CollectionsModel.owner == data.owner,
+                                                  CollectionsModel.container_code == data.container_code)
+    )
+    query_result = query.all()
+    if len(query_result) is len(payload_ids):
+        query_names = [i.name for i in query_result]
+        collections_names_exist = list(set(payload_names).intersection(set(query_names)))
+
+        if len(collections_names_exist) > 0:
+            raise BadRequestException(f'Collection name(s) {collections_names_exist} already exists')
+
         else:
-            raise BadRequestException(
-                f'Collection with id {collection.id} and name {collection.name} does not exist')
+            for collection in data.collections:
+                db.session.merge(CollectionsModel(id=collection.id, name=collection.name,
+                                                  container_code=data.container_code, owner=data.owner,
+                                                  last_updated_time=datetime.utcnow()))
+            db.session.commit()
+    else:
+        if len(query_result) == 0:
+            collections_not_exist = payload_ids
+        else:
+            query_ids = [str(i.id) for i in query_result]
+            collections_not_exist = list(set(payload_ids) - set(query_ids))
+        raise BadRequestException(f'Collection id(s) {collections_not_exist} do not exist')
 
     result = json.loads(data.json())
     api_response.result = result
@@ -132,6 +145,8 @@ def remove_items(data: DELETECollectionItems):
     db.session.commit()
 
 
-def remove_collection(collection_id: UUID):
+def remove_collection(collection_id: UUID, api_response: APIResponse):
     db.session.query(CollectionsModel).filter(CollectionsModel.id == collection_id).delete()
     db.session.commit()
+    api_response.total = 0
+    api_response.num_of_pages = 0

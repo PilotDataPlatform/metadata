@@ -47,8 +47,9 @@ class TestItems:
         assert response.status_code == 200
         assert res['name'] == test_collections[0]['collection_name']
 
-    def test_get_collection_not_found_404(self, test_collections):
-        param = {'owner': 'invalidowner', 'container_code': test_collections[0]['container_code']}
+    def test_get_collection_with_invalid_sorting_404(self, test_collections):
+        param = {'owner': test_collections[0]['owner'], 'container_code': test_collections[0]['container_code'],
+                 'sorting': 'created_time_x'}
         response = app.get('/v1/collection/', params=param)
         assert response.status_code == 404
 
@@ -124,7 +125,7 @@ class TestItems:
         response = app.put('/v1/collection/', json=payload)
         assert response.status_code == 200
 
-    def test_update_collection_with_duplicate_name_in_payload_400(self):
+    def test_update_collection_with_duplicate_name_in_payload_422(self):
         payload = {
             'owner': 'owner',
             'container_code': 'code',
@@ -142,6 +143,45 @@ class TestItems:
         }
         response = app.put('/v1/collection/', json=payload)
         assert response.status_code == 422
+
+    def test_update_collection_with_name_already_exists_400(self, test_collections):
+        name_exists = [test_collections[0]['collection_name']]
+        payload = {
+            'owner': test_collections[0]['owner'],
+            'container_code': test_collections[0]['container_code'],
+            'collections': [
+                {
+                    'id': test_collections[0]['id'],
+                    'name': test_collections[0]['collection_name']
+                }
+            ]
+        }
+        response = app.put('/v1/collection/', json=payload)
+        res = response.json()['error_msg']
+        assert response.status_code == 400
+        assert f'Collection name(s) {name_exists} already exists' in res
+
+    def test_update_collection_name_with_non_existent_id_400(self, test_collections):
+        id_not_exist = ['c8e7a842-2f96-4cbe-9f5b-d67ba86132ad']
+        payload = {
+            'owner': test_collections[0]['owner'],
+            'container_code': test_collections[0]['container_code'],
+            'collections': [
+                {
+                    'id': test_collections[0]['id'],
+                    'name': 'name1'
+                },
+
+                {
+                    'id': id_not_exist[0],
+                    'name': 'name2'
+                }
+            ]
+        }
+        response = app.put('/v1/collection/', json=payload)
+        res = response.json()['error_msg']
+        assert response.status_code == 400
+        assert f'Collection id(s) {id_not_exist} do not exist' in res
 
     def test_get_collection_items_200(self, test_collections, test_items):
         # add items

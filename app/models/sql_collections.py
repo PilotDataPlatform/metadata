@@ -13,7 +13,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import uuid
+from datetime import datetime
+
 from sqlalchemy import Column
+from sqlalchemy import DateTime
 from sqlalchemy import String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
@@ -27,18 +31,21 @@ class CollectionsModel(Base):
     __tablename__ = 'collections'
     __table_args__ = {'schema': ConfigClass.METADATA_SCHEMA}
     id = Column(UUID(as_uuid=True), primary_key=True)
-    name = Column(String())
-    container_code = Column(String())
-    owner = Column(String())
+    name = Column(String(), nullable=False)
+    container_code = Column(String(), nullable=False)
+    owner = Column(String(), nullable=False)
+    created_time = Column(DateTime(), default=datetime.utcnow, nullable=False)
+    last_updated_time = Column(DateTime(), default=datetime.utcnow, nullable=False)
 
-    def __init__(self, id, name, container_code, owner):
-        self.id = id
+    def __init__(self, name, container_code, owner, id=None, last_updated_time=None):
+        self.id = id if id is not None else uuid.uuid4()
         self.name = name
         self.container_code = container_code
         self.owner = owner
+        self.last_updated_time = last_updated_time if last_updated_time is not None else datetime.utcnow()
 
     def to_dict(self):
-        result = {}
-        for field in ['id', 'name', 'container_code', 'owner']:
-            result[field] = str(getattr(self, field))
-        return result
+        return {'id': str(self.id), 'name': self.name, 'container_code': self.container_code, 'owner': self.owner,
+                'created_time': str(self.created_time),
+                'last_updated_time': str(self.last_updated_time),
+                }

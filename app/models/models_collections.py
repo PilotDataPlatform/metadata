@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -21,6 +21,7 @@ from pydantic import Field
 from pydantic import validator
 
 from .base_models import APIResponse
+from .base_models import PaginationRequest
 
 
 class Collection(BaseModel):
@@ -28,15 +29,13 @@ class Collection(BaseModel):
     name: str
 
 
-class GETCollection(BaseModel):
+class GETCollection(PaginationRequest):
     owner: str
     container_code: str
 
 
-class GETCollectionItems(BaseModel):
+class GETCollectionItems(PaginationRequest):
     id: UUID
-    page_size: int = 10
-    page: int = 0
 
 
 class GETCollectionResponse(APIResponse):
@@ -85,7 +84,7 @@ class GETCollectionItemsResponse(APIResponse):
 
 
 class POSTCollection(BaseModel):
-    id: UUID
+    id: Optional[UUID] = Field(example='3fa85f64-5717-4562-b3fc-2c963f66afa6')
     owner: str
     container_code: str
     name: str
