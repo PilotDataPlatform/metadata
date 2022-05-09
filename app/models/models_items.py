@@ -88,12 +88,12 @@ class POSTItem(BaseModel):
     type: str = 'file'
     zone: int = 0
     name: str = Field(example='file_name.txt')
-    size: int
+    size: Optional[int]
     owner: str
     container_code: str
     container_type: str = 'project'
-    location_uri: str
-    version: str
+    location_uri: Optional[str]
+    version: Optional[str]
     tags: list[str] = []
     system_tags: list[str] = []
     attribute_template_id: Optional[UUID]

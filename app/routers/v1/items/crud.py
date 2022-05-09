@@ -24,7 +24,6 @@ from sqlalchemy.sql import expression
 from sqlalchemy_utils import Ltree
 from sqlalchemy_utils.types.ltree import LQUERY
 
-from app.app_utils import decode_label_from_ltree
 from app.app_utils import decode_path_from_ltree
 from app.app_utils import encode_label_for_ltree
 from app.app_utils import encode_path_for_ltree
