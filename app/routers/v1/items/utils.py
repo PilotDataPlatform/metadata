@@ -14,6 +14,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from app.app_utils import decode_path_from_ltree
+from app.models.sql_items import ItemModel
+
+
 def combine_item_tables(item_result: tuple) -> dict:
     item_data = item_result[0].to_dict()
     storage_data = item_result[1].to_dict()
@@ -23,3 +27,11 @@ def combine_item_tables(item_result: tuple) -> dict:
     item_data['storage'] = storage_data
     item_data['extended'] = extended_data
     return item_data
+
+
+def get_path_depth(item: ItemModel) -> int:
+    return len(decode_path_from_ltree(item.parent_path).split('.'))
+
+
+def get_relative_path_depth(parent: ItemModel, child: ItemModel) -> int:
+    return get_path_depth(child) - get_path_depth(parent)

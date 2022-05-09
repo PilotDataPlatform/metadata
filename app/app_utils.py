@@ -17,6 +17,8 @@ import base64
 import math
 import re
 
+from sqlalchemy_utils import Ltree
+
 
 def encode_label_for_ltree(raw_string: str) -> str:
     base32_string = str(base64.b32encode(raw_string.encode('utf-8')), 'utf-8')
@@ -40,6 +42,8 @@ def decode_label_from_ltree(encoded_string: str) -> str:
 
 
 def decode_path_from_ltree(encoded_path: str) -> str:
+    if type(encoded_path) == Ltree:
+        encoded_path = str(encoded_path)
     labels = encoded_path.split('.')
     path = ''
     for label in labels:

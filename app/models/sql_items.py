@@ -82,8 +82,8 @@ class ItemModel(Base):
         return {
             'id': str(self.id),
             'parent': str(self.parent) if self.parent else None,
-            'parent_path': decode_path_from_ltree(str(self.parent_path)) if self.parent_path else None,
-            'restore_path': decode_path_from_ltree(str(self.restore_path)) if self.restore_path else None,
+            'parent_path': decode_path_from_ltree(self.parent_path) if self.parent_path else None,
+            'restore_path': decode_path_from_ltree(self.restore_path) if self.restore_path else None,
             'archived': self.archived,
             'type': self.type,
             'zone': self.zone,
