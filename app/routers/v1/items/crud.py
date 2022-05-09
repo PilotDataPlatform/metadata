@@ -397,12 +397,18 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
 
 
 def delete_item_by_id(id: UUID, api_response: APIResponse):
-    item_query = (
+    root_item_query = (
         db.session.query(ItemModel, StorageModel, ExtendedModel)
         .join(StorageModel, ExtendedModel)
         .filter(ItemModel.id == id)
     )
-    for row in item_query.first():
+    root_item_result = root_item_query.first()
+    if root_item_result[0].type == 'folder':
+        children_result = get_item_children(root_item_result[0])
+        for child in children_result:
+            for row in child:
+                db.session.delete(row)
+    for row in root_item_result:
         db.session.delete(row)
     db.session.commit()
     api_response.total = 0
