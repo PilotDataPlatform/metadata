@@ -270,7 +270,7 @@ def update_item(item_id: UUID, data: PUTItem) -> dict:
     item = db.session.query(ItemModel).filter_by(id=item_id).first()
     if data.parent != '':
         item.parent = data.parent if data.parent else None
-    if data.parent_path != '':
+    if data.parent_path != '' and not item.archived:
         move_item(item, data.parent_path)
     if data.type:
         item.type = data.type
