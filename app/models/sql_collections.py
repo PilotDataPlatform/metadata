@@ -38,11 +38,11 @@ class CollectionsModel(Base):
     last_updated_time = Column(DateTime(), default=datetime.utcnow, nullable=False)
 
     def __init__(self, name, container_code, owner, id=None, last_updated_time=None):
-        self.id = id if id is not None else uuid.uuid4()
+        self.id = id if id else uuid.uuid4()
         self.name = name
         self.container_code = container_code
         self.owner = owner
-        self.last_updated_time = last_updated_time if last_updated_time is not None else datetime.utcnow()
+        self.last_updated_time = last_updated_time if last_updated_time else datetime.utcnow()
 
     def to_dict(self):
         return {'id': str(self.id), 'name': self.name, 'container_code': self.container_code, 'owner': self.owner,

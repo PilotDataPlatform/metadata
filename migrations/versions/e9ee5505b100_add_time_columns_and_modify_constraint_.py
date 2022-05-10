@@ -1,13 +1,11 @@
-"""add_time_columns_and_modify_constraint_to_collections_table
+"""add_time_columns_and_modify_constraint_to_collections_table.
 
 Revision ID: e9ee5505b100
 Revises: c9d07577d8d2
 Create Date: 2022-05-09 12:53:04.316417
-
 """
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = 'e9ee5505b100'
