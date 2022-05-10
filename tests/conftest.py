@@ -134,6 +134,35 @@ def test_items() -> dict:
 
 
 @pytest.fixture(scope='function')
+def test_collections() -> dict:
+    props = [{
+        'collection_name': generate_random_container_code(),
+        'owner': 'user',
+        'container_code': generate_random_container_code(),
+        'id': str(uuid.uuid4()),
+    }, {
+        'collection_name': generate_random_container_code(),
+        'owner': 'user',
+        'container_code': generate_random_container_code(),
+        'id': str(uuid.uuid4()),
+    }]
+    for i in range(0, len(props)):
+        payload = {
+            'id': props[i]['id'],
+            'owner': props[i]['owner'],
+            'container_code': props[i]['container_code'],
+            'name': props[i]['collection_name']
+
+        }
+        app.post('/v1/collection/', json=payload)
+
+    yield props
+    for i in props:
+        params = {'id': i['id']}
+        app.delete('/v1/collection/', params=params)
+
+
+@pytest.fixture(scope='function')
 def test_attribute_template() -> str:
     payload = {
         'name': 'test_template',

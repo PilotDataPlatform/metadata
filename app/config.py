@@ -58,6 +58,8 @@ class Settings(BaseSettings):
     MAX_SYSTEM_TAGS = 10
     MAX_ATTRIBUTE_LENGTH = 100
 
+    MAX_COLLECTIONS = 10
+
     def __init__(self):
         super().__init__()
         self.SQLALCHEMY_DATABASE_URI = f'postgresql://{self.OPSDB_UTILITY_USERNAME}:{self.OPSDB_UTILITY_PASSWORD}@{self.OPSDB_UTILITY_HOST}:{self.OPSDB_UTILITY_PORT}/{self.OPSDB_UTILITY_NAME}'
