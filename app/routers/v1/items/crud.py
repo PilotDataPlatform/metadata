@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
 import time
 import uuid
 from datetime import datetime
@@ -24,7 +23,6 @@ from sqlalchemy.sql import expression
 from sqlalchemy_utils import Ltree
 from sqlalchemy_utils.types.ltree import LQUERY
 
-from app.app_utils import decode_label_from_ltree
 from app.app_utils import decode_path_from_ltree
 from app.app_utils import encode_label_for_ltree
 from app.app_utils import encode_path_for_ltree
@@ -46,6 +44,8 @@ from app.routers.router_exceptions import BadRequestException
 from app.routers.router_exceptions import EntityNotFoundException
 from app.routers.router_utils import paginate
 from app.routers.v1.items.utils import combine_item_tables
+from app.routers.v1.items.utils import get_path_depth
+from app.routers.v1.items.utils import get_relative_path_depth
 
 
 def get_available_file_name(
@@ -78,14 +78,12 @@ def get_available_file_name(
     return item_name_new
 
 
-def get_children_of_item(root_item: ItemModel, first_children_only: bool = False) -> list[tuple]:
+def get_item_children(root_item: ItemModel, group_by_depth: bool = False) -> dict:
     search_path = (
-        f'{root_item.restore_path}.{encode_label_for_ltree(root_item.name)}'
+        f'{root_item.restore_path}.{encode_label_for_ltree(root_item.name)}.*'
         if root_item.archived
-        else f'{root_item.parent_path}.{encode_label_for_ltree(root_item.name)}'
+        else f'{root_item.parent_path}.{encode_label_for_ltree(root_item.name)}.*'
     )
-    if not first_children_only:
-        search_path += '.*'
     children_item_query = (
         db.session.query(ItemModel, StorageModel, ExtendedModel)
         .join(StorageModel, ExtendedModel)
@@ -98,29 +96,48 @@ def get_children_of_item(root_item: ItemModel, first_children_only: bool = False
             else ItemModel.parent_path.lquery(expression.cast(search_path, LQUERY)),
         )
     )
-    return children_item_query.all()
+    children = children_item_query.all()
+    if not group_by_depth:
+        return children
+    layers = {}
+    for item in children:
+        depth = get_relative_path_depth(root_item, item[0])
+        if depth not in layers:
+            layers[depth] = []
+        layers[depth].append(item)
+    return layers
 
 
-def move_item(item: ItemModel, new_parent_path: str):
-    children = get_children_of_item(item, True)
+def move_item(item: ItemModel, new_parent_path: str, children: dict = None, depth: int = 1):
+    if not children:
+        children = get_item_children(item, True)
     item.parent_path = Ltree(encode_path_for_ltree(new_parent_path)) if new_parent_path else None
-    for child in children:
-        move_item(
-            child[0],
-            f'{new_parent_path}.{item.name}' if new_parent_path else item.name,
-        )
+    if depth not in children:
+        return
+    layer = children[depth]
+    for child in layer:
+        move_item(child[0], f'{new_parent_path}.{item.name}' if new_parent_path else item.name, children, depth + 1)
 
 
-def rename_item(item: ItemModel, old_name: str, new_name: str, root_item: bool = True):
-    children = get_children_of_item(item, True)
-    if root_item:
+def rename_item(
+    root_item: ItemModel, item: ItemModel, old_name: str, new_name: str, children: dict = None, depth: int = 1
+):
+    if not children:
+        children = get_item_children(item, True)
+    if item == root_item:
         item.name = new_name
     else:
-        decoded_parent_path = decode_path_from_ltree(str(item.parent_path))
-        new_parent_path = re.sub(old_name, new_name, decoded_parent_path, 1)
+        decoded_parent_path = decode_path_from_ltree(item.parent_path)
+        root_item_depth = get_path_depth(root_item)
+        labels = decoded_parent_path.split('.')
+        labels[root_item_depth] = new_name
+        new_parent_path = '.'.join(labels)
         item.parent_path = Ltree(encode_path_for_ltree(new_parent_path))
-    for child in children:
-        rename_item(child[0], old_name, new_name, False)
+    if depth not in children:
+        return
+    layer = children[depth]
+    for child in layer:
+        rename_item(root_item, child[0], old_name, new_name, children, depth + 1)
 
 
 def attributes_match_template(attributes: dict, template_id: UUID) -> bool:
@@ -253,14 +270,14 @@ def update_item(item_id: UUID, data: PUTItem) -> dict:
     item = db.session.query(ItemModel).filter_by(id=item_id).first()
     if data.parent != '':
         item.parent = data.parent if data.parent else None
-    if data.parent_path != '':
+    if data.parent_path != '' and not item.archived:
         move_item(item, data.parent_path)
     if data.type:
         item.type = data.type
     if data.zone:
         item.zone = data.zone
-    if data.name:
-        rename_item(item, item.name, data.name)
+    if data.name and not item.archived:
+        rename_item(item, item, item.name, data.name)
     if data.size:
         item.size = data.size
     if data.owner:
@@ -303,7 +320,7 @@ def update_items(ids: list[UUID], data: PUTItems, api_response: APIResponse):
 
 
 def get_restore_destination_id(container_code: str, zone: int, restore_path: Ltree) -> UUID:
-    decoded_restore_path = decode_path_from_ltree(str(restore_path))
+    decoded_restore_path = decode_path_from_ltree(restore_path)
     destination_name = decoded_restore_path
     destination_path = None
     decoded_restore_path_labels = decoded_restore_path.split('.')
@@ -358,7 +375,7 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
         raise BadRequestException('Name folders cannot be archived or restored')
     children_result = []
     if root_item_result[0].type == 'folder':
-        children_result = get_children_of_item(root_item_result[0])
+        children_result = get_item_children(root_item_result[0])
     all_items = []
     try:
         archive_item(root_item_result[0], params.archived, True)
@@ -380,12 +397,18 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
 
 
 def delete_item_by_id(id: UUID, api_response: APIResponse):
-    item_query = (
+    root_item_query = (
         db.session.query(ItemModel, StorageModel, ExtendedModel)
         .join(StorageModel, ExtendedModel)
         .filter(ItemModel.id == id)
     )
-    for row in item_query.first():
+    root_item_result = root_item_query.first()
+    if root_item_result[0].type == 'folder':
+        children_result = get_item_children(root_item_result[0])
+        for child in children_result:
+            for row in child:
+                db.session.delete(row)
+    for row in root_item_result:
         db.session.delete(row)
     db.session.commit()
     api_response.total = 0
@@ -410,7 +433,7 @@ def bequeath_to_children(id: UUID, data: PUTItemsBequeath, api_response: APIResp
         raise EntityNotFoundException()
     if root_item_result[0].type != 'folder':
         raise BadRequestException('Properties can only be bequeathed from folders')
-    children_result = get_children_of_item(root_item_result[0])
+    children_result = get_item_children(root_item_result[0])
     results = []
     for child in children_result:
         extra = {}
