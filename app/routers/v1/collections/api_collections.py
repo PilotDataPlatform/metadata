@@ -41,6 +41,7 @@ from app.models.models_collections import DELETECollectionItems
 from app.models.models_collections import DELETECollectionItemsResponse
 from app.models.models_collections import DELETECollectionResponse
 from app.models.models_collections import GETCollection
+from app.models.models_collections import GETCollectionID
 from app.models.models_collections import GETCollectionItems
 from app.models.models_collections import GETCollectionItemsResponse
 from app.models.models_collections import GETCollectionResponse
@@ -55,6 +56,7 @@ from app.routers.router_utils import set_api_response_error
 
 from .crud import add_items
 from .crud import create_collection
+from .crud import get_collections_by_id
 from .crud import get_items_per_collection
 from .crud import get_user_collections
 from .crud import remove_collection
@@ -68,7 +70,8 @@ _logger = LoggerFactory('api_collections').get_logger()
 
 @cbv(router)
 class APICollections:
-    @router.get('/', response_model=GETCollectionResponse, summary='Get collections that belong to a user per project')
+    @router.get('/search/', response_model=GETCollectionResponse,
+                summary='Get collections that belong to a user per project')
     async def get_collections(self, params: GETCollection = Depends(GETCollection)):
         try:
             api_response = GETCollectionResponse()
@@ -77,6 +80,30 @@ class APICollections:
             _logger.exception(e)
             set_api_response_error(api_response,
                                    f'Failed to get collections:user {params.owner}; project {params.container_code}',
+                                   EAPIResponseCode.not_found)
+        return api_response.json_response()
+
+    @router.get('/items/', response_model=GETCollectionItemsResponse,
+                summary='Get items that belong to a collection')
+    async def get_collection_items(self, params: GETCollectionItems = Depends(GETCollectionItems)):
+        try:
+            api_response = GETCollectionItemsResponse()
+            get_items_per_collection(params, api_response)
+        except Exception as e:
+            _logger.exception(e)
+            set_api_response_error(api_response, f'Failed to get items from collection {params.id}',
+                                   EAPIResponseCode.not_found)
+        return api_response.json_response()
+
+    @router.get('/{id}/', response_model=GETCollectionResponse, summary='Get collection by id')
+    async def get_collections_id(self, params: GETCollectionID = Depends(GETCollectionID)):
+        try:
+            api_response = GETCollectionResponse()
+            get_collections_by_id(params, api_response)
+        except Exception as e:
+            _logger.exception(e)
+            set_api_response_error(api_response,
+                                   f'Failed to get collections: {params.id}',
                                    EAPIResponseCode.not_found)
         return api_response.json_response()
 
@@ -92,18 +119,6 @@ class APICollections:
             _logger.exception(e)
             set_api_response_error(api_response, f'Failed to create collection with id {data.id}',
                                    EAPIResponseCode.internal_error)
-        return api_response.json_response()
-
-    @router.get('/items/', response_model=GETCollectionItemsResponse,
-                summary='Get items that belong to a collection')
-    async def get_collection_items(self, params: GETCollectionItems = Depends(GETCollectionItems)):
-        try:
-            api_response = GETCollectionItemsResponse()
-            get_items_per_collection(params, api_response)
-        except Exception as e:
-            _logger.exception(e)
-            set_api_response_error(api_response, f'Failed to get items from collection {params.id}',
-                                   EAPIResponseCode.not_found)
         return api_response.json_response()
 
     @router.put('/', response_model=PUTCollectionResponse,

@@ -42,7 +42,7 @@ class TestItems:
 
     def test_get_collection_200(self, test_collections):
         param = {'owner': test_collections[0]['owner'], 'container_code': test_collections[0]['container_code']}
-        response = app.get('/v1/collection/', params=param)
+        response = app.get('/v1/collection/search/', params=param)
         res = response.json()['result'][0]
         assert response.status_code == 200
         assert res['name'] == test_collections[0]['collection_name']
@@ -50,8 +50,14 @@ class TestItems:
     def test_get_collection_with_invalid_sorting_404(self, test_collections):
         param = {'owner': test_collections[0]['owner'], 'container_code': test_collections[0]['container_code'],
                  'sorting': 'created_time_x'}
-        response = app.get('/v1/collection/', params=param)
+        response = app.get('/v1/collection/search/', params=param)
         assert response.status_code == 404
+
+    def test_get_collection_by_id_200(self, test_collections):
+        response = app.get(f'/v1/collection/{test_collections[0]["id"]}/')
+        res = response.json()['result']
+        assert response.status_code == 200
+        assert res['name'] == test_collections[0]['collection_name']
 
     def test_delete_collection_200(self, test_collections):
         param = {'id': test_collections[0]['id']}
@@ -98,6 +104,7 @@ class TestItems:
 
     def test_create_collection_name_already_exists_400(self, test_collections):
         collection_id = str(uuid.uuid4())
+        collection_name = test_collections[0]['collection_name']
         self.cleanup_item_ids.append(collection_id)
         payload = {
             'id': collection_id,
@@ -109,7 +116,7 @@ class TestItems:
         response = app.post('/v1/collection/', json=payload)
         res = response.json()['error_msg']
         assert response.status_code == 400
-        assert f'Collection {test_collections[0]["collection_name"]} already exists' in res
+        assert f'Collection {collection_name} already exists' in res
 
     def test_update_collection_name_200(self, test_collections):
         payload = {

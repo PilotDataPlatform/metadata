@@ -34,6 +34,10 @@ class GETCollection(PaginationRequest):
     container_code: str
 
 
+class GETCollectionID(BaseModel):
+    id: UUID
+
+
 class GETCollectionItems(PaginationRequest):
     id: UUID
 
@@ -45,7 +49,9 @@ class GETCollectionResponse(APIResponse):
             'id': '52c4a134-8550-4acc-9ab9-596548c91c52',
             'name': 'collection1',
             'owner': 'admin',
-            'container_code': 'project123'
+            'container_code': 'project123',
+            'created_time': '2022-04-13 13:30:10.890347',
+            'last_updated_time': '2022-04-13 13:30:10.890347'
         }],
     )
 
