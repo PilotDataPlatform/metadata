@@ -23,6 +23,7 @@ from app.config import ConfigClass
 from app.models.base_models import APIResponse
 from app.models.models_collections import DELETECollectionItems
 from app.models.models_collections import GETCollection
+from app.models.models_collections import GETCollectionID
 from app.models.models_collections import GETCollectionItems
 from app.models.models_collections import POSTCollection
 from app.models.models_collections import POSTCollectionItems
@@ -52,6 +53,18 @@ def get_user_collections(params: GETCollection, api_response: APIResponse):
     )
 
     paginate(params, api_response, collection_query, expand_func=False)
+
+
+def get_collections_by_id(params: GETCollectionID, api_response: APIResponse):
+    collection_query = (
+        db.session.query(CollectionsModel).filter(CollectionsModel.id == params.id)
+    )
+    collection_result = collection_query.first()
+    if collection_result:
+        api_response.result = collection_result.to_dict()
+        api_response.total = 1
+    else:
+        raise BadRequestException(f'Collection id {params.id} does not exist')
 
 
 def get_items_per_collection(params: GETCollectionItems, api_response: APIResponse):
