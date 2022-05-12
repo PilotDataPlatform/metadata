@@ -40,6 +40,7 @@ class GETCollectionID(BaseModel):
 
 class GETCollectionItems(PaginationRequest):
     id: UUID
+    archived: bool = False
 
 
 class GETCollectionResponse(APIResponse):

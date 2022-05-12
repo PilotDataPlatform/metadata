@@ -190,7 +190,7 @@ class TestItems:
         assert response.status_code == 400
         assert f'Collection id(s) {id_not_exist} do not exist' in res
 
-    def test_get_collection_items_200(self, test_collections, test_items):
+    def test_get_collection_items_archived_false_200(self, test_collections, test_items):
         # add items
         payload = {
             'id': test_collections[0]['id'],
@@ -200,13 +200,41 @@ class TestItems:
         }
         app.post('/v1/collection/items/', json=payload)
 
-        # get items
+        # archive item
+        trash_payload = {'id': test_items['ids']['file_1'], 'archived': True}
+        app.patch('/v1/item/', params=trash_payload)
+
+        # get item
         params = {'id': test_collections[0]['id']}
         response = app.get('/v1/collection/items/', params=params)
         res = response.json()['result']
         assert response.status_code == 200
-        assert res[0]['name'] == 'test_file_1.txt'
-        assert res[1]['name'] == 'test_file_2.txt'
+        assert len(res) == 1
+        assert res[0]['name'] == 'test_file_2.txt'
+        assert res[0]['archived'] is False
+
+    def test_get_collection_items_archived_true_200(self, test_collections, test_items):
+        # add items
+        payload = {
+            'id': test_collections[0]['id'],
+            'item_ids': [
+                test_items['ids']['file_1'], test_items['ids']['file_2']
+            ]
+        }
+        app.post('/v1/collection/items/', json=payload)
+
+        # archive item
+        trash_payload = {'id': test_items['ids']['file_2'], 'archived': True}
+        app.patch('/v1/item/', params=trash_payload)
+
+        # get item
+        params = {'id': test_collections[0]['id'], 'archived': True}
+        response = app.get('/v1/collection/items/', params=params)
+        res = response.json()['result']
+        assert response.status_code == 200
+        assert len(res) == 1
+        assert res[0]['name'] == 'test_file_2.txt'
+        assert res[0]['archived'] is True
 
     def test_add_collection_items_200(self, test_collections, test_items):
         # add items
