@@ -41,6 +41,7 @@ from app.models.sql_extended import ExtendedModel
 from app.models.sql_items import ItemModel
 from app.models.sql_storage import StorageModel
 from app.routers.router_exceptions import BadRequestException
+from app.routers.router_exceptions import DuplicateRecordException
 from app.routers.router_exceptions import EntityNotFoundException
 from app.routers.router_utils import paginate
 from app.routers.v1.items.utils import combine_item_tables
@@ -191,7 +192,7 @@ def get_items_by_location(params: GETItemsByLocation, api_response: APIResponse)
         custom_sort = getattr(ItemModel, params.sorting).asc()
         if params.order == 'desc':
             custom_sort = getattr(ItemModel, params.sorting).desc()
-    except:
+    except Exception:
         raise BadRequestException(f'Cannot sort by {params.sorting}')
     item_query = (
         db.session.query(ItemModel, StorageModel, ExtendedModel)
@@ -258,11 +259,14 @@ def create_item(data: POSTItem) -> dict:
         },
     }
     extended = ExtendedModel(**extended_model_data)
-    db.session.add_all([item, storage, extended])
-    db.session.commit()
-    db.session.refresh(item)
-    db.session.refresh(storage)
-    db.session.refresh(extended)
+    try:
+        db.session.add_all([item, storage, extended])
+        db.session.commit()
+        db.session.refresh(item)
+        db.session.refresh(storage)
+        db.session.refresh(extended)
+    except Exception:
+        raise DuplicateRecordException
     return combine_item_tables((item, storage, extended))
 
 

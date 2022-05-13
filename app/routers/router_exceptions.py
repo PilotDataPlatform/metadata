@@ -18,5 +18,9 @@ class BadRequestException(Exception):
     pass
 
 
+class DuplicateRecordException(Exception):
+    pass
+
+
 class EntityNotFoundException(Exception):
     pass

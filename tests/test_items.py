@@ -37,24 +37,24 @@ class TestItems:
         response = app.get(f'/v1/item/{test_items["ids"]["file_1"]}/')
         assert response.status_code == 200
 
-    def test_get_item_by_location_200(self):
+    def test_get_item_by_location_200(self, test_items):
         params = {
             'parent_path': 'user.test_folder',
-            'name': 'test_file.txt',
+            'name': 'test_file_1.txt',
             'archived': False,
             'zone': 0,
-            'container_code': 'test_project',
+            'container_code': test_items['container_code'],
             'recursive': False,
         }
         response = app.get('/v1/items/search/', params=params)
         assert response.status_code == 200
 
-    def test_get_item_by_location_missing_zone_422(self):
+    def test_get_item_by_location_missing_zone_422(self, test_items):
         params = {
             'parent_path': 'user.test_folder',
-            'name': 'test_file.txt',
+            'name': 'test_file_1.txt',
             'archived': False,
-            'container_code': 'test_project',
+            'container_code': test_items['container_code'],
             'recursive': False,
         }
         response = app.get('/v1/item/search/', params=params)
@@ -222,7 +222,7 @@ class TestItems:
         }
         response = app.patch('/v1/item/', params=params)
         assert response.status_code == 200
-        assert loads(response.text)['result'][0]['archived'] == True
+        assert loads(response.text)['result'][0]['archived']
 
     def test_restore_item_200(self, test_items):
         params = {
@@ -231,7 +231,7 @@ class TestItems:
         }
         response = app.patch('/v1/item/', params=params)
         assert response.status_code == 200
-        assert loads(response.text)['result'][0]['archived'] == False
+        assert not loads(response.text)['result'][0]['archived']
 
     def test_trash_folder_with_children_200(self, test_items):
         params = {
@@ -242,7 +242,7 @@ class TestItems:
         assert response.status_code == 200
         assert len(loads(response.text)['result']) == 4
         for i in range(4):
-            assert loads(response.text)['result'][i]['archived'] == True
+            assert loads(response.text)['result'][i]['archived']
 
     def test_restore_folder_with_children_200(self, test_items):
         params = {
@@ -253,7 +253,7 @@ class TestItems:
         assert response.status_code == 200
         assert len(loads(response.text)['result']) == 4
         for i in range(4):
-            assert loads(response.text)['result'][i]['archived'] == False
+            assert not loads(response.text)['result'][i]['archived']
 
     def test_rename_item_on_conflict_200(self, test_items):
         params = {
