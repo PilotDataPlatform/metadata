@@ -26,7 +26,6 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy_utils import LtreeType
 
-from app.app_utils import decode_label_from_ltree
 from app.app_utils import decode_path_from_ltree
 from app.config import ConfigClass
 
