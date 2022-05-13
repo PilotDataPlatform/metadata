@@ -43,6 +43,7 @@ class GETItemsByLocation(PaginationRequest):
     parent_path: Optional[str]
     name: Optional[str]
     owner: Optional[str]
+    type: Optional[str]
     container_type: Optional[str]
 
     class Config:
