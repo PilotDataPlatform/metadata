@@ -183,6 +183,8 @@ def get_items_by_ids(params: GETItemsByIDs, ids: list[UUID], api_response: APIRe
 
 
 def get_items_by_location(params: GETItemsByLocation, api_response: APIResponse):
+    if params.container_type and params.container_type not in ['project', 'dataset']:
+        raise BadRequestException(f'Invalid container_type {params.container_type}')
     try:
         custom_sort = getattr(ItemModel, params.sorting).asc()
         if params.order == 'desc':
@@ -203,6 +205,8 @@ def get_items_by_location(params: GETItemsByLocation, api_response: APIResponse)
         item_query = item_query.filter(ItemModel.name.like(params.name))
     if params.owner:
         item_query = item_query.filter(ItemModel.owner.like(params.owner))
+    if params.container_type:
+        item_query = item_query.filter(ItemModel.container_type == params.container_type)
     if params.parent_path:
         search_path = encode_path_for_ltree(params.parent_path)
         if params.recursive:
