@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
 from typing import Optional
 from uuid import UUID
 
@@ -99,6 +100,14 @@ class POSTCollection(BaseModel):
     class Config:
         anystr_strip_whitespace = True
 
+    @validator('name')
+    def check_special_characters_in_name(cls, v):
+        special_char = re.compile('[\/:?*<>|"\']')
+        found_char = special_char.findall(v)
+        if found_char:
+            raise ValueError(f'Cannot use special character(s) {list(set(found_char))} in collection name')
+        return v
+
 
 class POSTCollectionResponse(GETCollectionResponse):
     pass
@@ -114,6 +123,15 @@ class PUTCollections(BaseModel):
         names = [collection.name for collection in v]
         if len(names) is not len(set(names)):
             raise ValueError('Cannot use duplicate collection names')
+        return v
+
+    @validator('collections')
+    def check_special_characters_in_name(cls, v):
+        special_char = re.compile('[\/:?*<>|"\']')
+        for collection in v:
+            found_char = special_char.findall(collection.name)
+            if found_char:
+                raise ValueError(f'Cannot use special character(s) {list(set(found_char))} in collection name')
         return v
 
 

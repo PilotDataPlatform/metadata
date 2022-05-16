@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import random
+import string
 import uuid
 from json import loads
 
@@ -30,6 +31,14 @@ def generate_random_container_code() -> str:
     for _ in range(8):
         random_container_code += chr(random.randint(32, 126))
     return random_container_code
+
+
+def generate_random_collection_name() -> str:
+    random_collection_name = 'test'
+    letters = string.ascii_lowercase
+    for _ in range(8):
+        random_collection_name += random.choice(letters)
+    return random_collection_name
 
 
 @pytest.fixture(scope='function')
@@ -136,12 +145,12 @@ def test_items() -> dict:
 @pytest.fixture(scope='function')
 def test_collections() -> dict:
     props = [{
-        'collection_name': generate_random_container_code(),
+        'collection_name': generate_random_collection_name(),
         'owner': 'user',
         'container_code': generate_random_container_code(),
         'id': str(uuid.uuid4()),
     }, {
-        'collection_name': generate_random_container_code(),
+        'collection_name': generate_random_collection_name(),
         'owner': 'user',
         'container_code': generate_random_container_code(),
         'id': str(uuid.uuid4()),

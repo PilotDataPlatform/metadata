@@ -18,17 +18,11 @@ import uuid
 
 from fastapi.testclient import TestClient
 
+from .conftest import generate_random_collection_name
 from app.config import ConfigClass
 from app.main import app
 
 app = TestClient(app)
-
-
-def generate_random_container_code() -> str:
-    random_container_code = 'test_'
-    for _ in range(8):
-        random_container_code += chr(random.randint(32, 126))
-    return random_container_code
 
 
 class TestItems:
@@ -47,17 +41,24 @@ class TestItems:
         assert response.status_code == 200
         assert res['name'] == test_collections[0]['collection_name']
 
-    def test_get_collection_with_invalid_sorting_404(self, test_collections):
+    def test_get_collection_with_invalid_sorting_400(self, test_collections):
         param = {'owner': test_collections[0]['owner'], 'container_code': test_collections[0]['container_code'],
                  'sorting': 'created_time_x'}
         response = app.get('/v1/collection/search/', params=param)
-        assert response.status_code == 404
+        assert response.status_code == 400
 
     def test_get_collection_by_id_200(self, test_collections):
         response = app.get(f'/v1/collection/{test_collections[0]["id"]}/')
         res = response.json()['result']
         assert response.status_code == 200
         assert res['name'] == test_collections[0]['collection_name']
+
+    def test_get_collection_by_id_with_nonexistent_id_404(self, test_collections):
+        invalid_id = '52c4a134-8550-4acc-9ab9-596548c91c52'
+        response = app.get(f'/v1/collection/{invalid_id}/')
+        res = response.json()['error_msg']
+        assert response.status_code == 404
+        assert f'Collection id {invalid_id} does not exist' in res
 
     def test_delete_collection_200(self, test_collections):
         param = {'id': test_collections[0]['id']}
@@ -76,6 +77,18 @@ class TestItems:
         response = app.post('/v1/collection/', json=payload)
         assert response.status_code == 200
 
+    def test_create_collection_with_invalid_characters_in_name_422(self):
+        collection_id = str(uuid.uuid4())
+        self.cleanup_item_ids.append(collection_id)
+        payload = {
+            'id': collection_id,
+            'owner': 'owner',
+            'container_code': 'testproject',
+            'name': 'collectiontest\/:?*<>|'
+        }
+        response = app.post('/v1/collection/', json=payload)
+        assert response.status_code == 422
+
     def test_create_collection_over_limit_400(self):
         for _i in range(0, ConfigClass.MAX_COLLECTIONS):
             collection_id = str(uuid.uuid4())
@@ -84,7 +97,7 @@ class TestItems:
                 'id': collection_id,
                 'owner': 'owner',
                 'container_code': 'testproject',
-                'name': generate_random_container_code()
+                'name': generate_random_collection_name()
             }
             app.post('/v1/collection/', json=payload)
 
@@ -94,7 +107,7 @@ class TestItems:
             'id': collection_id,
             'owner': 'owner',
             'container_code': 'testproject',
-            'name': generate_random_container_code()
+            'name': generate_random_collection_name()
         }
 
         response = app.post('/v1/collection/', json=payload)
@@ -132,6 +145,7 @@ class TestItems:
         response = app.put('/v1/collection/', json=payload)
         assert response.status_code == 200
 
+
     def test_update_collection_with_duplicate_name_in_payload_422(self):
         payload = {
             'owner': 'owner',
@@ -168,7 +182,7 @@ class TestItems:
         assert response.status_code == 400
         assert f'Collection name(s) {name_exists} already exists' in res
 
-    def test_update_collection_name_with_non_existent_id_400(self, test_collections):
+    def test_update_collection_name_with_non_existent_id_404(self, test_collections):
         id_not_exist = ['c8e7a842-2f96-4cbe-9f5b-d67ba86132ad']
         payload = {
             'owner': test_collections[0]['owner'],
@@ -187,7 +201,7 @@ class TestItems:
         }
         response = app.put('/v1/collection/', json=payload)
         res = response.json()['error_msg']
-        assert response.status_code == 400
+        assert response.status_code == 404
         assert f'Collection id(s) {id_not_exist} do not exist' in res
 
     def test_get_collection_items_archived_false_200(self, test_collections, test_items):

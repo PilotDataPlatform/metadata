@@ -34,8 +34,11 @@ from app.models.sql_items import ItemModel
 from app.models.sql_items_collections import ItemsCollectionsModel
 from app.models.sql_storage import StorageModel
 from app.routers.router_exceptions import BadRequestException
+from app.routers.router_exceptions import EntityNotFoundException
 from app.routers.router_utils import paginate
 from app.routers.v1.items.utils import combine_item_tables
+
+from .utils import validate_collection
 
 
 def get_user_collections(params: GETCollection, api_response: APIResponse):
@@ -64,10 +67,12 @@ def get_collections_by_id(params: GETCollectionID, api_response: APIResponse):
         api_response.result = collection_result.to_dict()
         api_response.total = 1
     else:
-        raise BadRequestException(f'Collection id {params.id} does not exist')
+        raise EntityNotFoundException(f'Collection id {params.id} does not exist')
 
 
 def get_items_per_collection(params: GETCollectionItems, api_response: APIResponse):
+    validate_collection(collection_id=params.id)
+
     try:
         custom_sort = getattr(ItemModel, params.sorting).asc()
         if params.order == 'desc':
@@ -108,6 +113,7 @@ def create_collection(data: POSTCollection, api_response: APIResponse):
 
 def update_collection(data: PUTCollections, api_response: APIResponse):
     payload_ids = [str(collection.id) for collection in data.collections]
+
     payload_names = [collection.name for collection in data.collections]
     query = (
         db.session.query(CollectionsModel).filter(CollectionsModel.id.in_(payload_ids),
@@ -134,7 +140,7 @@ def update_collection(data: PUTCollections, api_response: APIResponse):
         else:
             query_ids = [str(i.id) for i in query_result]
             collections_not_exist = list(set(payload_ids) - set(query_ids))
-        raise BadRequestException(f'Collection id(s) {collections_not_exist} do not exist')
+        raise EntityNotFoundException(f'Collection id(s) {collections_not_exist} do not exist')
 
     result = json.loads(data.json())
     api_response.result = result
@@ -142,6 +148,7 @@ def update_collection(data: PUTCollections, api_response: APIResponse):
 
 
 def add_items(data: POSTCollectionItems, api_response: APIResponse):
+    validate_collection(collection_id=data.id)
     # foreign key constraint ensures collection_id and item_id must exist in collection and items tables
     for item_id in data.item_ids:
         db.session.merge(ItemsCollectionsModel(collection_id=data.id, item_id=item_id))
@@ -152,6 +159,7 @@ def add_items(data: POSTCollectionItems, api_response: APIResponse):
 
 
 def remove_items(data: DELETECollectionItems):
+    validate_collection(collection_id=data.id)
     # foreign key constraint ensures collection_id and item_id must exist in collection and items tables
     db.session.query(ItemsCollectionsModel).filter(ItemsCollectionsModel.collection_id == data.id,
                                                    ItemsCollectionsModel.item_id.in_(data.item_ids)).delete()
@@ -160,6 +168,7 @@ def remove_items(data: DELETECollectionItems):
 
 
 def remove_collection(collection_id: UUID, api_response: APIResponse):
+    validate_collection(collection_id=collection_id)
     db.session.query(CollectionsModel).filter(CollectionsModel.id == collection_id).delete()
     db.session.commit()
     api_response.total = 0

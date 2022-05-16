@@ -52,6 +52,7 @@ from app.models.models_collections import POSTCollectionResponse
 from app.models.models_collections import PUTCollectionResponse
 from app.models.models_collections import PUTCollections
 from app.routers.router_exceptions import BadRequestException
+from app.routers.router_exceptions import EntityNotFoundException
 from app.routers.router_utils import set_api_response_error
 
 from .crud import add_items
@@ -76,11 +77,13 @@ class APICollections:
         try:
             api_response = GETCollectionResponse()
             get_user_collections(params, api_response)
+        except BadRequestException as e:
+            set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
         except Exception as e:
             _logger.exception(e)
             set_api_response_error(api_response,
                                    f'Failed to get collections:user {params.owner}; project {params.container_code}',
-                                   EAPIResponseCode.not_found)
+                                   EAPIResponseCode.internal_error)
         return api_response.json_response()
 
     @router.get('/items/', response_model=GETCollectionItemsResponse,
@@ -89,10 +92,14 @@ class APICollections:
         try:
             api_response = GETCollectionItemsResponse()
             get_items_per_collection(params, api_response)
+        except BadRequestException as e:
+            set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
+        except EntityNotFoundException as e:
+            set_api_response_error(api_response, str(e), EAPIResponseCode.not_found)
         except Exception as e:
             _logger.exception(e)
-            set_api_response_error(api_response, f'Failed to get items from collection {params.id}',
-                                   EAPIResponseCode.not_found)
+            set_api_response_error(api_response, 'Failed to get items from collection',
+                                   EAPIResponseCode.internal_error)
         return api_response.json_response()
 
     @router.get('/{id}/', response_model=GETCollectionResponse, summary='Get collection by id')
@@ -100,11 +107,13 @@ class APICollections:
         try:
             api_response = GETCollectionResponse()
             get_collections_by_id(params, api_response)
+        except EntityNotFoundException as e:
+            set_api_response_error(api_response, str(e), EAPIResponseCode.not_found)
         except Exception as e:
             _logger.exception(e)
             set_api_response_error(api_response,
                                    f'Failed to get collections: {params.id}',
-                                   EAPIResponseCode.not_found)
+                                   EAPIResponseCode.internal_error)
         return api_response.json_response()
 
     @router.post('/', response_model=POSTCollectionResponse,
@@ -129,6 +138,8 @@ class APICollections:
             update_collection(data, api_response)
         except BadRequestException as e:
             set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
+        except EntityNotFoundException as e:
+            set_api_response_error(api_response, str(e), EAPIResponseCode.not_found)
         except Exception as e:
             _logger.exception(e)
             set_api_response_error(api_response, 'Failed to update collection(s)',
@@ -141,8 +152,8 @@ class APICollections:
         try:
             api_response = DELETECollectionResponse()
             remove_collection(id, api_response)
-        except BadRequestException as e:
-            set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
+        except EntityNotFoundException as e:
+            set_api_response_error(api_response, str(e), EAPIResponseCode.not_found)
         except Exception as e:
             _logger.exception(e)
             set_api_response_error(api_response, f'Failed to delete collection {id}',
@@ -155,8 +166,8 @@ class APICollections:
         try:
             api_response = POSTCollectionItemsResponse()
             add_items(data, api_response)
-        except BadRequestException as e:
-            set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
+        except EntityNotFoundException as e:
+            set_api_response_error(api_response, str(e), EAPIResponseCode.not_found)
         except Exception as e:
             _logger.exception(e)
             set_api_response_error(api_response, f'Failed to add items to collection {data.id}',
@@ -169,8 +180,8 @@ class APICollections:
         try:
             api_response = DELETECollectionItemsResponse()
             remove_items(data)
-        except BadRequestException as e:
-            set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
+        except EntityNotFoundException as e:
+            set_api_response_error(api_response, str(e), EAPIResponseCode.not_found)
         except Exception as e:
             _logger.exception(e)
             set_api_response_error(api_response, f'Failed to delete items from collection {data.id}',
