@@ -15,6 +15,7 @@
 
 from typing import Callable
 
+from common import LoggerFactory
 from pydantic import BaseModel
 
 from app.models.base_models import APIResponse
@@ -37,11 +38,10 @@ def paginate(params: BaseModel, api_response: APIResponse, query: Base, expand_f
     api_response.num_of_pages = int(int(total) / int(params.page_size)) + 1
     api_response.total = total
     api_response.result = results
-    if api_response.total == 0:
-        set_api_response_error(api_response, 'No results found', EAPIResponseCode.not_found)
 
 
-def set_api_response_error(api_response: APIResponse, message: str, code: EAPIResponseCode):
+def set_api_response_error(api_response: APIResponse, message: str, code: EAPIResponseCode, _logger: LoggerFactory):
+    _logger.exception(message)
     api_response.set_error_msg(message)
     api_response.set_code(code)
     api_response.total = 0

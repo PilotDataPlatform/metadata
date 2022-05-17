@@ -18,9 +18,10 @@ import uuid
 
 from fastapi.testclient import TestClient
 
-from .conftest import generate_random_collection_name
 from app.config import ConfigClass
 from app.main import app
+
+from .conftest import generate_random_collection_name
 
 app = TestClient(app)
 

@@ -170,8 +170,7 @@ def get_item_by_id(params: GETItem, api_response: APIResponse):
     if item_result:
         api_response.result = combine_item_tables(item_result)
     else:
-        api_response.total = 0
-        api_response.num_of_pages = 0
+        raise EntityNotFoundException()
 
 
 def get_items_by_ids(params: GETItemsByIDs, ids: list[UUID], api_response: APIResponse):
@@ -280,6 +279,8 @@ def create_items(data: POSTItems, api_response: APIResponse):
 
 def update_item(item_id: UUID, data: PUTItem) -> dict:
     item = db.session.query(ItemModel).filter_by(id=item_id).first()
+    if not item:
+        raise EntityNotFoundException()
     if data.parent != '':
         item.parent = data.parent if data.parent else None
     if data.parent_path != '' and not item.archived:
@@ -415,6 +416,8 @@ def delete_item_by_id(id: UUID, api_response: APIResponse):
         .filter(ItemModel.id == id)
     )
     root_item_result = root_item_query.first()
+    if not root_item_result:
+        raise EntityNotFoundException()
     if root_item_result[0].type == 'folder':
         children_result = get_item_children(root_item_result[0])
         for child in children_result:

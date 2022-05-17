@@ -27,5 +27,3 @@ def validate_collection(collection_id: UUID):
     collection_result = collection_query.first()
     if not collection_result:
         raise EntityNotFoundException(f'Collection {collection_id} does not exist')
-
-
