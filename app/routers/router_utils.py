@@ -40,8 +40,9 @@ def paginate(params: BaseModel, api_response: APIResponse, query: Base, expand_f
     api_response.result = results
 
 
-def set_api_response_error(api_response: APIResponse, message: str, code: EAPIResponseCode, _logger: LoggerFactory):
-    _logger.exception(message)
+def set_api_response_error(api_response: APIResponse, message: str, code: EAPIResponseCode, _logger: LoggerFactory = None):
+    if _logger:
+        _logger.exception(message)
     api_response.set_error_msg(message)
     api_response.set_code(code)
     api_response.total = 0
