@@ -215,11 +215,7 @@ def get_items_by_location(params: GETItemsByLocation, api_response: APIResponse)
         search_path = encode_path_for_ltree(params.parent_path)
         if params.recursive:
             search_path += '.*'
-        item_query = item_query.filter(
-            ItemModel.restore_path.lquery(expression.cast(search_path, LQUERY))
-            if params.archived
-            else ItemModel.parent_path.lquery(expression.cast(search_path, LQUERY)),
-        )
+        item_query = item_query.filter(ItemModel.parent_path.lquery(expression.cast(search_path, LQUERY)))
     else:
         if not params.recursive:
             item_query = item_query.filter(ItemModel.parent_path == None)
