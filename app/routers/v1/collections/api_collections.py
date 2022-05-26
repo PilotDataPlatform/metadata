@@ -52,6 +52,7 @@ from app.models.models_collections import POSTCollectionResponse
 from app.models.models_collections import PUTCollectionResponse
 from app.models.models_collections import PUTCollections
 from app.routers.router_exceptions import BadRequestException
+from app.routers.router_exceptions import DuplicateRecordException
 from app.routers.router_exceptions import EntityNotFoundException
 from app.routers.router_utils import set_api_response_error
 
@@ -124,6 +125,8 @@ class APICollections:
             create_collection(data, api_response)
         except BadRequestException as e:
             set_api_response_error(api_response, str(e), EAPIResponseCode.bad_request)
+        except DuplicateRecordException as e:
+            set_api_response_error(api_response, str(e), EAPIResponseCode.conflict)
         except Exception as e:
             _logger.exception(e)
             set_api_response_error(api_response, f'Failed to create collection with id {data.id}',

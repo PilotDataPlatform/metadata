@@ -34,6 +34,7 @@ from app.models.sql_items import ItemModel
 from app.models.sql_items_collections import ItemsCollectionsModel
 from app.models.sql_storage import StorageModel
 from app.routers.router_exceptions import BadRequestException
+from app.routers.router_exceptions import DuplicateRecordException
 from app.routers.router_exceptions import EntityNotFoundException
 from app.routers.router_utils import paginate
 from app.routers.v1.items.utils import combine_item_tables
@@ -99,7 +100,7 @@ def create_collection(data: POSTCollection, api_response: APIResponse):
     if len(collection_result) == ConfigClass.MAX_COLLECTIONS:
         raise BadRequestException(f'Cannot create more than {ConfigClass.MAX_COLLECTIONS} collections')
     elif data.name in (collection.name for collection in collection_result):
-        raise BadRequestException(f'Collection {data.name} already exists')
+        raise DuplicateRecordException(f'Collection {data.name} already exists')
     else:
         model_data = {'id': data.id, 'owner': data.owner, 'container_code': data.container_code,
                       'name': data.name}
