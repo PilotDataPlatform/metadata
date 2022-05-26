@@ -84,7 +84,7 @@ def get_items_per_collection(params: GETCollectionItems, api_response: APIRespon
         db.session.query(ItemModel, StorageModel, ExtendedModel).join(StorageModel, ExtendedModel,
                                                                       ItemsCollectionsModel)
         .filter(ItemsCollectionsModel.collection_id == params.id, ItemModel.archived == params.archived)
-        .order_by(ItemModel.container_type, custom_sort)
+        .order_by(ItemModel.type, custom_sort)
     )
 
     paginate(params, api_response, item_query, combine_item_tables)
