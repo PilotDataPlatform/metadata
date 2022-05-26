@@ -116,7 +116,7 @@ class TestItems:
         assert response.status_code == 400
         assert f'Cannot create more than {ConfigClass.MAX_COLLECTIONS} collections' in res
 
-    def test_create_collection_name_already_exists_400(self, test_collections):
+    def test_create_collection_name_already_exists_409(self, test_collections):
         collection_id = str(uuid.uuid4())
         collection_name = test_collections[0]['collection_name']
         self.cleanup_item_ids.append(collection_id)
@@ -129,7 +129,7 @@ class TestItems:
 
         response = app.post('/v1/collection/', json=payload)
         res = response.json()['error_msg']
-        assert response.status_code == 400
+        assert response.status_code == 409
         assert f'Collection {collection_name} already exists' in res
 
     def test_update_collection_name_200(self, test_collections):
