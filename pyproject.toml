@@ -16,6 +16,7 @@ requests = "2.24.0"
 sqlalchemy-utils = "0.38.2"
 uvicorn = "0.17.5"
 python-json-logger = "0.1.11"
+strawberry-graphql = {version = "0.112.0", extras = ["extras"]}
 
 [tool.poetry.dev-dependencies]
 pytest = "6.2.4"
