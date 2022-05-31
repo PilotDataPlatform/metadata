@@ -87,13 +87,13 @@ class POSTItem(BaseModel):
     id: Optional[UUID]
     parent: Optional[UUID] = Field(example='3fa85f64-5717-4562-b3fc-2c963f66afa6')
     parent_path: Optional[str] = Field(example='path.to.file')
+    container_code: str
+    container_type: str = 'project'
     type: str = 'file'
     zone: int = 0
     name: str = Field(example='file_name.txt')
     size: Optional[int]
     owner: str
-    container_code: str
-    container_type: str = 'project'
     location_uri: Optional[str]
     version: Optional[str]
     tags: list[str] = []
@@ -112,10 +112,10 @@ class POSTItem(BaseModel):
             raise ValueError('Name folders cannot have a parent')
         elif 'parent_path' in values and values['parent_path'] and v == 'name_folder':
             raise ValueError('Name folders cannot have a parent_path')
-        elif 'parent' not in values or not values['parent'] and v != 'name_folder':
-            raise ValueError('Files and folders must have a parent')
-        elif 'parent_path' not in values or not values['parent_path'] and v != 'name_folder':
-            raise ValueError('Files and folders must have a parent_path')
+        elif 'parent' not in values or not values['parent'] and v != 'name_folder' and values['container_type'] == 'project':
+            raise ValueError('Files and folders must have a parent if not part of a dataset')
+        elif 'parent_path' not in values or not values['parent_path'] and v != 'name_folder' and values['container_type'] == 'project':
+            raise ValueError('Files and folders must have a parent_path if not part of a dataset')
         return v
 
     @validator('container_type')

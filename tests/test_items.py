@@ -187,6 +187,74 @@ class TestItems:
         response = app.post('/v1/item/', json=payload)
         assert response.status_code == 422
 
+    def test_file_empty_parent_project_422(self):
+        item_id = str(uuid.uuid4())
+        self.cleanup_item_ids.append(item_id)
+        payload = {
+            'id': item_id,
+            'parent': None,
+            'parent_path': '',
+            'type': 'file',
+            'zone': 0,
+            'name': 'test_file_no_parent.txt',
+            'size': 0,
+            'owner': 'admin',
+            'container_code': 'create_item_200',
+            'container_type': 'project',
+            'location_uri': '',
+            'version': '',
+            'tags': [],
+            'system_tags': [],
+        }
+        response = app.post('/v1/item/', json=payload)
+        assert response.status_code == 422
+
+    def test_file_empty_parent_dataset_200(self):
+        item_id = str(uuid.uuid4())
+        self.cleanup_item_ids.append(item_id)
+        payload = {
+            'id': item_id,
+            'parent': None,
+            'parent_path': '',
+            'type': 'file',
+            'zone': 0,
+            'name': 'test_file_no_parent.txt',
+            'size': 0,
+            'owner': 'admin',
+            'container_code': 'dataset_empty_parent_200',
+            'container_type': 'dataset',
+            'location_uri': '',
+            'version': '',
+            'tags': [],
+            'system_tags': [],
+        }
+        response = app.post('/v1/item/', json=payload)
+        print(response.content)
+        assert response.status_code == 200
+
+    def test_folder_empty_parent_dataset_200(self):
+        item_id = str(uuid.uuid4())
+        self.cleanup_item_ids.append(item_id)
+        payload = {
+            'id': item_id,
+            'parent': None,
+            'parent_path': '',
+            'type': 'folder',
+            'zone': 0,
+            'name': 'test_folder_no_parent',
+            'size': 0,
+            'owner': 'admin',
+            'container_code': 'dataset_empty_parent_200',
+            'container_type': 'dataset',
+            'location_uri': '',
+            'version': '',
+            'tags': [],
+            'system_tags': [],
+        }
+        response = app.post('/v1/item/', json=payload)
+        print(response.content)
+        assert response.status_code == 200
+
     def test_update_item_200(self, test_items):
         params = {'id': test_items['ids']['file_1']}
         payload = {'name': 'test_file_updated.txt'}
