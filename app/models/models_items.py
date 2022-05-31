@@ -113,7 +113,7 @@ class POSTItem(BaseModel):
         elif 'parent_path' in values and values['parent_path'] and v == 'name_folder':
             raise ValueError('Name folders cannot have a parent_path')
         elif 'parent' not in values or not values['parent'] and v != 'name_folder' and values['container_type'] == 'project':
-            raise ValueError('Files and folders must have a parent_path if not part of a datase')
+            raise ValueError('Files and folders must have a parent if not part of a dataset')
         elif 'parent_path' not in values or not values['parent_path'] and v != 'name_folder' and values['container_type'] == 'project':
             raise ValueError('Files and folders must have a parent_path if not part of a dataset')
         return v
