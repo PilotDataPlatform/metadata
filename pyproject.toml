@@ -5,7 +5,7 @@ description = "Create and update file metadata"
 authors = ["Indoc Research"]
 
 [tool.poetry.dependencies]
-fastapi = "0.63.0"
+fastapi = "0.65.2"
 fastapi-health = "0.4.0"
 fastapi-sqlalchemy = "0.2.1"
 fastapi-utils = "0.2.1"
