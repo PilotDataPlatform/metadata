@@ -26,6 +26,8 @@ class Item:
     name: str
     owner: str
     type: str
+    container_code: str
+    container_type: str
     parent_path: Optional[str]
 
 

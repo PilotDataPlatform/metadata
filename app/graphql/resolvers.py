@@ -29,6 +29,8 @@ def get_item_by_id(id: uuid.UUID):
             name=item_dict['name'],
             owner=item_dict['owner'],
             type=item_dict['type'],
+            container_type=item_dict['container_type'],
+            container_code=item_dict['container_code'],
             parent_path=item_dict['parent_path']
             )
     else:
