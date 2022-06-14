@@ -37,6 +37,8 @@ def get_template_by_id(params: GETTemplate, api_response: APIResponse):
 
 def get_templates_by_project_code(params: GETTemplates, api_response: APIResponse):
     template_query = db.session.query(AttributeTemplateModel).filter_by(project_code=params.project_code)
+    if params.name:
+        template_query = template_query.filter_by(name=params.name)
     paginate(params, api_response, template_query, None)
 
 
