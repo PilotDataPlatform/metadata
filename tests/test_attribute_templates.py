@@ -32,6 +32,21 @@ class TestAttributeTemplates:
         response = app.get('/v1/template/', params=params)
         assert response.status_code == 200
 
+    def test_get_attribute_template_by_project_code_and_name_200(self, test_attribute_template):
+        params = {'project_code': 'test_project', 'name': 'test_template'}
+        response = app.get('/v1/template/', params=params)
+        res = response.json()['result'][0]
+        assert response.status_code == 200
+        assert res['name'] == 'test_template'
+        assert res['project_code'] == 'test_project'
+
+    def test_get_attribute_template_by_project_code_and_invalid_name_200(self, test_attribute_template):
+        params = {'project_code': 'test_project', 'name': 'invalid_name'}
+        response = app.get('/v1/template/', params=params)
+        res = response.json()['result']
+        assert response.status_code == 200
+        assert res == []
+
     def test_create_attribute_template_200(self):
         payload = {
             'name': 'template_1',

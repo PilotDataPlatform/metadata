@@ -30,6 +30,7 @@ class GETTemplate(BaseModel):
 
 class GETTemplates(BaseModel):
     project_code: str
+    name: Optional[str]
     page_size: int = 10
     page: int = 0
 
