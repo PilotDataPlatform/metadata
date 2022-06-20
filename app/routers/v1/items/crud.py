@@ -268,7 +268,13 @@ def create_item(data: POSTItem) -> dict:
 def create_items(data: POSTItems, api_response: APIResponse):
     results = []
     for item in data.items:
-        results.append(create_item(item))
+        try:
+            results.append(create_item(item))
+        except DuplicateRecordException as e:
+            if data.skip_duplicates:
+                pass
+            else:
+                raise e
     api_response.result = results
     api_response.total = len(results)
 

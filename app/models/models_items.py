@@ -164,6 +164,7 @@ class POSTItem(BaseModel):
 
 class POSTItems(BaseModel):
     items: list[POSTItem]
+    skip_duplicates: bool = False
 
 
 class PATCHItem(BaseModel):
