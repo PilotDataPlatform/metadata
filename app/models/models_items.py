@@ -146,7 +146,7 @@ class POSTItem(BaseModel):
 
     @validator('attributes')
     def attributes_are_valid(cls, v, values):
-        if 'type' in values and values['type'] != 'file':
+        if 'type' in values and values['type'] and values['type'] != 'file':
             raise ValueError('Attributes can only be applied to files')
         for attribute in v.values():
             if len(attribute) > ConfigClass.MAX_ATTRIBUTE_LENGTH:
@@ -157,7 +157,7 @@ class POSTItem(BaseModel):
 
     @validator('attribute_template_id')
     def attribute_template_only_on_files(cls, v, values):
-        if 'type' in values and values['type'] != 'file':
+        if 'type' in values and values['type'] and values['type'] != 'file':
             raise ValueError('Attribute templates can only be applied to files')
         return v
 
