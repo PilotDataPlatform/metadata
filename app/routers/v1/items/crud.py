@@ -309,15 +309,15 @@ def update_item(item_id: UUID, data: PUTItem) -> dict:
         storage.version = data.version
     extended = db.session.query(ExtendedModel).filter_by(item_id=item_id).first()
     extra = dict(extended.extra)
-    if data.tags:
+    if data.tags is not None:
         extra['tags'] = data.tags
-    if data.system_tags:
+    if data.system_tags is not None:
         extra['system_tags'] = data.system_tags
     if data.attribute_template_id and data.attributes:
         if not attributes_match_template(data.attributes, data.attribute_template_id):
             raise BadRequestException('Attributes do not match attribute template')
         extra['attributes'] = {str(data.attribute_template_id): data.attributes} if data.attributes else {}
-    if any(extra.values()):
+    if extra != extended.extra:
         extended.extra = extra
     db.session.commit()
     db.session.refresh(item)
