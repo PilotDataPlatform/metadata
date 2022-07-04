@@ -414,6 +414,8 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
                 parent_path=Ltree(f'{encode_path_for_ltree(archived_items[item_id]["parent_path"])}')
                 if archived_items[item_id]['parent_path'] else None,
                 archived=archived_items[item_id]['archived'],
+                name=archived_items[item_id]['name'],
+                parent=archived_items[item_id]['parent'],
                 restore_path=Ltree(f'{encode_path_for_ltree(archived_items[item_id]["restore_path"])}')
                 if archived_items[item_id]['restore_path'] else None,
                 last_updated_time=archived_items[item_id]['last_updated_time']
