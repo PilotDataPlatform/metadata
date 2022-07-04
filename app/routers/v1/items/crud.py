@@ -372,7 +372,7 @@ def archive_item(item: ItemModel, trash_item: bool, parent: bool):
                 if not restore_destination_id:
                     raise BadRequestException('Restore destination does not exist')
                 item.parent = restore_destination_id
-            item.name = item_file_name
+                item.name = item_file_name
             item.parent_path = item.restore_path
             item.restore_path = None
         item.archived = trash_item
