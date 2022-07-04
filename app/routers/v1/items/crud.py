@@ -19,6 +19,7 @@ from datetime import datetime
 from uuid import UUID
 
 from fastapi_sqlalchemy import db
+from sqlalchemy import update
 from sqlalchemy.sql import expression
 from sqlalchemy_utils import Ltree
 from sqlalchemy_utils.types.ltree import LQUERY
@@ -121,7 +122,7 @@ def move_item(item: ItemModel, new_parent_path: str, children: dict = None, dept
 
 
 def rename_item(
-    root_item: ItemModel, item: ItemModel, old_name: str, new_name: str, children: dict = None, depth: int = 1
+        root_item: ItemModel, item: ItemModel, old_name: str, new_name: str, children: dict = None, depth: int = 1
 ):
     if not children:
         children = get_item_children(item, True)
@@ -366,11 +367,12 @@ def archive_item(item: ItemModel, trash_item: bool, parent: bool):
             item.restore_path = item.parent_path
         else:
             if parent:
+                item_file_name = get_available_file_name(item.container_code, item.zone, item.name, item.restore_path, False)
                 restore_destination_id = get_restore_destination_id(item.container_code, item.zone, item.restore_path)
                 if not restore_destination_id:
                     raise BadRequestException('Restore destination does not exist')
                 item.parent = restore_destination_id
-                item.name = get_available_file_name(item.container_code, item.zone, item.name, item.restore_path, False)
+                item.name = item_file_name
             item.parent_path = item.restore_path
             item.restore_path = None
         item.archived = trash_item
@@ -392,6 +394,7 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
     if root_item_result[0].type == 'folder':
         children_result = get_item_children(root_item_result[0])
     all_items = []
+    children_checkpoint = db.session.begin_nested()
     try:
         archive_item(root_item_result[0], params.archived, True)
         all_items.append(root_item_result)
@@ -402,6 +405,21 @@ def archive_item_by_id(params: PATCHItem, api_response: APIResponse):
             move_item(root_item_result[0], None)
     except BadRequestException:
         raise
+    if params.archived:
+        archived_items = {str(item[0].id): item[0].to_dict() for item in all_items}
+        children_checkpoint.rollback()
+        for item in all_items:
+            item_id = str(item[0].id)
+            db.session.execute(update(ItemModel).where(ItemModel.id == item[0].id).values(
+                parent_path=Ltree(f'{encode_path_for_ltree(archived_items[item_id]["parent_path"])}')
+                if archived_items[item_id]['parent_path'] else None,
+                archived=archived_items[item_id]['archived'],
+                name=archived_items[item_id]['name'],
+                parent=archived_items[item_id]['parent'],
+                restore_path=Ltree(f'{encode_path_for_ltree(archived_items[item_id]["restore_path"])}')
+                if archived_items[item_id]['restore_path'] else None,
+                last_updated_time=archived_items[item_id]['last_updated_time']
+            ))
     db.session.commit()
     results = []
     for item in all_items:
