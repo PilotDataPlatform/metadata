@@ -37,7 +37,7 @@ class GETItemsByIDs(BaseModel):
 
 class GETItemsByLocation(PaginationRequest):
     container_code: str
-    zone: int
+    zone: Optional[int]
     recursive: bool
     archived: bool = False
     parent_path: Optional[str]

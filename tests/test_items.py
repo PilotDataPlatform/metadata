@@ -49,7 +49,7 @@ class TestItems:
         response = app.get('/v1/items/search/', params=params)
         assert response.status_code == 200
 
-    def test_get_item_by_location_missing_zone_422(self, test_items):
+    def test_get_item_by_location_missing_zone_200(self, test_items):
         params = {
             'parent_path': 'user.test_folder',
             'name': 'test_file_1.txt',
@@ -57,8 +57,8 @@ class TestItems:
             'container_code': test_items['container_code'],
             'recursive': False,
         }
-        response = app.get('/v1/item/search/', params=params)
-        assert response.status_code == 422
+        response = app.get('/v1/items/search/', params=params)
+        assert response.status_code == 200
 
     def test_get_items_by_id_batch_200(self, test_items):
         params = {'ids': [test_items['ids']['name_folder'], test_items['ids']['folder'], test_items['ids']['file_1']]}
