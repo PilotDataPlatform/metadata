@@ -199,11 +199,12 @@ def get_items_by_location(params: GETItemsByLocation, api_response: APIResponse)
         .join(StorageModel, ExtendedModel)
         .filter(
             ItemModel.container_code == params.container_code,
-            ItemModel.zone == params.zone,
             ItemModel.archived == params.archived,
         )
         .order_by(ItemModel.type, custom_sort)
     )
+    if params.zone is not None:
+        item_query = item_query.filter(ItemModel.zone == params.zone)
     if params.name:
         item_query = item_query.filter(ItemModel.name.like(params.name))
     if params.owner:
