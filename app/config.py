@@ -46,10 +46,10 @@ class Settings(BaseSettings):
     HOST: str = '0.0.0.0'
     ENV: str = 'test'
 
-    OPSDB_UTILITY_USERNAME: str
-    OPSDB_UTILITY_PASSWORD: str
-    OPSDB_UTILITY_HOST: str
-    OPSDB_UTILITY_PORT: str
+    OPSDB_UTILITY_USERNAME: str = 'postgres'
+    OPSDB_UTILITY_PASSWORD: str = 'postgres'
+    OPSDB_UTILITY_HOST: str = 'db'
+    OPSDB_UTILITY_PORT: str = '5432'
     OPSDB_UTILITY_NAME: str = 'metadata'
 
     METADATA_SCHEMA = str = 'metadata'

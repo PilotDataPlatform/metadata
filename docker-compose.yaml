@@ -3,23 +3,15 @@ services:
   web:
     build:
       context: .
+      target: production-environment
     ports:
       - "8000:8000"
-    environment:
-      OPSDB_UTILITY_USERNAME: postgres
-      OPSDB_UTILITY_PASSWORD: postgres
-      OPSDB_UTILITY_HOST: db
-      OPSDB_UTILITY_PORT: 5432
-      OPSDB_UTILITY_NAME: metadata
-      SQLALCHEMY_DATABASE_URI: postgresql://postgres:postgres@db:5432/metadata
     volumes:
       - .:/usr/src/app
     depends_on:
       - db
     command: >
       sh -c "
-        pip install alembic &&
-        alembic upgrade head &&
         uvicorn app.main:app --reload --host 0.0.0.0
       "
 
@@ -50,6 +42,15 @@ services:
       - ./local_config/pgadmin/:/var/lib/pgadmin/
     depends_on:
       - db
+
+  alembic:
+      build:
+        context: .
+        target: alembic-image
+      environment:
+        - SQLALCHEMY_DATABASE_URI=${SQLALCHEMY_DATABASE_URI:-postgresql://postgres:postgres@$db:5432/metadata}
+      depends_on:
+        - db
 
 networks:
   default:
