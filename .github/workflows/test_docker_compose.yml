@@ -36,6 +36,9 @@ jobs:
           docker-compose -f docker-compose.yaml down -v
           docker network create pilot-network
           docker-compose up -d
+      - name: Get logs from Alembic container
+        run: |
+          docker logs --tail 1000 -f metadata_alembic_1
       - name: Run Tests Inside Compose
         run: |
           docker exec metadata_web_1 pip install --user poetry==1.1.12
