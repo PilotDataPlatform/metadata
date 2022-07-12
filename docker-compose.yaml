@@ -54,7 +54,7 @@ services:
       context: .
       target: alembic-image
     environment:
-      - SQLALCHEMY_DATABASE_URI=${SQLALCHEMY_DATABASE_URI:-postgresql://postgres:postgres@$db:5432/metadata}
+      - SQLALCHEMY_DATABASE_URI=${SQLALCHEMY_DATABASE_URI:-postgresql://postgres:postgres@$metadata_db_1:5432/metadata}
     depends_on:
       db:
         condition: service_healthy
