@@ -28,6 +28,11 @@ services:
       - ./migrations/scripts/create_metadata_db.sql:/docker-entrypoint-initdb.d/01.sql
       - ./migrations/scripts/create_metadata_schema.sql:/docker-entrypoint-initdb.d/02.sql
       - ./migrations/scripts/install_ltree.sql:/docker-entrypoint-initdb.d/03.sql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready --username $$POSTGRES_USER" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   pgadmin:
     image: 'dpage/pgadmin4'
@@ -41,16 +46,18 @@ services:
     volumes:
       - ./local_config/pgadmin/:/var/lib/pgadmin/
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   alembic:
-      build:
-        context: .
-        target: alembic-image
-      environment:
-        - SQLALCHEMY_DATABASE_URI=${SQLALCHEMY_DATABASE_URI:-postgresql://postgres:postgres@$db:5432/metadata}
-      depends_on:
-        - db
+    build:
+      context: .
+      target: alembic-image
+    environment:
+      - SQLALCHEMY_DATABASE_URI=${SQLALCHEMY_DATABASE_URI:-postgresql://postgres:postgres@$db:5432/metadata}
+    depends_on:
+      db:
+        condition: service_healthy
 
 networks:
   default:
