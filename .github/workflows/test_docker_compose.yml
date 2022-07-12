@@ -38,10 +38,9 @@ jobs:
           docker-compose up -d
       - name: Run Tests Inside Compose
         run: |
-          docker exec -it metadata_web_1 bash
-          pip install --user poetry==1.1.12
-          poetry config virtualenvs.in-project false
-          poetry install --no-root --no-interaction
-          poetry run pytest --verbose -c tests/pytest.ini
+          docker exec metadata_web_1 pip install --user poetry==1.1.12
+          docker exec metadata_web_1 poetry config virtualenvs.in-project false
+          docker exec metadata_web_1 poetry install --no-root --no-interaction
+          docker exec metadata_web_1 poetry run pytest --verbose -c tests/pytest.ini
       - name: Tear Down Docker Compose
         run: docker-compose -f docker-compose.yaml down -v
