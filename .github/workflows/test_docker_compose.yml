@@ -34,17 +34,14 @@ jobs:
           [ -d local_config/pgadmin/sessions ] && sudo chmod 777 -R -f local_config/pgadmin/sessions
           sudo chmod 777 -R -f local_config/pgadmin/sessions
           docker-compose -f docker-compose.yaml down -v
-          docker system prune --all --force
           docker network create pilot-network
           docker-compose up -d
       - name: Run Tests Inside Compose
         run: |
-          docker-compose exec -T web /bin/bash
-          pwd
-          hostname
-          docker-compose exec -T web pip install --user poetry==1.1.12
-          docker-compose exec -T web poetry config virtualenvs.in-project false
-          docker-compose exec -T web poetry install --no-root --no-interaction
-          docker-compose exec -T web poetry run pytest --verbose -c tests/pytest.ini
+          docker exec -it metadata_web_1 bash
+          pip install --user poetry==1.1.12
+          poetry config virtualenvs.in-project false
+          poetry install --no-root --no-interaction
+          poetry run pytest --verbose -c tests/pytest.ini
       - name: Tear Down Docker Compose
         run: docker-compose -f docker-compose.yaml down -v
