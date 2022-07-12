@@ -11,6 +11,7 @@ Manages metadata such as file hierarchy, project and user ownership, names, type
  - [FastAPI](https://fastapi.tiangolo.com): The async API framework for backend.
  - [Poetry](https://python-poetry.org/): Python package management.
  - [Docker](https://docker.com): Products that use OS-level virtualization to deliver software in packages called containers.
+ - [Alembic](https://alembic.sqlalchemy.org/en/latest/): Lightweight database migration tool.
 
 
 ## Getting Started
