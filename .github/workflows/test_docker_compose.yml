@@ -33,9 +33,9 @@ jobs:
           [ ! -f .env ] && touch .env
           [ -d local_config/pgadmin/sessions ] && sudo chmod 777 -R -f local_config/pgadmin/sessions
           sudo chmod 777 -R -f local_config/pgadmin/sessions
-          docker build -t web .
           docker network create pilot-network
           docker-compose -f docker-compose.yaml down -v
+          docker system prune --all --force
           docker-compose up -d
       - name: Run Tests Inside Compose
         run: |
