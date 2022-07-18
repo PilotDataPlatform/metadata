@@ -34,7 +34,6 @@ jobs:
           [ -d local_config/pgadmin/sessions ] && sudo chmod 777 -R -f local_config/pgadmin/sessions
           sudo chmod 777 -R -f local_config/pgadmin/sessions
           docker-compose -f docker-compose.yaml down -v
-          docker network create pilot-network
           docker-compose up -d
       - name: Get logs from Alembic container
         run: |

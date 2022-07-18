@@ -52,8 +52,3 @@ services:
     depends_on:
       db:
         condition: service_healthy
-
-networks:
-  default:
-    external:
-      name: pilot-network
