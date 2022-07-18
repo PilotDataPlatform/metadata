@@ -56,7 +56,7 @@ Local URLs:
 pgAdmin's local config files have been committed to this repo for ease of development. Without the files, a connection between pgAdmin and Postgres will have to be manually established by the developer.
 
 General resources:
-- [API Document](https://pilotdataplatform.github.io/api-docs/) 
+- [API Document](https://pilotdataplatform.github.io/api-docs/)
 - [Helm Chart](https://github.com/PilotDataPlatform/helm-charts/)
 
 ## Contribution
