@@ -15,19 +15,16 @@
 
 from fastapi import FastAPI
 from fastapi_health import health
-from fastapi_sqlalchemy import db
+
+from app.routers.v1.health.api_health import opsdb_check
 
 from .routers.v1.attribute_templates import api_attribute_templates
 from .routers.v1.collections import api_collections
 from .routers.v1.items import api_items
 
 
-def is_db_online():
-    return db.session is not None
-
-
 def api_registry(app: FastAPI):
-    app.add_api_route('/v1/health/', health([is_db_online]), tags=['Health'])
+    app.add_api_route('/v1/health/', health([opsdb_check], success_status=204), tags=['Health'])
     app.include_router(api_items.router, prefix='/v1/item', tags=['Items'])
     app.include_router(api_items.router_bulk, prefix='/v1/items', tags=['Items'])
     app.include_router(api_attribute_templates.router, prefix='/v1/template', tags=['Attribute templates'])
