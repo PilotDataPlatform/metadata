@@ -23,11 +23,11 @@ pipeline {
       steps {
         script {
             docker.withRegistry('https://ghcr.io', registryCredential) {
-                customImage = docker.build('$imagename:alembic-$commit', '--target alembic-image .')
+                customImage = docker.build('$imagename:alembic-$commit-CAC', '--target alembic-image .')
                 customImage.push()
             }
             docker.withRegistry('https://ghcr.io', registryCredential) {
-                customImage = docker.build('$imagename:project-$commit', '--target project-image .')
+                customImage = docker.build('$imagename:metadata-$commit-CAC', '--target metadata-image .')
                 customImage.push()
             }
         }
@@ -37,8 +37,8 @@ pipeline {
     stage('DEV Remove image') {
       when {branch "develop"}
       steps {
-            sh 'docker rmi $imagename:alembic-$commit'
-            sh 'docker rmi $imagename:project-$commit'
+            sh 'docker rmi $imagename:alembic-$commit-CAC'
+            sh 'docker rmi $imagename:metadata-$commit-CAC'
       }
     }
 
@@ -71,7 +71,7 @@ pipeline {
                 customImage.push()
             }
             docker.withRegistry('https://ghcr.io', registryCredential) {
-                customImage = docker.build('$imagename:project-$commit', '--target project-image .')
+                customImage = docker.build('$imagename:metadata-$commit', '--target metadata-image .')
                 customImage.push()
             }
         }
@@ -82,7 +82,7 @@ pipeline {
       when {branch "main"}
       steps {
             sh 'docker rmi $imagename:alembic-$commit'
-            sh 'docker rmi $imagename:project-$commit'
+            sh 'docker rmi $imagename:metadata-$commit'
       }
     }
 
