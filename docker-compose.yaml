@@ -3,25 +3,13 @@ services:
   web:
     build:
       context: .
+      target: metadata-image
     ports:
-      - "8000:8000"
-    environment:
-      OPSDB_UTILITY_USERNAME: postgres
-      OPSDB_UTILITY_PASSWORD: postgres
-      OPSDB_UTILITY_HOST: db
-      OPSDB_UTILITY_PORT: 5432
-      OPSDB_UTILITY_NAME: metadata
-      SQLALCHEMY_DATABASE_URI: postgresql://postgres:postgres@db:5432/metadata
+      - "8000:5065"
     volumes:
       - .:/usr/src/app
     depends_on:
       - db
-    command: >
-      sh -c "
-        pip install alembic &&
-        alembic upgrade head &&
-        uvicorn app.main:app --reload --host 0.0.0.0
-      "
 
   db:
     image: 'postgres:12-alpine'
@@ -36,6 +24,11 @@ services:
       - ./migrations/scripts/create_metadata_db.sql:/docker-entrypoint-initdb.d/01.sql
       - ./migrations/scripts/create_metadata_schema.sql:/docker-entrypoint-initdb.d/02.sql
       - ./migrations/scripts/install_ltree.sql:/docker-entrypoint-initdb.d/03.sql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready --username $$POSTGRES_USER" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   pgadmin:
     image: 'dpage/pgadmin4'
@@ -49,9 +42,13 @@ services:
     volumes:
       - ./local_config/pgadmin/:/var/lib/pgadmin/
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
-networks:
-  default:
-    external:
-      name: pilot-network
+  alembic:
+    build:
+      context: .
+      target: alembic-image
+    depends_on:
+      db:
+        condition: service_healthy

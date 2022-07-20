@@ -30,25 +30,19 @@ jobs:
         run: poetry version
       - name: Start Docker Compose
         run: |
-          echo "OPSDB_UTILILY_USERNAME=postgres" >> $GITHUB_ENV
-          echo "OPSDB_UTILILY_PASSWORD=postgres" >> $GITHUB_ENV
-          echo "OPSDB_UTILILY_HOST=db" >> $GITHUB_ENV
-          echo "OPSDB_UTILILY_NAME=metadata" >> $GITHUB_ENV
           [ ! -f .env ] && touch .env
           [ -d local_config/pgadmin/sessions ] && sudo chmod 777 -R -f local_config/pgadmin/sessions
           sudo chmod 777 -R -f local_config/pgadmin/sessions
-          docker build -t web .
-          docker network create pilot-network
           docker-compose -f docker-compose.yaml down -v
           docker-compose up -d
+      - name: Get logs from Alembic container
+        run: |
+          docker logs --tail 1000 -f metadata_alembic_1
       - name: Run Tests Inside Compose
         run: |
-          docker-compose exec -T web /bin/bash
-          pwd
-          hostname
-          docker-compose exec -T web pip install --user poetry==1.1.12
-          docker-compose exec -T web poetry config virtualenvs.in-project false
-          docker-compose exec -T web poetry install --no-root --no-interaction
-          docker-compose exec -T web poetry run pytest --verbose -c tests/pytest.ini
+          docker exec metadata_web_1 pip install --user poetry==1.1.12
+          docker exec metadata_web_1 poetry config virtualenvs.in-project false
+          docker exec metadata_web_1 poetry install --no-root --no-interaction
+          docker exec metadata_web_1 poetry run pytest --verbose -c tests/pytest.ini
       - name: Tear Down Docker Compose
         run: docker-compose -f docker-compose.yaml down -v

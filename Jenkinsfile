@@ -18,57 +18,27 @@ pipeline {
         }
     }
 
-    // stage('DEV Run unit tests') {
-    //     when { branch 'develop' }
-    //     steps {
-    //         withCredentials([
-    //             usernamePassword(credentialsId: 'indoc-ssh', usernameVariable: 'SUDO_USERNAME', passwordVariable: 'SUDO_PASSWORD'),
-    //             string(credentialsId:'VAULT_TOKEN', variable: 'VAULT_TOKEN'),
-    //             string(credentialsId:'VAULT_URL', variable: 'VAULT_URL'),
-    //             file(credentialsId:'VAULT_CRT', variable: 'VAULT_CRT')
-    //         ]) {
-    //             sh """
-    //             export OPSDB_UTILILY_USERNAME=postgres
-    //             export OPSDB_UTILILY_PASSWORD=postgres
-    //             export OPSDB_UTILILY_HOST=db
-    //             export OPSDB_UTILILY_PORT=5432
-    //             export OPSDB_UTILILY_NAME=metadata
-    //             [ ! -f ${env.WORKSPACE}/.env ] && touch ${env.WORKSPACE}/.env
-    //             [ -d ${env.WORKSPACE}/local_config/pgadmin/sessions ] && sudo chmod 777 -R -f ${env.WORKSPACE}/local_config/pgadmin/sessions
-    //             sudo chmod 777 -R -f ${env.WORKSPACE}/local_config/pgadmin/sessions
-    //             docker build -t web .
-    //             docker-compose -f docker-compose.yaml down -v
-    //             docker-compose up -d
-    //             sleep 10s
-    //             docker-compose exec -T web /bin/bash
-    //             pwd
-    //             hostname
-    //             docker-compose exec -T web pip install --user poetry==1.1.12
-    //             docker-compose exec -T web poetry config virtualenvs.in-project false
-    //             docker-compose exec -T web poetry install --no-root --no-interaction
-    //             docker-compose exec -T web poetry run pytest --verbose -c tests/pytest.ini
-    //             docker-compose -f docker-compose.yaml down -v
-    //             """
-    //         }
-    //     }
-    // }
-
     stage('DEV Build and push image') {
       when {branch "develop"}
       steps {
         script {
-          docker.withRegistry('https://ghcr.io', registryCredential) {
-              customImage = docker.build("$imagename:$commit-CAC")
-              customImage.push()
-          }
+            docker.withRegistry('https://ghcr.io', registryCredential) {
+                customImage = docker.build('$imagename:alembic-$commit-CAC', '--target alembic-image .')
+                customImage.push()
+            }
+            docker.withRegistry('https://ghcr.io', registryCredential) {
+                customImage = docker.build('$imagename:metadata-$commit-CAC', '--target metadata-image .')
+                customImage.push()
+            }
         }
       }
     }
 
     stage('DEV Remove image') {
       when {branch "develop"}
-      steps{
-        sh "docker rmi $imagename:$commit-CAC"
+      steps {
+            sh 'docker rmi $imagename:alembic-$commit-CAC'
+            sh 'docker rmi $imagename:metadata-$commit-CAC'
       }
     }
 
@@ -96,18 +66,23 @@ pipeline {
       when {branch "main"}
       steps {
         script {
-          docker.withRegistry('https://ghcr.io', registryCredential) {
-              customImage = docker.build("$imagename:$commit")
-              customImage.push()
-          }
+            docker.withRegistry('https://ghcr.io', registryCredential) {
+                customImage = docker.build('$imagename:alembic-$commit', '--target alembic-image .')
+                customImage.push()
+            }
+            docker.withRegistry('https://ghcr.io', registryCredential) {
+                customImage = docker.build('$imagename:metadata-$commit', '--target metadata-image .')
+                customImage.push()
+            }
         }
       }
     }
 
     stage('STAGING Remove image') {
       when {branch "main"}
-      steps{
-        sh "docker rmi $imagename:$commit"
+      steps {
+            sh 'docker rmi $imagename:alembic-$commit'
+            sh 'docker rmi $imagename:metadata-$commit'
       }
     }
 
