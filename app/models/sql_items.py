@@ -15,6 +15,7 @@
 
 from datetime import datetime
 
+from sqlalchemy import BIGINT
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import DateTime
@@ -42,7 +43,7 @@ class ItemModel(Base):
     type = Column(Enum('name_folder', 'folder', 'file', name='type_enum', create_type=False), nullable=False)
     zone = Column(Integer(), nullable=False)
     name = Column(String(), nullable=False)
-    size = Column(Integer())
+    size = Column(BIGINT())
     owner = Column(String())
     container_code = Column(String(), nullable=False)
     container_type = Column(Enum('project', 'dataset', name='container_enum', create_type=False), nullable=False)
